@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { buildAccountMenu } from "@/ui/connection/account-menu";
+import { createLiveLyricsPanelBuilder, type LiveLyricsPanelModel } from "@/ui/lyrics/live-lyrics-panel";
+import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 
 import { createThemeStore, hydrateTheme } from "./theme/theme-store";
 import { ThemeToggle } from "./theme/theme-toggle";
@@ -18,7 +20,31 @@ type AppShellProps = {
   isConnected?: boolean;
   accountName?: string;
   onDisconnect?: () => Promise<void>;
+  lyricsPanelOverride?: LiveLyricsPanelModel;
 };
+
+const baseSyncState: LiveSyncUiState = {
+  playbackState: "idle",
+  activeLineIndex: null,
+  nextLineIndex: null,
+  confidence: "static",
+  trackId: null,
+  statusLine: "Play a track on Spotify to start live lyrics.",
+  resolvedLyrics: [],
+  lyricsSourceState: "loading",
+  lyricsRenderMode: null,
+  lyricsWarning: null,
+  retryAvailable: false,
+  retryInFlight: false,
+};
+
+function buildDefaultLyricsPanel(): LiveLyricsPanelModel {
+  return createLiveLyricsPanelBuilder().build({
+    syncState: baseSyncState,
+    lines: [],
+    showReturnToLive: false,
+  });
+}
 
 export function AppShell(input?: AppShellProps) {
   const themeStore = useRef(createThemeStore({ mode: hydrateTheme() }));
@@ -43,6 +69,13 @@ export function AppShell(input?: AppShellProps) {
         input.onDisconnect ?? (async () => undefined),
       )
     : null;
+  const lyricsPanel = input?.lyricsPanelOverride ?? buildDefaultLyricsPanel();
+  const statusRailClass =
+    lyricsPanel.stateRailVariant === "warning"
+      ? "text-amber-600 dark:text-amber-400"
+      : lyricsPanel.stateRailVariant === "idle"
+        ? "text-muted-foreground"
+        : "text-foreground";
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
@@ -90,8 +123,40 @@ export function AppShell(input?: AppShellProps) {
           <CardHeader>
             <CardTitle className="text-lg font-medium leading-snug">Lyrics</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground leading-relaxed">Lyrics will appear once a track is playing.</p>
+          <CardContent className="space-y-4">
+            <div data-testid="lyrics-now-playing" className="space-y-1">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Now playing</p>
+              <p className="text-base font-medium leading-tight">{lyricsPanel.nowPlayingTitle}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{lyricsPanel.nowPlayingArtist}</p>
+            </div>
+
+            <p data-testid="lyrics-status-rail" className={`text-sm leading-relaxed ${statusRailClass}`}>
+              {lyricsPanel.stateRailMessage}
+            </p>
+
+            {lyricsPanel.sourceState === "not-found" ? (
+              <div data-testid="lyrics-not-found-state" className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+                <p>Lyrics not found</p>
+                {lyricsPanel.showPrimaryAction && lyricsPanel.primaryActionLabel ? (
+                  <Button type="button" variant="secondary" size="sm">
+                    {lyricsPanel.primaryActionLabel}
+                  </Button>
+                ) : null}
+              </div>
+            ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
+              <div data-testid="lyrics-empty-state" className="text-sm leading-relaxed text-muted-foreground">
+                {lyricsPanel.status === "idle"
+                  ? "Lyrics will appear once a track is playing."
+                  : "Waiting for an active Spotify track..."}
+              </div>
+            ) : lyricsPanel.showLyrics ? (
+              <div className="space-y-2 text-sm leading-relaxed">
+                {lyricsPanel.activeLineText ? <p className="font-medium text-foreground">{lyricsPanel.activeLineText}</p> : null}
+                {lyricsPanel.nextLineText ? (
+                  <p className="text-muted-foreground">{lyricsPanel.nextLineText}</p>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

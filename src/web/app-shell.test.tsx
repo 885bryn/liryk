@@ -146,7 +146,9 @@ describe("AppShell", () => {
       />,
     );
 
-    const nowPlaying = screen.getByTestId("lyrics-now-playing");
+    const shell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(shell).toBeTruthy();
+    const nowPlaying = within(shell as HTMLElement).getByTestId("lyrics-now-playing");
     expect(nowPlaying).toBeTruthy();
     expect(within(nowPlaying).getByText("Track Z")).toBeTruthy();
     expect(within(nowPlaying).getByText("Artist Z")).toBeTruthy();
@@ -165,7 +167,11 @@ describe("AppShell", () => {
       />,
     );
 
-    expect(screen.getByTestId("lyrics-status-rail").textContent).toContain("Syncing latest playback position...");
+    const syncingShell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(syncingShell).toBeTruthy();
+    expect(within(syncingShell as HTMLElement).getByTestId("lyrics-status-rail").textContent).toContain(
+      "Syncing latest playback position...",
+    );
 
     rerender(
       <AppShell
@@ -179,7 +185,11 @@ describe("AppShell", () => {
       />,
     );
 
-    expect(screen.getByTestId("lyrics-empty-state").textContent).toContain("Waiting for an active Spotify track");
+    const emptyShell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(emptyShell).toBeTruthy();
+    expect(within(emptyShell as HTMLElement).getByTestId("lyrics-empty-state").textContent).toContain(
+      "Waiting for an active Spotify track",
+    );
 
     rerender(
       <AppShell
@@ -194,7 +204,9 @@ describe("AppShell", () => {
       />,
     );
 
-    const notFoundState = screen.getByTestId("lyrics-not-found-state");
+    const notFoundShell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(notFoundShell).toBeTruthy();
+    const notFoundState = within(notFoundShell as HTMLElement).getByTestId("lyrics-not-found-state");
     expect(notFoundState.textContent).toContain("Lyrics not found");
     expect(within(notFoundState).getByRole("button", { name: "Retry" })).toBeTruthy();
   });
@@ -202,10 +214,14 @@ describe("AppShell", () => {
   it("keeps one stable lyrics status rail container across state variants", () => {
     const { rerender } = render(<AppShell lyricsPanelOverride={panelOverride({ stateRailVariant: "info" })} />);
 
-    expect(screen.getAllByTestId("lyrics-status-rail")).toHaveLength(1);
+    let shell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(shell).toBeTruthy();
+    expect(within(shell as HTMLElement).getAllByTestId("lyrics-status-rail")).toHaveLength(1);
 
     rerender(<AppShell lyricsPanelOverride={panelOverride({ stateRailVariant: "idle", showLyrics: false })} />);
-    expect(screen.getAllByTestId("lyrics-status-rail")).toHaveLength(1);
+    shell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(shell).toBeTruthy();
+    expect(within(shell as HTMLElement).getAllByTestId("lyrics-status-rail")).toHaveLength(1);
 
     rerender(
       <AppShell
@@ -216,6 +232,8 @@ describe("AppShell", () => {
         })}
       />,
     );
-    expect(screen.getAllByTestId("lyrics-status-rail")).toHaveLength(1);
+    shell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(shell).toBeTruthy();
+    expect(within(shell as HTMLElement).getAllByTestId("lyrics-status-rail")).toHaveLength(1);
   });
 });
