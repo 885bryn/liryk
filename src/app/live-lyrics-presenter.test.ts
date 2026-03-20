@@ -11,6 +11,15 @@ function state(overrides: Partial<LiveSyncUiState> = {}): LiveSyncUiState {
     confidence: "synced",
     trackId: "track-1",
     statusLine: "Syncing lyrics...",
+    resolvedLyrics: [
+      { startMs: 0, text: "line a", renderMode: "synced", isTimestamped: true },
+      { startMs: 1_000, text: "line b", renderMode: "synced", isTimestamped: true },
+    ],
+    lyricsSourceState: "synced",
+    lyricsRenderMode: "synced",
+    lyricsWarning: null,
+    retryAvailable: false,
+    retryInFlight: false,
     ...overrides,
   };
 }
@@ -49,6 +58,48 @@ describe("buildLiveLyricsViewModel", () => {
     ).toMatchObject({ status: "paused" });
   });
 
+  it("returns explicit not-found copy with one retry action", () => {
+    const model = buildLiveLyricsViewModel({
+      syncState: state({ lyricsSourceState: "not-found", resolvedLyrics: [], retryAvailable: true }),
+      lines: ["line a", "line b"],
+      showReturnToLive: false,
+    });
+
+    expect(model.sourceState).toBe("not-found");
+    expect(model.statusLine).toBe("Lyrics not found");
+    expect(model.showPrimaryAction).toBe(true);
+    expect(model.primaryActionLabel).toBe("Retry");
+  });
+
+  it("keeps low-confidence and plain fallback lyrics visible without synced badge", () => {
+    const lowConfidence = buildLiveLyricsViewModel({
+      syncState: state({
+        lyricsSourceState: "low-confidence",
+        lyricsRenderMode: "synced",
+        lyricsWarning: "Potential mismatch",
+      }),
+      lines: ["line a", "line b"],
+      showReturnToLive: false,
+    });
+
+    const plain = buildLiveLyricsViewModel({
+      syncState: state({
+        lyricsSourceState: "plain",
+        lyricsRenderMode: "plain-static",
+        activeLineIndex: null,
+        nextLineIndex: null,
+      }),
+      lines: ["line a", "line b"],
+      showReturnToLive: true,
+    });
+
+    expect(lowConfidence.showLyrics).toBe(true);
+    expect(lowConfidence.warningBadge).toContain("Low confidence");
+    expect(plain.renderMode).toBe("plain-static");
+    expect(plain.confidenceBadge).toBeUndefined();
+    expect(plain.showLyrics).toBe(true);
+  });
+
   it("returns dual emphasis lines and confidence badge", () => {
     const model = buildLiveLyricsViewModel({
       syncState: state({ confidence: "estimated", activeLineIndex: 1, nextLineIndex: 2 }),
@@ -60,5 +111,22 @@ describe("buildLiveLyricsViewModel", () => {
     expect(model.nextLineText).toBe("line c");
     expect(model.confidenceBadge).toBe("Estimated sync");
     expect(model.showReturnToLive).toBe(true);
+  });
+
+  it("shows retry-in-flight as inline status without resetting panel semantics", () => {
+    const model = buildLiveLyricsViewModel({
+      syncState: state({
+        retryInFlight: true,
+        statusLine: "Retrying lyrics lookup...",
+        lyricsSourceState: "not-found",
+        retryAvailable: true,
+      }),
+      lines: [],
+      showReturnToLive: false,
+    });
+
+    expect(model.statusLine).toBe("Retrying lyrics lookup...");
+    expect(model.showPrimaryAction).toBe(false);
+    expect(model.sourceState).toBe("not-found");
   });
 });

@@ -11,6 +11,15 @@ function state(overrides: Partial<LiveSyncUiState> = {}): LiveSyncUiState {
     confidence: "synced",
     trackId: "track-1",
     statusLine: "Live sync active.",
+    resolvedLyrics: [
+      { startMs: 0, text: "line a", renderMode: "synced", isTimestamped: true },
+      { startMs: 1_000, text: "line b", renderMode: "synced", isTimestamped: true },
+    ],
+    lyricsSourceState: "synced",
+    lyricsRenderMode: "synced",
+    lyricsWarning: null,
+    retryAvailable: false,
+    retryInFlight: false,
     ...overrides,
   };
 }
@@ -51,5 +60,50 @@ describe("createLiveLyricsPanelBuilder", () => {
 
     expect(switched.activeLineText).toBeUndefined();
     expect(switched.nextLineText).toBeUndefined();
+  });
+
+  it("projects not-found and low-confidence states into panel actions and warning copy", () => {
+    const builder = createLiveLyricsPanelBuilder();
+
+    const notFound = builder.build({
+      syncState: state({ lyricsSourceState: "not-found", retryAvailable: true, resolvedLyrics: [] }),
+      lines: [],
+      trackTitle: "Missing Track",
+      showReturnToLive: false,
+    });
+
+    const lowConfidence = builder.build({
+      syncState: state({ lyricsSourceState: "low-confidence", lyricsWarning: "Potential mismatch" }),
+      lines: ["line a", "line b"],
+      trackTitle: "Risky Track",
+      showReturnToLive: false,
+    });
+
+    expect(notFound.showPrimaryAction).toBe(true);
+    expect(notFound.primaryActionLabel).toBe("Retry");
+    expect(notFound.statusLine).toBe("Lyrics not found");
+
+    expect(lowConfidence.warningBadge).toContain("Low confidence");
+    expect(lowConfidence.showLyrics).toBe(true);
+  });
+
+  it("keeps plain fallback readable with no synced confidence semantics", () => {
+    const builder = createLiveLyricsPanelBuilder();
+
+    const panel = builder.build({
+      syncState: state({
+        lyricsSourceState: "plain",
+        lyricsRenderMode: "plain-static",
+        activeLineIndex: null,
+        nextLineIndex: null,
+      }),
+      lines: ["plain one", "plain two"],
+      trackTitle: "Plain Track",
+      showReturnToLive: true,
+    });
+
+    expect(panel.renderMode).toBe("plain-static");
+    expect(panel.confidenceBadge).toBeUndefined();
+    expect(panel.showLyrics).toBe(true);
   });
 });
