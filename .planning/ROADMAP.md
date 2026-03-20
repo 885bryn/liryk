@@ -64,6 +64,13 @@ Plans:
 2. User sees cohesive loading, empty, and lyrics-not-found states that match the milestone visual direction.
 3. User can transition between key app states without jarring visual regressions across themes.
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md - Define parity-ready lyrics panel metadata and state-rail contract with model tests.
+- [ ] 07-02-PLAN.md - Integrate state-driven lyrics parity rendering into web shell with explicit state coverage tests.
+- [ ] 07-03-PLAN.md - Add visual regression guards and a reproducible Phase 7 visual checkpoint artifact.
+
 ## Progress
 
 **Execution Order:**
