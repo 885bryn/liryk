@@ -76,7 +76,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User gets noticeably faster lyric retrieval on repeat plays of previously resolved tracks via local cache keyed by Spotify track ID.
   2. User gets refreshed lyric data when cached entries are stale or invalid rather than repeatedly seeing outdated results.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md - Cache policy, versioned entry contract, and local file-backed lyrics cache foundation
+- [ ] 04-02-PLAN.md - Cache-aware lyrics resolution runtime with stale refresh and retry-forced invalidation
 
 ## Progress
 
@@ -88,4 +92,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
 | 2. Live Playback Sync Engine | 3/3 | Complete | 2026-03-20 |
 | 3. Lyrics Resolution and Rendered Experience | 4/4 | Complete   | 2026-03-20 |
-| 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |
+| 4. Cache Freshness and Repeat-Load Performance | 0/2 | Planned | - |
