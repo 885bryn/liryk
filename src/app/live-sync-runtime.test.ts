@@ -95,4 +95,49 @@ describe("createLiveSyncRuntime", () => {
     expect(store.selectPlaybackState()).toBe("unavailable");
     expect(store.selectLiveSync().statusLine).toContain("unavailable");
   });
+
+  it("keeps plain-static lyrics readable without activating timeline highlights", () => {
+    let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    const engine = createLyricSyncEngine({ nowPerfMs: () => 100 });
+
+    const runtime = createLiveSyncRuntime({
+      subscribePlayback: (listener) => {
+        playbackListener = listener;
+        return () => {
+          playbackListener = null;
+        };
+      },
+      syncEngine: engine,
+      liveSyncStore: store,
+      getTimelineForTrack: () => null,
+      getResolvedLyricsForTrack: () => ({
+        sourceState: "plain",
+        renderMode: "plain-static",
+        lines: [
+          { startMs: null, text: "plain a", renderMode: "plain-static", isTimestamped: false },
+          { startMs: null, text: "plain b", renderMode: "plain-static", isTimestamped: false },
+        ],
+      }),
+      setIntervalFn: vi.fn(() => 0 as unknown as ReturnType<typeof setInterval>),
+      clearIntervalFn: vi.fn(),
+    });
+
+    runtime.start();
+    playbackListener?.({
+      snapshot: {
+        trackId: "plain-track",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 200,
+        capturedAtMs: 100,
+      },
+      transition: "track_changed",
+    });
+
+    expect(store.selectPlaybackState()).toBe("playing");
+    expect(store.selectLiveSync().activeLineIndex).toBeNull();
+    expect(store.selectLiveSync().nextLineIndex).toBeNull();
+    expect(store.selectLiveSync().confidence).toBe("static");
+  });
 });
