@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-20T23:40:49.112Z"
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-03-20T23:44:04.927Z"
 last_activity: 2026-03-20
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -89,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Locked route exclusivity with marker-based tests so shell and fullscreen never render together.
 - [Phase 09]: Reused shared web auth and lyrics runtime boundaries in fullscreen route to avoid state drift from AppShell.
 - [Phase 09]: Locked fullscreen geometry and no-shell chrome via explicit wrapper and column class token tests.
+- [Phase 09]: Validated Simplified Chinese behavior at fullscreen UI surface with route-level regression tests.
+- [Phase 09]: Standardized fullscreen lyric mapping to displayText fallback normalization for active and adjacent lines.
 
 ### Roadmap Evolution
 
@@ -104,8 +106,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:40:49.110Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-03-20T23:44:04.925Z
+Stopped at: Completed 09-03-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -129,3 +131,4 @@ Resume file: None
 | Phase 08 P03 | 200 | 2 tasks | 3 files |
 | Phase 09 P01 | 106 | 2 tasks | 3 files |
 | Phase 09 P02 | 118 | 2 tasks | 3 files |
+| Phase 09 P03 | 139 | 2 tasks | 3 files |

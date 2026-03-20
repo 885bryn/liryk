@@ -27,8 +27,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Chinese Rendering
 
-- [ ] **CHN-03**: User sees Chinese lyrics rendered in Simplified Chinese in fullscreen mode.
-- [ ] **CHN-04**: User sees non-Chinese text preserved while Chinese-script text is normalized.
+- [x] **CHN-03**: User sees Chinese lyrics rendered in Simplified Chinese in fullscreen mode.
+- [x] **CHN-04**: User sees non-Chinese text preserved while Chinese-script text is normalized.
 
 ### Optional Minimal Overlay
 
@@ -66,8 +66,8 @@ Explicitly excluded for v1.2.
 | MOT-01 | Phase 11 | Pending |
 | MOT-02 | Phase 11 | Pending |
 | MOT-03 | Phase 11 | Pending |
-| CHN-03 | Phase 9 | Pending |
-| CHN-04 | Phase 9 | Pending |
+| CHN-03 | Phase 9 | Complete |
+| CHN-04 | Phase 9 | Complete |
 | META-01 | Phase 11 | Pending |
 
 **Coverage:**
