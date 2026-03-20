@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,7 @@ import { createLiveLyricsPanelBuilder } from "../ui/lyrics/live-lyrics-panel";
 import type { UiAuthState } from "../state/auth/auth-store";
 import { AuthStore } from "../state/auth/auth-store";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
+import type { ResolvedLyrics } from "../core/lyrics/types";
 import { AppShell } from "./app-shell";
 
 type HookModel = {
@@ -15,6 +16,7 @@ type HookModel = {
   statusCopy: string;
   uiState: UiAuthState;
   onConnect: () => Promise<void>;
+  sessionAccessToken?: string;
 };
 
 const disconnectedState: UiAuthState = {
@@ -30,8 +32,35 @@ let hookModel: HookModel = {
   onConnect: async () => undefined,
 };
 
+let nowPlayingResponse: {
+  trackId: string;
+  title: string;
+  artist: string;
+  progressMs: number;
+  durationMs?: number;
+  isPlaying: boolean;
+} | null = null;
+
+let resolvedLyricsResponse: ResolvedLyrics = {
+  sourceState: "not-found",
+  renderMode: "plain-static",
+  lines: [],
+};
+
 vi.mock("./use-web-auth-runtime", () => ({
   useWebAuthRuntime: () => hookModel,
+}));
+
+vi.mock("./auth/now-playing", () => ({
+  fetchWebNowPlaying: vi.fn(async () => nowPlayingResponse),
+}));
+
+vi.mock("@/infra/providers/lrclib-client", () => ({
+  createLrclibClient: vi.fn(() => ({})),
+}));
+
+vi.mock("@/core/lyrics/lyrics-resolver", () => ({
+  resolveLyricsForTrack: vi.fn(async () => resolvedLyricsResponse),
 }));
 
 function panelOverride(overrides: Record<string, unknown> = {}) {
@@ -67,6 +96,12 @@ describe("AppShell", () => {
       statusCopy: "Checking Spotify connection...",
       uiState: disconnectedState,
       onConnect: async () => undefined,
+    };
+    nowPlayingResponse = null;
+    resolvedLyricsResponse = {
+      sourceState: "not-found",
+      renderMode: "plain-static",
+      lines: [],
     };
   });
 
@@ -315,5 +350,47 @@ describe("AppShell", () => {
     expect(screen.getByRole("heading", { name: "Liryk" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Authorizing Spotify connection..." }).hasAttribute("disabled")).toBe(true);
     expect(screen.getAllByText("Authorizing Spotify connection...").length).toBeGreaterThan(0);
+  });
+
+  it("renders simplified chinese active and next lines while preserving mixed content", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-zh",
+      title: "Track ZH",
+      artist: "Artist ZH",
+      progressMs: 1_500,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "愛在臺北", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "歡迎光臨 ABC 2026!", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<AppShell />);
+
+    await waitFor(() => {
+      expect(screen.getByText("爱在台北")).toBeTruthy();
+      expect(screen.getByText("欢迎光临 ABC 2026!")).toBeTruthy();
+    });
+    expect(screen.queryByText("愛在臺北")).toBeNull();
+    expect(screen.queryByText("歡迎光臨 ABC 2026!")).toBeNull();
+    expect(screen.getByTestId("lyrics-now-playing")).toBeTruthy();
+    expect(screen.getByTestId("lyrics-status-rail")).toBeTruthy();
   });
 });
