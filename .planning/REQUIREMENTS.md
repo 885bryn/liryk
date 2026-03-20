@@ -28,7 +28,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Live Sync Experience
 
 - [x] **SYNC-01**: User sees the correct lyric line highlighted in real time during playback
-- [ ] **SYNC-02**: User sees the lyrics view auto-scroll to keep the active line in view as the song progresses
+- [x] **SYNC-02**: User sees the lyrics view auto-scroll to keep the active line in view as the song progresses
 
 ### Internationalization & Rendering
 
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LYR-03 | Phase 3 | Pending |
 | LYR-04 | Phase 3 | Pending |
 | SYNC-01 | Phase 2 | Complete |
-| SYNC-02 | Phase 2 | Pending |
+| SYNC-02 | Phase 2 | Complete |
 | I18N-01 | Phase 3 | Pending |
 | CACH-01 | Phase 4 | Pending |
 | CACH-02 | Phase 4 | Pending |
