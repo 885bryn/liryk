@@ -1,107 +1,108 @@
-# Phase 08 Research: Live Playback and Lyrics Data Flow Hardening
+# Phase 08 Research: Simplified Chinese Lyrics Normalization
 
 **Date:** 2026-03-20
 **Status:** Complete
-**Scope:** WEB-04, LYR-WEB-01, LYR-WEB-02
+**Scope:** CHN-01, CHN-02
 
 ## Inputs Reviewed
 
 - `.planning/ROADMAP.md`
 - `.planning/REQUIREMENTS.md`
 - `.planning/STATE.md`
-- `.planning/phases/07.1-wire-end-to-end-web-auth-flow-connect-redirect-callback-token-restore-verify-localhost-env-redirect-alignment-and-add-a-real-connection-to-now-playing-verification-path/07.1-03-SUMMARY.md`
-- `.planning/phases/07-web-lyrics-experience-parity-and-state-polish/07-02-SUMMARY.md`
 - `.planning/phases/03-lyrics-resolution-and-rendered-experience/03-04-SUMMARY.md`
-- `src/web/app-shell.tsx`
-- `src/web/auth/now-playing.ts`
-- `src/web/auth/now-playing.test.ts`
+- `.planning/phases/07-web-lyrics-experience-parity-and-state-polish/07-02-SUMMARY.md`
 - `src/core/lyrics/unicode-normalization.ts`
+- `src/core/lyrics/unicode-normalization.test.ts`
+- `src/core/lyrics/lrc-parser.ts`
+- `src/core/lyrics/plain-lyrics-timing.ts`
 - `src/core/lyrics/lyrics-resolver.ts`
-- `src/state/playback/live-sync-store.ts`
+- `src/core/lyrics/lyrics-resolver.test.ts`
+- `src/ui/lyrics/lyrics-viewport.tsx`
+- `src/ui/lyrics/lyrics-viewport.test.tsx`
+- `src/web/app-shell.tsx`
+- `src/web/app-shell.test.tsx`
 
 ## Discovery Level
 
-**Level 0 (skip deep external discovery)**
+**Level 0 (no external discovery required)**
 
 Reasoning:
-- No new external providers or SDKs are required.
-- Existing project stack already contains runtime polling, lyric resolution, and panel contracts.
-- Phase 8 is reliability hardening and integration completion on existing contracts.
+- Scope is internal normalization and rendering behavior on existing lyrics contracts.
+- No new external API, SDK, or architecture choice is required.
+- Existing code already has Chinese normalization helpers; this phase is consistency hardening across the full render path.
 
-## Current Flow Observations
+## Current Behavior Snapshot
 
-1. `AppShell` polls now-playing data every 1000ms and resolves lyrics by track identity.
-2. `fetchWebNowPlaying` already falls back from `/currently-playing` to `/me/player` when 204 is returned.
-3. Lyrics matching already strips common remaster/live suffixes via `normalizeForMatch`, but web-side metadata shaping is still minimal.
-4. Shell rendering computes active/next lines from synchronized lyric timestamps and currently reported progress.
+1. `normalizeChineseForDisplay` exists but uses a very small Traditional-to-Simplified map (`愛`, `還`, `說`).
+2. `lyrics-viewport` always normalizes line display text (`line.displayText ?? line.text`) before rendering.
+3. `app-shell` currently renders active/next text from resolver output (`displayText ?? text`) without a fallback normalization step.
+4. Resolver line builders (`parseLrc`, `buildPlainLyricsLines`) currently only set `text`; they do not guarantee `displayText` is populated.
 
-## Risks and Gaps to Close
+## Risk Assessment
 
-- **Metadata completeness risk:** Web now-playing payload currently exposes only `trackId`, `title`, first `artist`, and `progressMs`; missing metadata like album/duration can reduce resolver confidence and remaster-variant matching reliability.
-- **Stability risk for status messaging:** Current shell status text flips between resolving/ready/not-found without explicit contract tests for polling transitions and paused playback edge cases.
-- **Regression risk in active/next updates:** Active/next line behavior is computed in shell; without explicit cadence-focused tests, regressions could reintroduce stale or stuck line updates.
+- **Coverage risk:** Existing map is too small for real-world Traditional lyric lines; users may still see Traditional glyphs.
+- **Pipeline inconsistency risk:** Viewport path normalizes, but shell path relies on incoming `displayText`, which is not guaranteed.
+- **Regression risk:** If normalization is applied destructively to `text`, matching/debug contracts could drift from provider-source text.
 
 ## Recommended Implementation Approach
 
-### 1) Strengthen web now-playing contract before UI wiring
+### 1) Harden deterministic conversion contract
 
-- Extend `WebNowPlaying` to include richer lyric metadata inputs (`album`, `durationMs`, `artists`, `capturedAtMs`) while preserving existing required fields.
-- Add normalization helper(s) for title variants used in matching (for example preserving raw display title and deriving a normalized lookup title where needed).
-- Expand `now-playing` tests to lock fallback, parse behavior, and edge-case responses (204, malformed payload, missing item fields).
+- Expand deterministic Traditional-to-Simplified mappings in `unicode-normalization.ts` for common lyric characters and phrase-level coverage used in tests.
+- Keep conversion character-mapped and deterministic (no external transliteration services).
+- Preserve all non-Chinese characters (Latin, numbers, punctuation, emoji, RTL scripts).
 
-### 2) Harden lyric resolution input mapping and not-found behavior
+### 2) Normalize once in resolver line outputs
 
-- Route web resolver calls through explicit metadata mapping with deterministic values for title/artist/album/duration where present.
-- Keep explicit fallback behavior (`sourceState: not-found`, `renderMode: plain-static`) and test it for resolver failure and no-candidate paths.
-- Add tests covering remaster-title inputs from now-playing metadata to ensure resolver receives match-friendly values.
+- Populate `displayText` during line construction for both synced (`parseLrc`) and plain (`buildPlainLyricsLines`) outputs.
+- Keep `text` as normalized provider-source text (NFC), and use `displayText` for Simplified rendering.
+- Ensure resolver output contract yields Simplified display text regardless of downstream consumer (`AppShell` or `LyricsViewport`).
 
-### 3) Lock shell behavior for live line progression and rail messaging
+### 3) Lock rendering-level behavior and publish a phase QA checklist
 
-- Add app-shell tests that assert active/next lyric line transitions across progress updates while playback remains active.
-- Add tests for status rail copy/variant in key transitions: resolving -> ready, ready -> not-found, playing -> paused.
-- Preserve existing responsive/layout contracts from Phase 6 and parity markers from Phase 7.
+- Add shell tests proving active/next rendered lyric text is Simplified when source lyrics are Traditional.
+- Add tests proving mixed-language lines preserve non-Chinese segments unchanged.
+- Publish phase-local verification artifact with automated commands and manual real-track checks for CHN-01/CHN-02.
 
 ## Do Not Hand-Roll
 
-- Do not introduce a new global store for web-only playback/lyrics status.
-- Do not duplicate lyric-matching normalization logic in ad hoc JSX branches.
-- Do not replace current provider integration (`createLrclibClient` + `resolveLyricsForTrack`) with custom fetch pipelines.
+- Do not add network-based transliteration libraries or AI conversion services.
+- Do not mutate matcher contracts (`normalizeForMatch`) for this phase; matching remains separate from display normalization.
+- Do not duplicate normalization logic in multiple UI components when line contracts can carry `displayText`.
 
 ## Common Pitfalls
 
-- Polling cadence updates that trigger repeated lyric re-resolution for unchanged track IDs.
-- Status rail copy drift between source states and playback states.
-- Using only display title for matching when metadata includes variant suffixes.
-- Tests that assert only happy-path rendering and miss failure/not-found transitions.
+- Applying conversion only in one renderer (viewport) and missing shell/alternate consumers.
+- Overwriting `text` instead of providing `displayText`, making debugging/provider traceability harder.
+- Adding broad regex-based script transforms that unintentionally alter Japanese/Korean text.
 
 ## Validation Architecture
 
-Validation for Phase 8 should prove data flow from Spotify playback through resolver input to shell rendering:
+Validation must prove deterministic conversion and end-to-end rendering consistency:
 
-1. **Now-playing contract coverage**
-   - `npm test -- src/web/auth/now-playing.test.ts`
-   - Assert fallback behavior and metadata parse invariants.
+1. **Normalization contract unit tests**
+   - `npm test -- src/core/lyrics/unicode-normalization.test.ts`
+   - Assert deterministic Traditional-to-Simplified conversions and non-Chinese preservation.
 
-2. **Shell data-flow and state rendering coverage**
-   - `npm test -- src/web/app-shell.test.tsx src/web/auth/local-verification-path.test.tsx`
-   - Assert now-playing metadata visibility, status rail behavior, and live active/next line transitions.
+2. **Resolver output contract tests**
+   - `npm test -- src/core/lyrics/lyrics-resolver.test.ts`
+   - Assert synced/plain resolver lines include Simplified-ready `displayText` while preserving source `text`.
 
-3. **Resolver and matching confidence guardrails**
-   - `npm test -- src/core/lyrics/lyrics-resolver.test.ts src/core/lyrics/lyrics-matcher.test.ts`
-   - Assert remaster/live suffix matching remains accepted for real now-playing metadata variants.
+3. **Web shell rendering behavior tests**
+   - `npm test -- src/web/app-shell.test.tsx`
+   - Assert rendered active/next lines display Simplified Chinese for Traditional source fixtures.
 
 4. **Build validity**
    - `npm run build`
 
 5. **Requirement traceability checks**
-   - WEB-04: connected playback metadata appears within polling cadence.
-   - LYR-WEB-01: remaster-title variants resolve or explicit not-found is rendered.
-   - LYR-WEB-02: active/next lyric lines update while playback progresses.
+   - CHN-01: synced + plain render paths surface Simplified Chinese output.
+   - CHN-02: mixed-language lines keep non-Chinese content intact while Chinese script is normalized.
 
 ## Plan Implications
 
-- Use three execute plans:
-  1. now-playing contract hardening + tests,
-  2. lyrics resolution metadata/fallback hardening,
-  3. shell live-line/status verification + phase checkpoint artifact.
-- Keep plans sequential where they share `src/web/app-shell.tsx`; parallelize only where file ownership is disjoint.
+- Keep three execute plans aligned to updated roadmap intent:
+  1. conversion contract hardening,
+  2. resolver-flow normalization wiring,
+  3. shell-level verification + QA artifact.
+- Sequence plans because they share core files and must build contract first, then wiring, then verification artifact.
