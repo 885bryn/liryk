@@ -85,10 +85,31 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 3 - Blocking] `gsd-tools` state automation could not parse current STATE template**
+- **Found during:** Post-task state update
+- **Issue:** `state advance-plan`, `state update-progress`, and `state record-session` returned parse errors because this repository's STATE headings do not match expected parser fields.
+- **Fix:** Updated `.planning/STATE.md` manually to reflect Plan 2 completion, progress, metrics rollup, and session continuity.
+- **Files modified:** `.planning/STATE.md`
+- **Verification:** Reviewed updated state values and persisted changes in metadata commit.
+- **Committed in:** `9478549`
+
+**2. [Rule 3 - Blocking] `gsd-tools commit` wrapper misparsed commit message arguments**
+- **Found during:** Final metadata commit step
+- **Issue:** Wrapper attempted to treat commit message words as pathspecs, preventing required docs commit.
+- **Fix:** Performed equivalent manual git metadata commit with the required planning files.
+- **Files modified:** `.planning/phases/01-spotify-connection-foundation/01-02-SUMMARY.md`, `.planning/STATE.md`, `.planning/ROADMAP.md`
+- **Verification:** Commit `9478549` created successfully with expected files.
+- **Committed in:** `9478549`
+
+---
+
+**Total deviations:** 2 auto-fixed (2 blocking)
+**Impact on plan:** Execution artifacts were completed successfully; deviations were limited to planning-tooling wrappers and did not affect implemented product behavior.
 
 ## Issues Encountered
-None.
+- `gsd-tools` state and commit helpers were partially incompatible with this repository's current planning-file format; manual updates/commit were used to complete required metadata steps.
 
 ## User Setup Required
 None - no external service configuration required.
