@@ -13,7 +13,7 @@ This milestone follows completed v1.1 delivery and introduces a dedicated immers
 ## Phases
 
 - [ ] **Phase 9: Fullscreen Route and Content Foundation** - Add dedicated fullscreen lyrics page structure and bind normalized lyrics content.
-- [ ] **Phase 10: Cinematic Visual Language and Typography** - Implement immersive burgundy visual direction with premium lyric hierarchy.
+- [ ] **Phase 10: Monochrome Visual Language and Typography** - Implement pure black/white immersive visual direction with premium lyric hierarchy.
 - [ ] **Phase 11: Karaoke Motion and Minimal Overlay Polish** - Finalize smooth progression motion, active-line transitions, and subtle metadata overlays.
 
 ## Phase Details
@@ -27,17 +27,19 @@ This milestone follows completed v1.1 delivery and introduces a dedicated immers
 2. User sees centered column layout with left-aligned lyric text and generous top/bottom spacing.
 3. User sees Chinese lyrics rendered in Simplified Chinese while non-Chinese text remains intact.
 
-**Plans:** 0 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run `/gsd-plan-phase 9`)
+- [ ] 09-01-PLAN.md - Add route-entry contract and app bootstrap wiring for dedicated `/fullscreen` path.
+- [ ] 09-02-PLAN.md - Implement immersive fullscreen page layout with centered lyric column and no shell chrome.
+- [ ] 09-03-PLAN.md - Lock fullscreen Simplified Chinese rendering and publish phase verification checklist.
 
-### Phase 10: Cinematic Visual Language and Typography
-**Goal**: Users experience a premium atmospheric lyrics canvas with clear active-line hierarchy.
+### Phase 10: Monochrome Visual Language and Typography
+**Goal**: Users experience a premium monochrome lyrics canvas with clear active-line hierarchy.
 **Depends on**: Phase 9
 **Requirements**: VIS-01, VIS-02, VIS-03
 **Success Criteria**:
-1. User sees deep warm red/burgundy gradient background with subtle vignette and no heavy card-like framing.
+1. User sees a pure black background with no heavy card-like framing or non-lyric chrome.
 2. User sees large bold lyric typography with clear contrast between active, near-active, and distant lines.
 3. User sees uncluttered visual composition that keeps lyrics as the dominant focus.
 
