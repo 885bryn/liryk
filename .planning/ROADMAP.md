@@ -13,7 +13,7 @@ This roadmap starts after completed Phase 4 work and initializes milestone v1.1 
 ## Phases
 
 - [x] **Phase 5: Web Runtime and Theme Foundation** - Establish browser app shell, install shadcn/ui at kickoff, and enable persistent light/dark theming.
-- [ ] **Phase 6: Responsive Layout and Visual System** - Build aesthetically pleasing, responsive composition with robust theme token usage.
+- [x] **Phase 6: Responsive Layout and Visual System** - Build aesthetically pleasing, responsive composition with robust theme token usage. (completed 2026-03-20)
 - [ ] **Phase 7: Web Lyrics Experience Parity and State Polish** - Finish user-facing web states and lyrics-panel behavior parity in the new design.
 
 ## Phase Details
@@ -48,12 +48,12 @@ Plans:
 2. User sees cohesive typography and spacing hierarchy that goes beyond default scaffold styling.
 3. User sees consistent color-token usage and readable contrast in both light and dark themes.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 06-01-PLAN.md - Refine global theme tokens and typography baseline for readable light/dark surfaces.
 - [x] 06-02-PLAN.md - Implement responsive shell rhythm (lyrics-first mobile, 40/60 desktop) with hierarchy-focused tests.
-- [ ] 06-03-PLAN.md - Finalize card surface consistency and add explicit visual verification checkpoint artifacts.
+- [x] 06-03-PLAN.md - Finalize card surface consistency and add explicit visual verification checkpoint artifacts.
 
 ### Phase 7: Web Lyrics Experience Parity and State Polish
 **Goal**: Users get polished web-state handling and lyrics-pane parity with the existing milestone core behavior.
@@ -72,5 +72,5 @@ Phases execute in numeric order: 5 -> 6 -> 7
 | Phase | Requirements | Status |
 |-------|--------------|--------|
 | 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Complete |
-| 6. Responsive Layout and Visual System | 2/3 | In Progress |
+| 6. Responsive Layout and Visual System | 3/3 | Complete |
 | 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Pending |
