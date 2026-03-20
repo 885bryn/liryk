@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthStore } from "../state/auth/auth-store";
 import type { UiAuthState } from "../state/auth/auth-store";
@@ -12,6 +12,9 @@ type RuntimeStub = {
   connectSpotify: () => Promise<{ authorizeUrl: string; requestId: string }>;
   getUiState: () => UiAuthState;
 };
+
+const probeReadLocation = () => new URL("http://localhost:3000/?code=abc&state=xyz");
+const probeReplaceHistoryUrl = () => undefined;
 
 function HookProbe(input: {
   runtime: RuntimeStub;
@@ -26,8 +29,8 @@ function HookProbe(input: {
     runtime: input.runtime,
     runBootstrap: input.runBootstrap,
     navigateToAuthorization: input.navigateToAuthorization,
-    readLocation: () => new URL("http://localhost:3000/?code=abc&state=xyz"),
-    replaceHistoryUrl: () => undefined,
+    readLocation: probeReadLocation,
+    replaceHistoryUrl: probeReplaceHistoryUrl,
   });
 
   return (
@@ -43,6 +46,10 @@ function HookProbe(input: {
 }
 
 describe("useWebAuthRuntime", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("emits checking state during bootstrap before yielding runtime UI state", async () => {
     const authStore = new AuthStore();
 
