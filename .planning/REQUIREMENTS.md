@@ -32,6 +32,11 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 - [x] **AUTH-WEB-02**: User sees explicit checking, authorizing, reconnect-required, and connected-waiting-playback auth states in the web shell.
 - [x] **AUTH-WEB-03**: User can diagnose localhost auth config mismatch via actionable APP_BASE_URL and SPOTIFY_REDIRECT_URI origin/path diagnostics.
 
+### Chinese Script Normalization (Phase 8)
+
+- [ ] **CHN-01**: User sees Chinese lyrics rendered in Simplified Chinese across synced and plain lyric displays.
+- [x] **CHN-02**: User sees non-Chinese lyric content preserved while Chinese-script content is normalized to Simplified Chinese.
+
 ## v1.2+ Candidate Requirements
 
 Deferred to future milestones.
@@ -74,6 +79,8 @@ Explicitly excluded for v1.1.
 | AUTH-WEB-01 | Phase 07.1 | Complete |
 | AUTH-WEB-02 | Phase 07.1 | Complete |
 | AUTH-WEB-03 | Phase 07.1 | Complete |
+| CHN-01 | Phase 8 | Not started |
+| CHN-02 | Phase 8 | Not started |
 
 **Coverage:**
 - v1.1 requirements: 9 total

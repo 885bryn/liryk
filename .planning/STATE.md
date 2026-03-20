@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: completed
-stopped_at: Completed 07.1-03-PLAN.md
-last_updated: "2026-03-20T21:25:53.354Z"
-last_activity: 2026-03-20 - Completed 07.1-03-PLAN.md
+current_plan: 2
+status: executing
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-20T23:04:17.326Z"
+last_activity: 2026-03-20
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
 ---
 
 # Project State
@@ -24,10 +25,12 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 07.1 - Web auth flow wiring and verification path
-Plan: Complete (03 of 03 complete)
-Status: Phase 07.1 complete
-Last activity: 2026-03-20 - Completed 07.1-03-PLAN.md
+Phase: 08 - Live playback and lyrics data flow hardening
+Plan: 01 of 03 complete
+Current Plan: 2
+Total Plans in Phase: 3
+Status: Phase 08 in progress
+Last Activity: 2026-03-20
 
 ## Accumulated Context
 
@@ -79,6 +82,7 @@ Recent decisions affecting current work:
 - [Phase 07.1]: Render connection pane states directly from UiAuthState plus hook phase for explicit checking and authorizing copy.
 - [Phase 07.1]: Surface env alignment warning text in the connection pane so localhost misconfiguration is visible during auth verification.
 - [Phase 07.1]: Keep a dedicated phase runbook with exact automated commands and manual URL-cleanup checks for reproducible validation.
+- [Phase 08]: Kept Chinese display normalization deterministic with explicit per-character mappings and mixed-script preservation.
 
 ### Roadmap Evolution
 
@@ -94,8 +98,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T21:25:53.352Z
-Stopped at: Completed 07.1-03-PLAN.md
+Last session: 2026-03-20T23:04:17.324Z
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -114,3 +118,4 @@ Resume file: None
 | Phase 07.1 P01 | 160 | 2 tasks | 4 files |
 | Phase 07.1 P02 | 281 | 2 tasks | 4 files |
 | Phase 07.1 P03 | 158 | 2 tasks | 4 files |
+| Phase 08 P01 | 166 | 2 tasks | 2 files |
