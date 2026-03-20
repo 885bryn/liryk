@@ -1,95 +1,62 @@
-# Roadmap: Spotify Live Lyrics Desktop App
+# Roadmap: Spotify Live Lyrics Web App
 
 ## Overview
 
-This roadmap delivers the core milestone outcome in dependency order: secure Spotify connection and playback state, trustworthy real-time lyric sync behavior, correct lyric retrieval and multilingual rendering, then cache lifecycle performance. Each phase completes a user-verifiable capability and maps all v1 requirements exactly once.
+This roadmap starts after completed Phase 4 work and initializes milestone v1.1 for web migration and visual quality. It preserves validated lyrics-sync behavior while introducing browser delivery, theme architecture, and polished shadcn/ui-driven UX in dependency order.
+
+## Milestone
+
+- **Milestone:** v1.1 Web App Foundation and Theming
+- **Requirements mapped:** 9 of 9
+- **First phase number:** 5 (continuing from completed Phase 4)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 1: Spotify Connection Foundation** - Users securely connect Spotify and maintain a working authenticated session.
-- [x] **Phase 2: Live Playback Sync Engine** - Users get reliable, real-time lyric line progression tied to playback behavior. (completed 2026-03-20)
-- [x] **Phase 3: Lyrics Resolution and Rendered Experience** - Users receive the best available lyrics with clear fallback states and multilingual rendering. (completed 2026-03-20)
-- [x] **Phase 4: Cache Freshness and Repeat-Load Performance** - Users get fast repeat loads without stale or invalid lyric results. (completed 2026-03-20)
+- [ ] **Phase 5: Web Runtime and Theme Foundation** - Establish browser app shell, install shadcn/ui at kickoff, and enable persistent light/dark theming.
+- [ ] **Phase 6: Responsive Layout and Visual System** - Build aesthetically pleasing, responsive composition with robust theme token usage.
+- [ ] **Phase 7: Web Lyrics Experience Parity and State Polish** - Finish user-facing web states and lyrics-panel behavior parity in the new design.
 
 ## Phase Details
 
-### Phase 1: Spotify Connection Foundation
-**Goal**: Users can securely connect Spotify and stay authenticated across restarts so playback data is available.
-**Depends on**: Nothing (first phase)
-**Requirements**: AUTH-01, AUTH-02, SECU-01
-**Success Criteria** (what must be TRUE):
-  1. User can connect their Spotify account via OAuth PKCE without entering Spotify credentials into the app UI.
-  2. User remains connected after restarting the desktop app and can continue without reauthorizing each launch.
-  3. User secrets and auth configuration are loaded from `.env`, with no hardcoded credentials in shipped behavior.
-**Plans**: 4 plans
+### Phase 5: Web Runtime and Theme Foundation
+**Goal**: Users can access a browser-based shell with shadcn/ui initialized and theme switching available from day one.
+**Depends on**: Completed Phase 4
+**Requirements**: WEB-01, THEM-01, THEM-02, UI-02
+**Success Criteria**:
+1. User can open the app in browser with the primary shell rendering without desktop-only runtime assumptions.
+2. User can toggle between light and dark mode from visible in-app controls.
+3. User returns to the previously selected theme after page reload.
+4. User-visible UI primitives are built from shadcn/ui components after explicit install checkpoint.
 
-Plans:
-- [x] 01-01-PLAN.md - Secure env validation and Spotify PKCE auth service foundation
-- [x] 01-02-PLAN.md - Connection UX states, trust messaging, and retry/troubleshooting flow
-- [x] 01-03-PLAN.md - Session persistence, startup rehydrate, and disconnect/account switch controls
-- [x] 01-04-PLAN.md - Spotify runtime wiring for connect callback and startup bootstrap gap closure
+Implementation notes:
+- Install shadcn/ui immediately after web scaffold and Tailwind setup, before milestone UI composition.
+- Confirm baseline shadcn tokens and component registry before proceeding to Phase 6.
 
-### Phase 2: Live Playback Sync Engine
-**Goal**: Users see lyric progression stay aligned with current Spotify playback timing and controls.
-**Depends on**: Phase 1
-**Requirements**: PLAY-01, PLAY-02, PLAY-03, SYNC-01, SYNC-02
-**Success Criteria** (what must be TRUE):
-  1. User sees lyric sync tied to the currently playing Spotify track on desktop without requiring Spotify Premium.
-  2. User sees the active lyric line update continuously from playback position while audio is playing.
-  3. User sees sync behavior respond correctly when pausing, resuming, skipping tracks, or seeking within a track.
-  4. User sees the lyrics viewport automatically keep the active line in view as playback advances.
-**Plans**: 3 plans
+### Phase 6: Responsive Layout and Visual System
+**Goal**: Users get an aesthetically pleasing, intentional interface that works across desktop and mobile.
+**Depends on**: Phase 5
+**Requirements**: WEB-02, THEM-03, UI-03
+**Success Criteria**:
+1. User can use the app comfortably on mobile and desktop with stable responsive layout behavior.
+2. User sees cohesive typography and spacing hierarchy that goes beyond default scaffold styling.
+3. User sees consistent color-token usage and readable contrast in both light and dark themes.
 
-Plans:
-- [x] 02-01-PLAN.md - Playback snapshot runtime and transition classification foundation
-- [x] 02-02-PLAN.md - Timestamp-anchored sync engine and live sync state runtime wiring
-- [x] 02-03-PLAN.md - Live lyrics viewport auto-scroll, dual emphasis, and playback-state UI behavior
-
-### Phase 3: Lyrics Resolution and Rendered Experience
-**Goal**: Users receive correct, readable lyrics for the active track with explicit fallback outcomes.
-**Depends on**: Phase 2
-**Requirements**: LYR-01, LYR-02, LYR-03, LYR-04, I18N-01, UI-01
-**Success Criteria** (what must be TRUE):
-  1. User gets lyrics fetched for the active Spotify track and receives the best-matching version for that track metadata.
-  2. User receives timestamped lyrics when available and still gets usable plain-lyrics display when timestamps are missing.
-  3. User sees "Lyrics not found" when no usable lyrics source succeeds for the current track.
-  4. User can read rendered lyrics in supported UTF-8 scripts, including CJK, Arabic, and Korean text.
-  5. User sees the milestone UI built using the project's existing shadcn/ui component system.
-**Plans**: 4 plans
-
-Plans:
-- [x] 03-01-PLAN.md - Core lyric contracts, Unicode-safe normalization, and synced/plain line preparation
-- [x] 03-02-PLAN.md - LRCLIB provider adapter and deterministic lyric candidate resolution
-- [x] 03-03-PLAN.md - Runtime/store wiring for track-session lyric resolution, retry, and not-found states
-- [x] 03-04-PLAN.md - Presenter, panel, and viewport updates for fallback UX and multilingual rendering
-
-### Phase 4: Cache Freshness and Repeat-Load Performance
-**Goal**: Users get faster repeated lyric loads while still receiving updated results when cached data is stale.
-**Depends on**: Phase 3
-**Requirements**: CACH-01, CACH-02
-**Success Criteria** (what must be TRUE):
-  1. User gets noticeably faster lyric retrieval on repeat plays of previously resolved tracks via local cache keyed by Spotify track ID.
-  2. User gets refreshed lyric data when cached entries are stale or invalid rather than repeatedly seeing outdated results.
-**Plans**: 2 plans
-
-Plans:
-- [x] 04-01-PLAN.md - Cache policy, versioned entry contract, and local file-backed lyrics cache foundation
-- [x] 04-02-PLAN.md - Cache-aware lyrics resolution runtime with stale refresh and retry-forced invalidation
+### Phase 7: Web Lyrics Experience Parity and State Polish
+**Goal**: Users get polished web-state handling and lyrics-pane parity with the existing milestone core behavior.
+**Depends on**: Phase 6
+**Requirements**: WEB-03, UI-04
+**Success Criteria**:
+1. User can see now-playing metadata and lyrics panel states in the web shell aligned with existing core behavior.
+2. User sees cohesive loading, empty, and lyrics-not-found states that match the milestone visual direction.
+3. User can transition between key app states without jarring visual regressions across themes.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
+Phases execute in numeric order: 5 -> 6 -> 7
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Live Playback Sync Engine | 3/3 | Complete | 2026-03-20 |
-| 3. Lyrics Resolution and Rendered Experience | 4/4 | Complete   | 2026-03-20 |
-| 4. Cache Freshness and Repeat-Load Performance | 2/2 | Complete | 2026-03-20 |
+| Phase | Requirements | Status |
+|-------|--------------|--------|
+| 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Pending |
+| 6. Responsive Layout and Visual System | WEB-02, THEM-03, UI-03 | Pending |
+| 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Pending |
