@@ -118,6 +118,65 @@ describe("FullscreenLyricsPage", () => {
     expect(column.className).not.toContain("border");
   });
 
+  it("renders active near and distant lyric hierarchy tiers", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-hierarchy",
+      title: "Hierarchy Track",
+      artist: "Hierarchy Artist",
+      progressMs: 5_000,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 5", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const activeLines = screen.queryAllByTestId("fullscreen-lyric-line-active");
+      const nearLines = screen.queryAllByTestId("fullscreen-lyric-line-near");
+      const distantLines = screen.queryAllByTestId("fullscreen-lyric-line-distant");
+
+      expect(activeLines.length).toBe(1);
+      expect(nearLines.length).toBeGreaterThanOrEqual(2);
+      expect(distantLines.length).toBeGreaterThanOrEqual(2);
+      expect(activeLines[0]?.className).toContain("text-white");
+      expect(activeLines[0]?.className).toContain("font-semibold");
+      expect(activeLines[0]?.className).toContain("text-4xl");
+      expect(activeLines[0]?.className).toContain("sm:text-5xl");
+      expect(nearLines.every((line) => line.className.includes("text-zinc-300"))).toBe(true);
+      expect(nearLines.every((line) => line.className.includes("font-medium"))).toBe(true);
+      expect(nearLines.every((line) => line.className.includes("text-3xl"))).toBe(true);
+      expect(nearLines.every((line) => line.className.includes("sm:text-4xl"))).toBe(true);
+      expect(distantLines.every((line) => line.className.includes("text-zinc-500"))).toBe(true);
+      expect(distantLines.every((line) => line.className.includes("font-normal"))).toBe(true);
+      expect(distantLines.every((line) => line.className.includes("text-2xl"))).toBe(true);
+      expect(distantLines.every((line) => line.className.includes("sm:text-3xl"))).toBe(true);
+    });
+  });
+
   it("renders simplified chinese lines while preserving mixed non-chinese content", async () => {
     hookModel = {
       phase: "ready",
