@@ -1,6 +1,7 @@
 import type { PlaybackRuntimeEvent } from "./playback-runtime";
 import type { LyricLine } from "../core/sync/lyric-timeline";
 import type { LyricSyncEngine } from "../core/sync/lyric-sync-engine";
+import type { ResolvedLyrics } from "../core/lyrics/types";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 
 export type LiveSyncRuntimeDependencies = {
@@ -8,6 +9,7 @@ export type LiveSyncRuntimeDependencies = {
   syncEngine: LyricSyncEngine;
   liveSyncStore: LiveSyncStore;
   getTimelineForTrack: (trackId: string) => LyricLine[] | null;
+  getResolvedLyricsForTrack?: (trackId: string) => ResolvedLyrics | null;
   setIntervalFn?: (callback: () => void, delayMs: number) => ReturnType<typeof setInterval>;
   clearIntervalFn?: (timer: ReturnType<typeof setInterval>) => void;
 };
@@ -76,7 +78,22 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
 
     const timeline = dependencies.getTimelineForTrack(event.snapshot.trackId);
     if (!timeline || timeline.length === 0) {
+      const resolved = dependencies.getResolvedLyricsForTrack?.(event.snapshot.trackId) ?? null;
       stopTicker();
+
+      if (resolved) {
+        const playbackState = event.snapshot.isPlaying ? "playing" : "paused";
+        dependencies.liveSyncStore.setPlaybackState(playbackState);
+        dependencies.liveSyncStore.setTrack(event.snapshot.trackId);
+        dependencies.liveSyncStore.setActiveLine(null);
+        dependencies.liveSyncStore.setNextLine(null);
+        dependencies.liveSyncStore.setConfidence("static");
+        if (resolved.sourceState !== "not-found") {
+          dependencies.liveSyncStore.setStatusLine(statusForState(playbackState));
+        }
+        return;
+      }
+
       dependencies.liveSyncStore.setPlaybackState("unavailable");
       dependencies.liveSyncStore.setTrack(event.snapshot.trackId);
       dependencies.liveSyncStore.setStatusLine(statusForState("unavailable"));
