@@ -9,14 +9,14 @@ describe("buildLyricsViewport", () => {
     const lines = ["0", "1", "2", "3", "4", "5", "6"];
 
     const view = buildLyricsViewport({
-      lines,
+      lines: lines.map((text) => ({ text })),
       activeLineIndex: 4,
       nextLineIndex: 5,
       nowMs: 100,
       controller,
     });
 
-    expect(view.visibleLines).toEqual(["2", "3", "4", "5", "6"]);
+    expect(view.visibleLines.map((line) => line.text)).toEqual(["2", "3", "4", "5", "6"]);
     expect(view.scrollMode).toBe("smooth-step");
   });
 
@@ -24,7 +24,7 @@ describe("buildLyricsViewport", () => {
     const controller = useAutoScrollController({ suspendMs: 5_000 });
 
     const paused = buildLyricsViewport({
-      lines: ["a", "b", "c", "d"],
+      lines: ["a", "b", "c", "d"].map((text) => ({ text })),
       activeLineIndex: 1,
       nextLineIndex: 2,
       nowMs: 1_000,
@@ -34,7 +34,7 @@ describe("buildLyricsViewport", () => {
     expect(paused.showReturnToLive).toBe(true);
 
     const resumed = buildLyricsViewport({
-      lines: ["a", "b", "c", "d"],
+      lines: ["a", "b", "c", "d"].map((text) => ({ text })),
       activeLineIndex: 1,
       nextLineIndex: 2,
       nowMs: 1_010,
@@ -42,5 +42,38 @@ describe("buildLyricsViewport", () => {
       controller,
     });
     expect(resumed.showReturnToLive).toBe(false);
+  });
+
+  it("renders plain-static mode with no highlight and no return-to-live affordance", () => {
+    const view = buildLyricsViewport({
+      lines: ["plain one", "plain two", "plain three"].map((text) => ({ text })),
+      activeLineIndex: 0,
+      nextLineIndex: 1,
+      renderMode: "plain-static",
+      nowMs: 100,
+    });
+
+    expect(view.renderMode).toBe("plain-static");
+    expect(view.activeLineIndex).toBeNull();
+    expect(view.nextLineIndex).toBeNull();
+    expect(view.showReturnToLive).toBe(false);
+  });
+
+  it("adds direction metadata for Arabic, Korean, and Chinese lines", () => {
+    const view = buildLyricsViewport({
+      lines: [
+        { text: "\u0645\u0631\u062d\u0628\u0627" },
+        { text: "\ud55c\uad6d\uc5b4" },
+        { text: "\u611b\u4f60" },
+      ],
+      activeLineIndex: null,
+      nextLineIndex: null,
+      renderMode: "plain-static",
+      nowMs: 100,
+    });
+
+    expect(view.visibleLines[0]?.dir).toBe("rtl");
+    expect(view.visibleLines[1]?.dir).toBe("ltr");
+    expect(view.visibleLines[2]?.displayText).toBe("\u7231\u4f60");
   });
 });
