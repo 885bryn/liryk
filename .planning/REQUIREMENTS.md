@@ -11,7 +11,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 ### Web Foundation
 
 - [x] **WEB-01**: User can open Liryk in a browser and load the primary app shell without desktop runtime dependencies.
-- [ ] **WEB-02**: User can access the app through a responsive layout that remains usable on both mobile and desktop viewport sizes.
+- [x] **WEB-02**: User can access the app through a responsive layout that remains usable on both mobile and desktop viewport sizes.
 - [ ] **WEB-03**: User can continue to see now-playing metadata and lyrics panel states from the existing core flow in the web shell.
 
 ### Theming
@@ -57,7 +57,7 @@ Explicitly excluded for v1.1.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | WEB-01 | Phase 5 | Complete |
-| WEB-02 | Phase 6 | Pending |
+| WEB-02 | Phase 6 | Complete |
 | WEB-03 | Phase 7 | Pending |
 | THEM-01 | Phase 5 | Complete |
 | THEM-02 | Phase 5 | Complete |
