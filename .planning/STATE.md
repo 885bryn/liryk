@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-03-20T23:37:10.579Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-20T23:40:49.112Z"
 last_activity: 2026-03-20
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -87,6 +87,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Added shell-level fallback normalization plus a CHN verification runbook to guarantee final user-visible Simplified output.
 - [Phase 09]: Kept fullscreen entry as a dedicated router branch while preserving shell fallback for unknown paths.
 - [Phase 09]: Locked route exclusivity with marker-based tests so shell and fullscreen never render together.
+- [Phase 09]: Reused shared web auth and lyrics runtime boundaries in fullscreen route to avoid state drift from AppShell.
+- [Phase 09]: Locked fullscreen geometry and no-shell chrome via explicit wrapper and column class token tests.
 
 ### Roadmap Evolution
 
@@ -102,8 +104,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:37:10.577Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-03-20T23:40:49.110Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -126,3 +128,4 @@ Resume file: None
 | Phase 08 P02 | 123 | 2 tasks | 4 files |
 | Phase 08 P03 | 200 | 2 tasks | 3 files |
 | Phase 09 P01 | 106 | 2 tasks | 3 files |
+| Phase 09 P02 | 118 | 2 tasks | 3 files |

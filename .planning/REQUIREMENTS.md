@@ -11,7 +11,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 ### Fullscreen Experience
 
 - [x] **FULL-01**: User can open a dedicated fullscreen lyrics page that occupies the full viewport without utility-shell clutter.
-- [ ] **FULL-02**: User sees the lyrics hero column centered on the page with left-aligned lyric text and generous vertical breathing room.
+- [x] **FULL-02**: User sees the lyrics hero column centered on the page with left-aligned lyric text and generous vertical breathing room.
 
 ### Visual Direction
 
@@ -59,7 +59,7 @@ Explicitly excluded for v1.2.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FULL-01 | Phase 9 | Complete |
-| FULL-02 | Phase 9 | Pending |
+| FULL-02 | Phase 9 | Complete |
 | VIS-01 | Phase 10 | Pending |
 | VIS-02 | Phase 10 | Pending |
 | VIS-03 | Phase 10 | Pending |
