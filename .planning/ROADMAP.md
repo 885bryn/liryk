@@ -32,6 +32,13 @@ Implementation notes:
 - Install shadcn/ui immediately after web scaffold and Tailwind setup, before milestone UI composition.
 - Confirm baseline shadcn tokens and component registry before proceeding to Phase 6.
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md - Scaffold browser runtime entry and baseline split-first shell with Tailwind foundation.
+- [ ] 05-02-PLAN.md - Initialize shadcn/ui and verify required primitive checkpoint artifacts.
+- [ ] 05-03-PLAN.md - Implement persistent light/dark theming and integrate toggles into shell/account surfaces.
+
 ### Phase 6: Responsive Layout and Visual System
 **Goal**: Users get an aesthetically pleasing, intentional interface that works across desktop and mobile.
 **Depends on**: Phase 5
