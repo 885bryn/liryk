@@ -1,15 +1,16 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: web-app-foundation-and-theming
-status: in_progress
-stopped_at: Milestone initialized; ready for Phase 5 planning
-last_updated: "2026-03-20T12:00:00.000Z"
+milestone_name: milestone
+status: Ready to begin Phase 5
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-20T09:18:27.421Z"
+last_activity: 2026-03-20 - Milestone v1.1 started
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 
 ## Current Position
 
-Phase: Not started (defining requirements complete)
-Plan: -
-Status: Ready to begin Phase 5
-Last activity: 2026-03-20 - Milestone v1.1 started
+Phase: 05 - Web Runtime and Theme Foundation
+Plan: 02 of 03 (next)
+Status: In progress (05-01 complete)
+Last activity: 2026-03-20 - Completed 05-01 runtime scaffold and Tailwind baseline
 
 ## Accumulated Context
 
@@ -54,10 +55,12 @@ Recent decisions affecting current work:
 - [Phase 04]: Use shorter TTL windows for not-found cache entries to avoid sticky negative cache results.
 - [Phase 04]: Keep cache orchestration in runtime while resolver remains provider source of truth.
 - [Phase 04]: Evict invalid cache entries before provider resolve to fail closed on poisoned data.
+- [Phase 05]: Use a thin browser composition layer (src/main.tsx + AppShell) without touching existing auth/lyrics model contracts.
+- [Phase 05]: Adopt class-based dark mode tokens in global CSS before shadcn work so later primitives inherit stable theme variables.
 
 ### Pending Todos
 
-- Confirm implementation kickoff for Phase 5 and execute shadcn install checkpoint after web scaffold/Tailwind base setup.
+- Execute Phase 05-02 shadcn/ui initialization and primitive verification checkpoint.
 
 ### Blockers/Concerns
 
@@ -65,6 +68,12 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T12:00:00.000Z
-Stopped at: Milestone initialized; ready for roadmap execution
-Resume file: `.planning/ROADMAP.md`
+Last session: 2026-03-20T09:18:27.419Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
+
+## Performance Metrics
+
+| Phase | Plan | Duration (s) | Tasks | Files |
+|-------|------|--------------|-------|-------|
+| 05 | 01 | 475 | 2 | 13 |

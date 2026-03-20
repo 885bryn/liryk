@@ -35,7 +35,7 @@ Implementation notes:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md - Scaffold browser runtime entry and baseline split-first shell with Tailwind foundation.
+- [x] 05-01-PLAN.md - Scaffold browser runtime entry and baseline split-first shell with Tailwind foundation.
 - [ ] 05-02-PLAN.md - Initialize shadcn/ui and verify required primitive checkpoint artifacts.
 - [ ] 05-03-PLAN.md - Implement persistent light/dark theming and integrate toggles into shell/account surfaces.
 
@@ -64,6 +64,6 @@ Phases execute in numeric order: 5 -> 6 -> 7
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Pending |
+| 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | In Progress (1/3 plans) |
 | 6. Responsive Layout and Visual System | WEB-02, THEM-03, UI-03 | Pending |
 | 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Pending |
