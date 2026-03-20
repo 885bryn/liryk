@@ -75,28 +75,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase TBD | Pending |
-| AUTH-02 | Phase TBD | Pending |
-| PLAY-01 | Phase TBD | Pending |
-| PLAY-02 | Phase TBD | Pending |
-| PLAY-03 | Phase TBD | Pending |
-| LYR-01 | Phase TBD | Pending |
-| LYR-02 | Phase TBD | Pending |
-| LYR-03 | Phase TBD | Pending |
-| LYR-04 | Phase TBD | Pending |
-| SYNC-01 | Phase TBD | Pending |
-| SYNC-02 | Phase TBD | Pending |
-| I18N-01 | Phase TBD | Pending |
-| CACH-01 | Phase TBD | Pending |
-| CACH-02 | Phase TBD | Pending |
-| UI-01 | Phase TBD | Pending |
-| SECU-01 | Phase TBD | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| PLAY-01 | Phase 2 | Pending |
+| PLAY-02 | Phase 2 | Pending |
+| PLAY-03 | Phase 2 | Pending |
+| LYR-01 | Phase 3 | Pending |
+| LYR-02 | Phase 3 | Pending |
+| LYR-03 | Phase 3 | Pending |
+| LYR-04 | Phase 3 | Pending |
+| SYNC-01 | Phase 2 | Pending |
+| SYNC-02 | Phase 2 | Pending |
+| I18N-01 | Phase 3 | Pending |
+| CACH-01 | Phase 4 | Pending |
+| CACH-02 | Phase 4 | Pending |
+| UI-01 | Phase 3 | Pending |
+| SECU-01 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Last updated: 2026-03-19 after roadmap mapping*
