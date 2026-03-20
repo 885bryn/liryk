@@ -1,6 +1,6 @@
 const WHITESPACE = /\s+/g;
 const MINOR_SUFFIX = new RegExp(
-  String.raw`(?:\s*(?:-|\()\s*(?:live|remaster(?:ed)?(?:\s*\d{2,4})?|clean|explicit)[^)\]]*\)?\s*)$`,
+  String.raw`(?:\s*(?:-|\()\s*(?:live|(?:\d{2,4}\s*)?remaster(?:ed)?(?:\s*\d{2,4})?|clean|explicit)[^)\]]*\)?\s*)$`,
   "i",
 );
 const RTL_SCRIPT = /[\u0590-\u08FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
@@ -9,6 +9,11 @@ const LIKELY_MOJIBAKE = /(Ã.|Â.|â[\u0080-\u00BF]|Ð.|Ñ.)/;
 
 const TRADITIONAL_TO_SIMPLIFIED: Record<string, string> = {
   愛: "爱",
+  臺: "台",
+  風: "风",
+  裡: "里",
+  歡: "欢",
+  臨: "临",
   還: "还",
   說: "说",
 };
