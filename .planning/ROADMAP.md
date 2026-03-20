@@ -27,12 +27,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. User can connect their Spotify account via OAuth PKCE without entering Spotify credentials into the app UI.
   2. User remains connected after restarting the desktop app and can continue without reauthorizing each launch.
   3. User secrets and auth configuration are loaded from `.env`, with no hardcoded credentials in shipped behavior.
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 01-01-PLAN.md - Secure env validation and Spotify PKCE auth service foundation
 - [x] 01-02-PLAN.md - Connection UX states, trust messaging, and retry/troubleshooting flow
 - [x] 01-03-PLAN.md - Session persistence, startup rehydrate, and disconnect/account switch controls
+- [x] 01-04-PLAN.md - Spotify runtime wiring for connect callback and startup bootstrap gap closure
 
 ### Phase 2: Live Playback Sync Engine
 **Goal**: Users see lyric progression stay aligned with current Spotify playback timing and controls.
@@ -73,7 +74,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Spotify Connection Foundation | 3/3 | Complete | 2026-03-20 |
+| 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
 | 2. Live Playback Sync Engine | 0/TBD | Not started | - |
 | 3. Lyrics Resolution and Rendered Experience | 0/TBD | Not started | - |
 | 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |
