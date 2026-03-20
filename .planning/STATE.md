@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-03-20T20:11:04.706Z"
-last_activity: 2026-03-20 - Completed Phase 06 responsive layout and visual system
+status: executing
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-20T20:31:15.260Z"
+last_activity: 2026-03-20 - Completed 07-01-PLAN.md
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 ## Current Position
 
 Phase: 07 - Web Lyrics Experience Parity and State Polish
-Plan: 01 of 03 (next)
-Status: Ready to begin Phase 07
-Last activity: 2026-03-20 - Completed Phase 06 responsive layout and visual system
+Plan: 02 of 03 (next)
+Status: In progress (Phase 07 underway)
+Last activity: 2026-03-20 - Completed 07-01-PLAN.md
 
 ## Accumulated Context
 
@@ -67,10 +67,12 @@ Recent decisions affecting current work:
 - [Phase 06]: Encode shell hierarchy with explicit class markers and test-level assertions for responsive rhythm.
 - [Phase 06]: Standardize card ring treatment on ring-border/60 to keep pane boundaries consistent across themes.
 - [Phase 06]: Keep a dedicated visual checkpoint document mapping WEB-02, THEM-03, UI-03 to exact files and verification commands.
+- [Phase 07]: Kept state rail message sourced from presenter statusLine for one canonical state copy contract.
+- [Phase 07]: Mapped panel state rail variants as warning(not-found/unsupported), idle(idle/no-track), and info for all other statuses.
 
 ### Pending Todos
 
-- Begin Phase 07 planning for web lyrics state parity and polish.
+- Execute 07-02-PLAN.md shell integration for parity state contract.
 
 ### Blockers/Concerns
 
@@ -78,8 +80,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T20:11:04.702Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-03-20T20:30:32.345Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -92,3 +94,4 @@ Resume file: None
 | Phase 06 P01 | 99 | 2 tasks | 2 files |
 | Phase 06 P02 | 187 | 2 tasks | 2 files |
 | Phase 06 P03 | 138 | 2 tasks | 4 files |
+| Phase 07 P01 | 120 | 2 tasks | 3 files |

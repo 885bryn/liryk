@@ -12,7 +12,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **WEB-01**: User can open Liryk in a browser and load the primary app shell without desktop runtime dependencies.
 - [x] **WEB-02**: User can access the app through a responsive layout that remains usable on both mobile and desktop viewport sizes.
-- [ ] **WEB-03**: User can continue to see now-playing metadata and lyrics panel states from the existing core flow in the web shell.
+- [x] **WEB-03**: User can continue to see now-playing metadata and lyrics panel states from the existing core flow in the web shell.
 
 ### Theming
 
@@ -24,7 +24,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **UI-02**: User sees milestone UI built with shadcn/ui components in the web app.
 - [x] **UI-03**: User sees intentionally polished typography, spacing, and hierarchy rather than scaffold-default styling.
-- [ ] **UI-04**: User sees distinct interaction states (loading, empty, and lyrics-not-found) presented with cohesive visual treatment.
+- [x] **UI-04**: User sees distinct interaction states (loading, empty, and lyrics-not-found) presented with cohesive visual treatment.
 
 ## v1.2+ Candidate Requirements
 
@@ -58,13 +58,13 @@ Explicitly excluded for v1.1.
 |-------------|-------|--------|
 | WEB-01 | Phase 5 | Complete |
 | WEB-02 | Phase 6 | Complete |
-| WEB-03 | Phase 7 | Pending |
+| WEB-03 | Phase 7 | Complete |
 | THEM-01 | Phase 5 | Complete |
 | THEM-02 | Phase 5 | Complete |
 | THEM-03 | Phase 6 | Complete |
 | UI-02 | Phase 5 | Complete |
 | UI-03 | Phase 6 | Complete |
-| UI-04 | Phase 7 | Pending |
+| UI-04 | Phase 7 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 9 total
