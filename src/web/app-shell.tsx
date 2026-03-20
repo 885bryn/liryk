@@ -82,22 +82,22 @@ export function AppShell(input?: AppShellProps) {
         </div>
       </header>
 
-      <main data-testid="shell-layout" className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-4 py-6 sm:px-6 lg:grid-cols-2">
-        <Card aria-label="Connection pane">
-          <CardHeader>
-            <CardTitle>Connection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Spotify is not connected yet.</p>
-          </CardContent>
-        </Card>
-
-        <Card aria-label="Lyrics pane">
+      <main data-testid="shell-layout" className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-4 py-6 sm:px-6 lg:grid-cols-5">
+        <Card aria-label="Lyrics pane" className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Lyrics</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">Lyrics will appear once a track is playing.</p>
+          </CardContent>
+        </Card>
+
+        <Card aria-label="Connection pane" className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Connection</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Spotify is not connected yet.</p>
           </CardContent>
         </Card>
       </main>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -41,8 +41,8 @@ describe("AppShell", () => {
     expect(shell.className).toContain("grid-cols-1");
     expect(shell.className).toContain("lg:grid-cols-5");
 
-    const lyricsPane = screen.getByLabelText("Lyrics pane");
-    const connectionPane = screen.getByLabelText("Connection pane");
+    const lyricsPane = within(shell).getByLabelText("Lyrics pane");
+    const connectionPane = within(shell).getByLabelText("Connection pane");
 
     expect(lyricsPane.className).toContain("lg:col-span-3");
     expect(connectionPane.className).toContain("lg:col-span-2");
