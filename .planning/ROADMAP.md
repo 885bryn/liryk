@@ -30,8 +30,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md - Secure env validation and Spotify PKCE auth service foundation
-- [ ] 01-02-PLAN.md - Connection UX states, trust messaging, and retry/troubleshooting flow
+- [x] 01-01-PLAN.md - Secure env validation and Spotify PKCE auth service foundation
+- [x] 01-02-PLAN.md - Connection UX states, trust messaging, and retry/troubleshooting flow
 - [ ] 01-03-PLAN.md - Session persistence, startup rehydrate, and disconnect/account switch controls
 
 ### Phase 2: Live Playback Sync Engine
@@ -73,7 +73,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Spotify Connection Foundation | 1/3 | In Progress|  |
+| 1. Spotify Connection Foundation | 2/3 | In Progress|  |
 | 2. Live Playback Sync Engine | 0/TBD | Not started | - |
 | 3. Lyrics Resolution and Rendered Experience | 0/TBD | Not started | - |
 | 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |
