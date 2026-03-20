@@ -14,7 +14,7 @@ This roadmap starts after completed Phase 4 work and initializes milestone v1.1 
 
 - [x] **Phase 5: Web Runtime and Theme Foundation** - Establish browser app shell, install shadcn/ui at kickoff, and enable persistent light/dark theming.
 - [x] **Phase 6: Responsive Layout and Visual System** - Build aesthetically pleasing, responsive composition with robust theme token usage. (completed 2026-03-20)
-- [ ] **Phase 7: Web Lyrics Experience Parity and State Polish** - Finish user-facing web states and lyrics-panel behavior parity in the new design.
+- [x] **Phase 7: Web Lyrics Experience Parity and State Polish** - Finish user-facing web states and lyrics-panel behavior parity in the new design. (completed 2026-03-20)
 
 ## Phase Details
 
@@ -64,12 +64,12 @@ Plans:
 2. User sees cohesive loading, empty, and lyrics-not-found states that match the milestone visual direction.
 3. User can transition between key app states without jarring visual regressions across themes.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 07-01-PLAN.md - Define parity-ready lyrics panel metadata and state-rail contract with model tests.
 - [x] 07-02-PLAN.md - Integrate state-driven lyrics parity rendering into web shell with explicit state coverage tests.
-- [ ] 07-03-PLAN.md - Add visual regression guards and a reproducible Phase 7 visual checkpoint artifact.
+- [x] 07-03-PLAN.md - Add visual regression guards and a reproducible Phase 7 visual checkpoint artifact.
 
 ## Progress
 
@@ -80,4 +80,4 @@ Phases execute in numeric order: 5 -> 6 -> 7
 |-------|--------------|--------|
 | 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Complete |
 | 6. Responsive Layout and Visual System | 3/3 | Complete |
-| 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Pending |
+| 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Complete |
