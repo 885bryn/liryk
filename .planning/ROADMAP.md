@@ -44,7 +44,12 @@ Plans:
   2. User sees the active lyric line update continuously from playback position while audio is playing.
   3. User sees sync behavior respond correctly when pausing, resuming, skipping tracks, or seeking within a track.
   4. User sees the lyrics viewport automatically keep the active line in view as playback advances.
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md - Playback snapshot runtime and transition classification foundation
+- [ ] 02-02-PLAN.md - Timestamp-anchored sync engine and live sync state runtime wiring
+- [ ] 02-03-PLAN.md - Live lyrics viewport auto-scroll, dual emphasis, and playback-state UI behavior
 
 ### Phase 3: Lyrics Resolution and Rendered Experience
 **Goal**: Users receive correct, readable lyrics for the active track with explicit fallback outcomes.
@@ -75,6 +80,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Live Playback Sync Engine | 0/TBD | Not started | - |
+| 2. Live Playback Sync Engine | 0/3 | Planned | - |
 | 3. Lyrics Resolution and Rendered Experience | 0/TBD | Not started | - |
 | 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |

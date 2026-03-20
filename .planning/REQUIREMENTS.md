@@ -14,9 +14,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Playback Detection
 
-- [ ] **PLAY-01**: User can see lyrics tied to the currently playing Spotify track without requiring Spotify Premium
+- [x] **PLAY-01**: User can see lyrics tied to the currently playing Spotify track without requiring Spotify Premium
 - [ ] **PLAY-02**: User sees lyric sync update based on current playback position (`progress_ms`) while a track is playing
-- [ ] **PLAY-03**: User sees lyric sync react correctly when playback is paused, resumed, skipped, or seeked
+- [x] **PLAY-03**: User sees lyric sync react correctly when playback is paused, resumed, skipped, or seeked
 
 ### Lyrics Retrieval & Matching
 
@@ -77,9 +77,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
-| PLAY-01 | Phase 2 | Pending |
+| PLAY-01 | Phase 2 | Complete |
 | PLAY-02 | Phase 2 | Pending |
-| PLAY-03 | Phase 2 | Pending |
+| PLAY-03 | Phase 2 | Complete |
 | LYR-01 | Phase 3 | Pending |
 | LYR-02 | Phase 3 | Pending |
 | LYR-03 | Phase 3 | Pending |
