@@ -2,91 +2,79 @@
 
 **Defined:** 2026-03-20
 **Core Value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current Milestone:** v1.1 Web App Foundation and Theming
+**Current Milestone:** v1.2 Immersive Fullscreen Lyrics Mode
 
-## v1.1 Requirements
+## v1.2 Requirements
 
 Requirements for this milestone. Each maps to exactly one roadmap phase.
 
-### Web Foundation
+### Fullscreen Experience
 
-- [x] **WEB-01**: User can open Liryk in a browser and load the primary app shell without desktop runtime dependencies.
-- [x] **WEB-02**: User can access the app through a responsive layout that remains usable on both mobile and desktop viewport sizes.
-- [x] **WEB-03**: User can continue to see now-playing metadata and lyrics panel states from the existing core flow in the web shell.
+- [ ] **FULL-01**: User can open a dedicated fullscreen lyrics page that occupies the full viewport without utility-shell clutter.
+- [ ] **FULL-02**: User sees the lyrics hero column centered on the page with left-aligned lyric text and generous vertical breathing room.
 
-### Theming
+### Visual Direction
 
-- [x] **THEM-01**: User can switch between light and dark themes from an in-app control.
-- [x] **THEM-02**: User's selected theme persists across page reloads.
-- [x] **THEM-03**: User sees readable contrast and consistent color tokens across both themes for primary lyric and navigation surfaces.
+- [ ] **VIS-01**: User sees an immersive deep warm red/burgundy atmospheric background with subtle vignette treatment.
+- [ ] **VIS-02**: User sees large, bold, typographic lyric rendering where the active line is clearly dominant and nearby lines have depth-based emphasis.
+- [ ] **VIS-03**: User does not see card-heavy chrome, bordered utility panels, or distracting non-lyric UI in fullscreen mode.
 
-### UI System and Visual Quality
+### Karaoke Motion
 
-- [x] **UI-02**: User sees milestone UI built with shadcn/ui components in the web app.
-- [x] **UI-03**: User sees intentionally polished typography, spacing, and hierarchy rather than scaffold-default styling.
-- [x] **UI-04**: User sees distinct interaction states (loading, empty, and lyrics-not-found) presented with cohesive visual treatment.
+- [ ] **MOT-01**: User sees smooth auto-scrolling lyric progression with the active line positioned near vertical center during playback.
+- [ ] **MOT-02**: User sees elegant color/opacity/transform transitions as lines move between inactive, near-active, and active states.
+- [ ] **MOT-03**: User sees motion remain readable and stable (no jumpy line transitions) across track progression.
 
-### Web Auth Verification Path (Phase 07.1 insertion)
+### Chinese Rendering
 
-- [x] **AUTH-WEB-01**: User returns to the same shell route after Spotify callback handling and callback query params are removed to prevent replay.
-- [x] **AUTH-WEB-02**: User sees explicit checking, authorizing, reconnect-required, and connected-waiting-playback auth states in the web shell.
-- [x] **AUTH-WEB-03**: User can diagnose localhost auth config mismatch via actionable APP_BASE_URL and SPOTIFY_REDIRECT_URI origin/path diagnostics.
+- [ ] **CHN-03**: User sees Chinese lyrics rendered in Simplified Chinese in fullscreen mode.
+- [ ] **CHN-04**: User sees non-Chinese text preserved while Chinese-script text is normalized.
 
-### Chinese Script Normalization (Phase 8)
+### Optional Minimal Overlay
 
-- [x] **CHN-01**: User sees Chinese lyrics rendered in Simplified Chinese across synced and plain lyric displays.
-- [x] **CHN-02**: User sees non-Chinese lyric content preserved while Chinese-script content is normalized to Simplified Chinese.
+- [ ] **META-01**: User may see understated song metadata/progress affordances that remain visually secondary to lyrics.
 
-## v1.2+ Candidate Requirements
+## v1.3+ Candidate Requirements
 
 Deferred to future milestones.
 
 ### Enhancements
 
-- **DESK-02**: User can access mini-player style compact mode optimized for multitasking.
-- **THEM-04**: User can customize accent palette beyond base light/dark themes.
-- **SOC-01**: User can share the currently highlighted lyric line with generated artwork.
+- **THEM-04**: User can customize accent palette beyond base mood presets.
+- **SOC-01**: User can share currently active lyric lines as visual cards.
+- **DESK-02**: User can use compact mini-player mode for multitasking.
 
 ## Out of Scope
 
-Explicitly excluded for v1.1.
+Explicitly excluded for v1.2.
 
 | Feature | Reason |
 |---------|--------|
-| Native desktop packaging changes | Milestone focus is browser delivery and UI theming |
-| Non-Spotify provider support | Migration scope should avoid expanding integration surface |
-| Word-level karaoke animation | Not required for initial web migration success |
-
-## Implementation Notes
-
-- shadcn/ui is required for v1.1 UI implementation.
-- Install shadcn/ui at the start of implementation, immediately after web scaffold creation and Tailwind base setup in Phase 5.
-- Installation checkpoint should run before building milestone-specific UI components.
+| New music providers beyond Spotify | Milestone focuses on immersive presentation, not source expansion |
+| Word-level karaoke syllable timing | Not required for this fullscreen milestone |
+| Mobile native app packaging | Web fullscreen mode remains delivery target |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WEB-01 | Phase 5 | Complete |
-| WEB-02 | Phase 6 | Complete |
-| WEB-03 | Phase 7 | Complete |
-| THEM-01 | Phase 5 | Complete |
-| THEM-02 | Phase 5 | Complete |
-| THEM-03 | Phase 6 | Complete |
-| UI-02 | Phase 5 | Complete |
-| UI-03 | Phase 6 | Complete |
-| UI-04 | Phase 7 | Complete |
-| AUTH-WEB-01 | Phase 07.1 | Complete |
-| AUTH-WEB-02 | Phase 07.1 | Complete |
-| AUTH-WEB-03 | Phase 07.1 | Complete |
-| CHN-01 | Phase 8 | Not started |
-| CHN-02 | Phase 8 | Not started |
+| FULL-01 | Phase 9 | Pending |
+| FULL-02 | Phase 9 | Pending |
+| VIS-01 | Phase 10 | Pending |
+| VIS-02 | Phase 10 | Pending |
+| VIS-03 | Phase 10 | Pending |
+| MOT-01 | Phase 11 | Pending |
+| MOT-02 | Phase 11 | Pending |
+| MOT-03 | Phase 11 | Pending |
+| CHN-03 | Phase 9 | Pending |
+| CHN-04 | Phase 9 | Pending |
+| META-01 | Phase 11 | Pending |
 
 **Coverage:**
-- v1.1 requirements: 9 total
-- Mapped to phases: 9
+- v1.2 requirements: 11 total
+- Mapped to phases: 11
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after milestone v1.1 requirements gate*
+*Last updated: 2026-03-20 after milestone v1.2 definition*
