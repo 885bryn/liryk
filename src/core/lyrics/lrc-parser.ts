@@ -1,4 +1,5 @@
 import type { ResolvedLyricLine } from "./types";
+import { normalizeChineseForDisplay } from "./unicode-normalization";
 
 const TIMESTAMP_ROW = /^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)$/;
 
@@ -34,6 +35,7 @@ export function parseLrc(input: string): ResolvedLyricLine[] {
   return parsed.map((row) => ({
     startMs: row.startMs,
     text: row.text,
+    displayText: normalizeChineseForDisplay(row.text),
     renderMode: "synced",
     isTimestamped: true,
   }));
