@@ -1,11 +1,25 @@
 import type { PlaybackRuntimeEvent } from "./playback-runtime";
+import {
+  createLyricsCacheEntry,
+  evaluateLyricsCacheEntry,
+  type LyricsCacheEntry,
+  type LyricsCacheState,
+} from "../core/lyrics/cache-policy";
 import type { LyricTrackMetadata, ResolvedLyrics } from "../core/lyrics/types";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
+
+type LyricsCache = {
+  read(trackId: string): Promise<LyricsCacheEntry | null>;
+  write(entry: LyricsCacheEntry): Promise<void>;
+  delete(trackId: string): Promise<void>;
+};
 
 export type LyricsResolutionRuntimeDependencies = {
   subscribePlayback: (listener: (event: PlaybackRuntimeEvent) => void) => () => void;
   resolveLyricsForTrack: (metadata: LyricTrackMetadata) => Promise<ResolvedLyrics>;
   liveSyncStore: LiveSyncStore;
+  cache?: LyricsCache;
+  evaluateCacheEntry?: (entry: LyricsCacheEntry, nowMs: number) => LyricsCacheState;
   mapTrackMetadata?: (event: PlaybackRuntimeEvent) => LyricTrackMetadata | null;
 };
 
@@ -32,26 +46,14 @@ export function createLyricsResolutionRuntime(
   dependencies: LyricsResolutionRuntimeDependencies,
 ): LyricsResolutionRuntime {
   const mapTrackMetadata = dependencies.mapTrackMetadata ?? defaultMetadataMapper;
+  const evaluateCacheEntry = dependencies.evaluateCacheEntry ?? evaluateLyricsCacheEntry;
 
   let unsubscribePlayback: (() => void) | null = null;
   let currentMetadata: LyricTrackMetadata | null = null;
   let resolveSession = 0;
   const resolvedByTrack = new Map<string, ResolvedLyrics>();
 
-  async function runResolve(metadata: LyricTrackMetadata, options: { retry: boolean }): Promise<void> {
-    const session = ++resolveSession;
-    dependencies.liveSyncStore.setTrack(metadata.trackId);
-    dependencies.liveSyncStore.setLyricsSourceState("loading");
-    dependencies.liveSyncStore.setLyricsRetryState({ retryAvailable: false, retryInFlight: options.retry });
-    dependencies.liveSyncStore.setLyricsWarning(null);
-    dependencies.liveSyncStore.setStatusLine(options.retry ? "Retrying lyrics lookup..." : "Resolving lyrics...");
-
-    const resolved = await dependencies.resolveLyricsForTrack(metadata);
-    if (session !== resolveSession || currentMetadata?.trackId !== metadata.trackId) {
-      return;
-    }
-
-    resolvedByTrack.set(metadata.trackId, resolved);
+  function applyResolvedLyrics(resolved: ResolvedLyrics, options: { retry: boolean }): void {
     dependencies.liveSyncStore.setResolvedLyrics(resolved);
     dependencies.liveSyncStore.setLyricsRetryState({
       retryAvailable: resolved.sourceState === "not-found",
@@ -60,7 +62,70 @@ export function createLyricsResolutionRuntime(
 
     if (resolved.sourceState === "not-found") {
       dependencies.liveSyncStore.setStatusLine("Lyrics not found");
+      return;
     }
+
+    dependencies.liveSyncStore.setStatusLine(options.retry ? "Lyrics refreshed" : "Lyrics ready");
+  }
+
+  async function resolveAndProjectFresh(
+    metadata: LyricTrackMetadata,
+    options: { retry: boolean },
+    session: number,
+  ): Promise<void> {
+    const resolved = await dependencies.resolveLyricsForTrack(metadata);
+    if (session !== resolveSession || currentMetadata?.trackId !== metadata.trackId) {
+      return;
+    }
+
+    resolvedByTrack.set(metadata.trackId, resolved);
+    applyResolvedLyrics(resolved, options);
+
+    if (!dependencies.cache) {
+      return;
+    }
+
+    await dependencies.cache.write(
+      createLyricsCacheEntry({
+        trackId: metadata.trackId,
+        resolvedLyrics: resolved,
+      }),
+    );
+  }
+
+  async function runResolve(metadata: LyricTrackMetadata, options: { retry: boolean }): Promise<void> {
+    const session = ++resolveSession;
+    dependencies.liveSyncStore.setTrack(metadata.trackId);
+    dependencies.liveSyncStore.setLyricsRetryState({ retryAvailable: false, retryInFlight: options.retry });
+    dependencies.liveSyncStore.setLyricsWarning(null);
+    dependencies.liveSyncStore.setStatusLine(options.retry ? "Retrying lyrics lookup..." : "Resolving lyrics...");
+
+    if (!options.retry && dependencies.cache) {
+      const cached = await dependencies.cache.read(metadata.trackId);
+      if (session !== resolveSession || currentMetadata?.trackId !== metadata.trackId) {
+        return;
+      }
+
+      if (cached) {
+        const cacheState = evaluateCacheEntry(cached, Date.now());
+        if (cacheState === "fresh") {
+          resolvedByTrack.set(metadata.trackId, cached.resolvedLyrics);
+          applyResolvedLyrics(cached.resolvedLyrics, options);
+          return;
+        }
+
+        if (cacheState === "stale") {
+          resolvedByTrack.set(metadata.trackId, cached.resolvedLyrics);
+          applyResolvedLyrics(cached.resolvedLyrics, options);
+          dependencies.liveSyncStore.setStatusLine("Refreshing cached lyrics...");
+          void resolveAndProjectFresh(metadata, { retry: false }, session);
+          return;
+        }
+      }
+    }
+
+    dependencies.liveSyncStore.setLyricsSourceState("loading");
+    await resolveAndProjectFresh(metadata, options, session);
   }
 
   function onPlayback(event: PlaybackRuntimeEvent): void {

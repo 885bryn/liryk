@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { PlaybackRuntimeEvent } from "./playback-runtime";
 import { createLyricsResolutionRuntime } from "./lyrics-resolution-runtime";
-import { createLyricsCacheEntry, evaluateLyricsCacheEntry } from "../core/lyrics/cache-policy";
+import { createLyricsCacheEntry } from "../core/lyrics/cache-policy";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 import type { LyricTrackMetadata, ResolvedLyrics } from "../core/lyrics/types";
 
@@ -20,6 +20,11 @@ function plainResult(text: string): ResolvedLyrics {
     renderMode: "plain-static",
     lines: [{ startMs: null, text, renderMode: "plain-static", isTimestamped: false }],
   };
+}
+
+async function flushRuntimeWork(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 describe("createLyricsResolutionRuntime", () => {
@@ -47,7 +52,7 @@ describe("createLyricsResolutionRuntime", () => {
         write: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
       },
-      evaluateCacheEntry: evaluateLyricsCacheEntry,
+      evaluateCacheEntry: () => "fresh",
     } as never);
 
     runtime.start();
@@ -55,7 +60,7 @@ describe("createLyricsResolutionRuntime", () => {
       snapshot: { trackId: "track-1", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 1 },
       transition: "track_changed",
     });
-    await Promise.resolve();
+    await flushRuntimeWork();
 
     expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("cached");
     expect(resolveLyricsForTrack).not.toHaveBeenCalled();
@@ -99,13 +104,13 @@ describe("createLyricsResolutionRuntime", () => {
       snapshot: { trackId: "track-1", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 1 },
       transition: "track_changed",
     });
-    await Promise.resolve();
+    await flushRuntimeWork();
 
     expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("stale");
     expect(resolveLyricsForTrack).toHaveBeenCalledTimes(1);
 
     resolveProvider?.(plainResult("fresh"));
-    await Promise.resolve();
+    await flushRuntimeWork();
 
     expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("fresh");
   });
@@ -142,7 +147,7 @@ describe("createLyricsResolutionRuntime", () => {
       snapshot: { trackId: "track-1", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 1 },
       transition: "track_changed",
     });
-    await Promise.resolve();
+    await flushRuntimeWork();
 
     expect(resolveLyricsForTrack).toHaveBeenCalledTimes(1);
     expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("provider");
