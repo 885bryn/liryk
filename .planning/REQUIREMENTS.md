@@ -12,12 +12,14 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **FULL-01**: User can open a dedicated fullscreen lyrics page that occupies the full viewport without utility-shell clutter.
 - [x] **FULL-02**: User sees the lyrics hero column centered on the page with left-aligned lyric text and generous vertical breathing room.
+- [ ] **FULL-03**: User can enter fullscreen lyrics mode from the main app shell using a visible in-app control.
+- [ ] **FULL-04**: User can exit fullscreen lyrics mode from the fullscreen page using a visible in-app control.
 
 ### Visual Direction
 
-- [ ] **VIS-01**: User sees a pure black fullscreen background in immersive mode.
+- [x] **VIS-01**: User sees a pure black fullscreen background in immersive mode.
 - [ ] **VIS-02**: User sees white lyric text hierarchy where the active line is brightest and surrounding lines remain readable with lower emphasis.
-- [ ] **VIS-03**: User does not see card-heavy chrome, bordered utility panels, or distracting non-lyric UI in fullscreen mode.
+- [x] **VIS-03**: User does not see card-heavy chrome, bordered utility panels, or distracting non-lyric UI in fullscreen mode.
 
 ### Karaoke Motion
 
@@ -60,9 +62,11 @@ Explicitly excluded for v1.2.
 |-------------|-------|--------|
 | FULL-01 | Phase 9 | Complete |
 | FULL-02 | Phase 9 | Complete |
-| VIS-01 | Phase 10 | Pending |
+| FULL-03 | Phase 11 | Pending |
+| FULL-04 | Phase 11 | Pending |
+| VIS-01 | Phase 10 | Complete |
 | VIS-02 | Phase 10 | Pending |
-| VIS-03 | Phase 10 | Pending |
+| VIS-03 | Phase 10 | Complete |
 | MOT-01 | Phase 11 | Pending |
 | MOT-02 | Phase 11 | Pending |
 | MOT-03 | Phase 11 | Pending |
@@ -71,8 +75,8 @@ Explicitly excluded for v1.2.
 | META-01 | Phase 11 | Pending |
 
 **Coverage:**
-- v1.2 requirements: 11 total
-- Mapped to phases: 11
+- v1.2 requirements: 13 total
+- Mapped to phases: 13
 - Unmapped: 0
 
 ---

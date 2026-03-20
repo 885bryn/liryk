@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-03-20T23:44:04.927Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-20T23:58:37.769Z"
 last_activity: 2026-03-20
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
 ---
 
 # Project State
@@ -91,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Locked fullscreen geometry and no-shell chrome via explicit wrapper and column class token tests.
 - [Phase 09]: Validated Simplified Chinese behavior at fullscreen UI surface with route-level regression tests.
 - [Phase 09]: Standardized fullscreen lyric mapping to displayText fallback normalization for active and adjacent lines.
+- [Phase 10]: Use explicit bg-black/text-white class tokens on fullscreen root to keep VIS-01 deterministic.
+- [Phase 10]: Remove utility label and standalone state rail copy so lyric lines remain dominant in fullscreen mode.
 
 ### Roadmap Evolution
 
@@ -106,8 +108,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:44:04.925Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-03-20T23:58:37.767Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -132,3 +134,4 @@ Resume file: None
 | Phase 09 P01 | 106 | 2 tasks | 3 files |
 | Phase 09 P02 | 118 | 2 tasks | 3 files |
 | Phase 09 P03 | 139 | 2 tasks | 3 files |
+| Phase 10 P01 | 74 | 2 tasks | 2 files |

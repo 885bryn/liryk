@@ -7,7 +7,7 @@ This milestone follows completed v1.1 delivery and introduces a dedicated immers
 ## Milestone
 
 - **Milestone:** v1.2 Immersive Fullscreen Lyrics Mode
-- **Requirements mapped:** 11 of 11
+- **Requirements mapped:** 13 of 13
 - **First phase number:** 9
 
 ## Phases
@@ -43,19 +43,22 @@ Plans:
 2. User sees large bold lyric typography with clear contrast between active, near-active, and distant lines.
 3. User sees uncluttered visual composition that keeps lyrics as the dominant focus.
 
-**Plans:** 0 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] TBD (run `/gsd-plan-phase 10`)
+- [ ] 10-01-PLAN.md - Lock fullscreen pure-black monochrome baseline and remove utility chrome.
+- [ ] 10-02-PLAN.md - Implement active/near/distant lyric typography hierarchy with explicit class contracts.
+- [ ] 10-03-PLAN.md - Publish fullscreen visual verification runbook and final regression checks.
 
 ### Phase 11: Karaoke Motion and Minimal Overlay Polish
 **Goal**: Users see smooth readable karaoke-style progression with subtle non-distracting supporting overlays.
 **Depends on**: Phase 10
-**Requirements**: MOT-01, MOT-02, MOT-03, META-01
+**Requirements**: MOT-01, MOT-02, MOT-03, META-01, FULL-03, FULL-04
 **Success Criteria**:
 1. User sees smooth continuous lyric auto-scroll with active line near viewport center during playback.
 2. User sees elegant transition behavior (opacity/color/transform) without jumpy motion.
 3. User may see small metadata/progress overlays that remain secondary to lyric content.
+4. User can enter fullscreen from the standard shell and exit fullscreen from the fullscreen page using visible controls.
 
 **Plans:** 0 plans
 
@@ -69,5 +72,5 @@ Phases execute in numeric order: 9 -> 10 -> 11
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 9. Fullscreen Route and Content Foundation | 3/3 | Complete   | 2026-03-20 | 10. Cinematic Visual Language and Typography | VIS-01, VIS-02, VIS-03 | Not started |
-| 11. Karaoke Motion and Minimal Overlay Polish | MOT-01, MOT-02, MOT-03, META-01 | Not started |
+| 9. Fullscreen Route and Content Foundation | FULL-01, FULL-02, CHN-03, CHN-04 | Complete |
+| 10. Monochrome Visual Language and Typography | 1/3 | In Progress|  | 11. Karaoke Motion and Minimal Overlay Polish | MOT-01, MOT-02, MOT-03, META-01, FULL-03, FULL-04 | Not started |
