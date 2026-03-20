@@ -1,12 +1,22 @@
-# Spotify Live Lyrics Desktop App
+# Spotify Live Lyrics Web App
 
 ## What This Is
 
-A desktop app that mirrors Spotify's live lyrics experience for any currently playing track. It detects the active Spotify song and playback position, fetches matching lyrics from internet sources, and highlights lines in sync with auto-scroll. Milestone 1 focuses on end-to-end lyric sync reliability across songs and languages.
+Liryk is a browser-based Spotify companion that shows synced lyrics for the currently playing track. It keeps the core value from v1.0 (correct line at the correct moment) while shifting delivery from desktop runtime boundaries to a responsive web app experience. Milestone v1.1 focuses on web foundation, polished visual design, and first-class light/dark theming.
 
 ## Core Value
 
 When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
+
+## Current Milestone: v1.1 Web App Foundation and Theming
+
+**Goal:** Convert the experience into a polished web app with responsive layout, light/dark themes, and shadcn/ui-driven interface consistency.
+
+**Target features:**
+- Browser-accessible app shell that replaces desktop-only delivery assumptions
+- Aesthetic, responsive lyrics interface with intentional typography and visual hierarchy
+- Light and dark theme support with user toggle and persisted preference
+- Explicit shadcn/ui setup checkpoint during implementation (install immediately after web scaffold and Tailwind base setup)
 
 ## Requirements
 
@@ -27,44 +37,45 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 
 ### Active
 
-None - all v1 requirements are validated.
+- [ ] Deliver web app foundation and browser runtime wiring for the existing lyrics experience
+- [ ] Ship light/dark theme system with persistent user preference
+- [ ] Implement milestone UI with shadcn/ui components after explicit install checkpoint
+- [ ] Improve visual polish (layout, typography, spacing, and interaction states) for desktop and mobile web
 
 ### Out of Scope
 
-- Mobile apps (iOS/Android) - milestone is desktop-only
-- Publishing/deployment/distribution setup - explicitly excluded for this milestone
-- Replacing shadcn/ui with another UI library - existing installed UI stack must be used
+- Native desktop packaging changes in this milestone - focus is web delivery first
+- Full mobile-native apps (iOS/Android) - responsive web covers mobile usage for now
+- New music providers beyond Spotify - migration scope is runtime and UI, not provider expansion
 
 ## Context
 
-- Target milestone is a working desktop experience equivalent to Spotify-style live lyric progression.
-- Track detection must not require Spotify Premium.
-- Accuracy depends on timestamped lyric sources (for example lrclib.net) with fallback behavior when only plain lyrics are available.
-- Existing project direction requires use of shadcn/ui components already installed in this repository.
+- v1.0 is complete through Phase 4; core lyrics sync behavior is already validated.
+- This milestone changes delivery target from desktop app context to web app context.
+- User explicitly wants aesthetically pleasing design plus light and dark theme support from the start.
+- shadcn/ui must be used, and install timing should be explicit during implementation planning.
 
 ## Constraints
 
-- **Security**: Credentials must come from `.env` only - never hardcoded
-- **API/Auth**: Spotify Web API with OAuth PKCE for current track and playback position
-- **Lyrics Data**: Prioritize timestamped lyrics; fallback to estimated timing for plain lyrics
-- **Caching**: Store lyrics locally by track ID to avoid redundant requests
-- **Compatibility**: Must render multilingual UTF-8 lyrics including CJK, Arabic, and Korean scripts
-- **UX Fallback**: Show "Lyrics not found" when no lyrics source succeeds
-- **Scope**: Do not modify files outside this project directory
+- **Security**: Credentials must come from `.env` only - never hardcoded.
+- **API/Auth**: Spotify Web API remains source of truth for now-playing and playback position.
+- **UI System**: Use shadcn/ui components; do not replace with another design system in this milestone.
+- **Theming**: Light and dark themes are required from first implementation phase.
+- **Responsiveness**: UI must work on desktop and mobile viewports.
+- **Scope**: Do not modify non-planning files during milestone initialization.
 
 ## Current State
 
-- Phase 04 complete - cache freshness policy and runtime cache wiring deliver fast repeat loads with stale/invalid recovery.
-- Milestone v1 execution complete across Phases 1-4 with verification artifacts recorded per phase.
+- Milestone v1.0 complete (Phases 1-4).
+- Milestone v1.1 initialized for web app conversion and theming.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Spotify Web API + OAuth PKCE for playback state | Required to detect currently playing track and playback position securely | - Pending |
-| Timestamped lyrics first, plain lyrics fallback second | Best path to accurate sync while preserving broad song coverage | - Pending |
-| Local lyrics cache keyed by Spotify track ID | Reduces repeated network calls and improves responsiveness | - Pending |
-| shadcn/ui as required UI component system | Project constraint and consistency with existing setup | - Pending |
+| Keep Spotify Web API as playback source during web migration | Preserves validated sync core while changing delivery surface | - Pending |
+| Start v1.1 with light and dark themes in initial build | User requirement and reduces later redesign churn | - Pending |
+| Use shadcn/ui in web milestone and install at implementation kickoff | Maintains component consistency and speeds polished UI delivery | - Pending |
 
 ---
-*Last updated: 2026-03-20 after Phase 04 completion*
+*Last updated: 2026-03-20 after milestone v1.1 initialization*

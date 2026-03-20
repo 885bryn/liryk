@@ -1,62 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-stopped_at: Completed 04-cache-freshness-and-repeat-load-performance
-last_updated: "2026-03-20T08:33:33.896Z"
+milestone: v1.1
+milestone_name: web-app-foundation-and-theming
+status: in_progress
+stopped_at: Milestone initialized; ready for Phase 5 planning
+last_updated: "2026-03-20T12:00:00.000Z"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-03-19)
+See: `.planning/PROJECT.md` (updated 2026-03-20)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** Milestone complete — all planned phases executed and verified
+**Current focus:** Milestone v1.1 initialization complete; requirements and roadmap approved
 
 ## Current Position
 
-Phase: 04 (cache-freshness-and-repeat-load-performance) — COMPLETE
-Plan: 2 of 2
-
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 13
-- Average duration: 7.5 min
-- Total execution time: 1.6 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Spotify Connection Foundation | 4 | 19 min | 4.8 min |
-| 2. Live Playback Sync Engine | 3 | 20 min | 6.7 min |
-| 3. Lyrics Resolution and Rendered Experience | 4 | 41 min | 10.3 min |
-| 4. Cache Freshness and Repeat-Load Performance | 2 | 30 min | 15.0 min |
-
-**Recent Trend:**
-
-- Last 5 plans: Phase 01 P01 (4 min, 2 tasks, 7 files) | Phase 01 P02 (3 min, 3 tasks, 7 files) | Phase 01 P03 (4 min, 3 tasks, 7 files) | Phase 01 P04 (8 min, 3 tasks, 6 files)
-- Trend: Stable
-
-| Phase 02 P01 | 6 min | 2 tasks | 6 files |
-| Phase 02 P02 | 8 min | 3 tasks | 8 files |
-| Phase 02 P03 | 6 min | 2 tasks | 8 files |
-| Phase 03 P01 | 12 | 2 tasks | 7 files |
-| Phase 03 P02 | 10 | 2 tasks | 6 files |
-| Phase 03 P03 | 11 | 2 tasks | 6 files |
-| Phase 03 P04 | 8 | 2 tasks | 6 files |
-| Phase 04 P01 | 12 | 2 tasks | 4 files |
-| Phase 04 P02 | 18 | 2 tasks | 2 files |
+Phase: Not started (defining requirements complete)
+Plan: -
+Status: Ready to begin Phase 5
+Last activity: 2026-03-20 - Milestone v1.1 started
 
 ## Accumulated Context
 
@@ -87,14 +57,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Confirm implementation kickoff for Phase 5 and execute shadcn install checkpoint after web scaffold/Tailwind base setup.
 
 ### Blockers/Concerns
 
-None yet.
+None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T08:33:33.890Z
-Stopped at: Completed 04-cache-freshness-and-repeat-load-performance
-Resume file: None
+Last session: 2026-03-20T12:00:00.000Z
+Stopped at: Milestone initialized; ready for roadmap execution
+Resume file: `.planning/ROADMAP.md`
