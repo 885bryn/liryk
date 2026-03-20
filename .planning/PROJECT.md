@@ -12,13 +12,14 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 
 ### Validated
 
-(None yet - ship to validate)
+- [x] Detect currently playing Spotify track and playback position on desktop via Spotify Web API OAuth PKCE
+  - Validated in Phase 02: live-playback-sync-engine
+- [x] Highlight lyric lines in real time based on playback position and keep view auto-scrolled
+  - Validated in Phase 02: live-playback-sync-engine
 
 ### Active
 
-- [ ] Detect currently playing Spotify track and playback position on desktop via Spotify Web API OAuth PKCE
 - [ ] Fetch lyrics for the exact track version from internet sources, prioritizing timestamped lyrics
-- [ ] Highlight lyric lines in real time based on playback position and keep view auto-scrolled
 - [ ] Support multilingual lyric rendering (UTF-8, non-Latin scripts)
 - [ ] Gracefully handle missing lyrics by showing "Lyrics not found"
 - [ ] Cache lyrics locally by Spotify track ID to reduce redundant lookups
@@ -46,6 +47,11 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 - **UX Fallback**: Show "Lyrics not found" when no lyrics source succeeds
 - **Scope**: Do not modify files outside this project directory
 
+## Current State
+
+- Phase 02 complete - live playback snapshots, sync engine projection, and viewport auto-scroll behavior are implemented and verified.
+- Next focus: Phase 03 lyrics retrieval/matching and multilingual rendered fallback experience.
+
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
@@ -56,4 +62,4 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 | shadcn/ui as required UI component system | Project constraint and consistency with existing setup | - Pending |
 
 ---
-*Last updated: 2026-03-19 after initialization*
+*Last updated: 2026-03-20 after Phase 02 completion*
