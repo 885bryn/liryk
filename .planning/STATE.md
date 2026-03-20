@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: Ready to begin Phase 5
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-20T09:18:27.421Z"
-last_activity: 2026-03-20 - Milestone v1.1 started
+status: executing
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-03-20T09:26:39.072Z"
+last_activity: 2026-03-20 - Completed 05-01 runtime scaffold and Tailwind baseline
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 ## Current Position
 
 Phase: 05 - Web Runtime and Theme Foundation
-Plan: 02 of 03 (next)
-Status: In progress (05-01 complete)
-Last activity: 2026-03-20 - Completed 05-01 runtime scaffold and Tailwind baseline
+Plan: 03 of 03 (next)
+Status: In progress (05-02 complete)
+Last activity: 2026-03-20 - Completed 05-02 shadcn initialization checkpoint
 
 ## Accumulated Context
 
@@ -57,10 +57,12 @@ Recent decisions affecting current work:
 - [Phase 04]: Evict invalid cache entries before provider resolve to fail closed on poisoned data.
 - [Phase 05]: Use a thin browser composition layer (src/main.tsx + AppShell) without touching existing auth/lyrics model contracts.
 - [Phase 05]: Adopt class-based dark mode tokens in global CSS before shadcn work so later primitives inherit stable theme variables.
+- [Phase 05]: Keep the generated shadcn component set in-repo and validate with a dedicated checkpoint surface before shell composition.
+- [Phase 05]: Bridge shadcn-generated token expectations into existing Tailwind v3 config instead of delaying primitives to a later refactor.
 
 ### Pending Todos
 
-- Execute Phase 05-02 shadcn/ui initialization and primitive verification checkpoint.
+- Execute Phase 05-03 persistent theme controls and final shell composition.
 
 ### Blockers/Concerns
 
@@ -68,8 +70,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:18:27.419Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-20T09:26:39.069Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -77,3 +79,4 @@ Resume file: None
 | Phase | Plan | Duration (s) | Tasks | Files |
 |-------|------|--------------|-------|-------|
 | 05 | 01 | 475 | 2 | 13 |
+| Phase 05 P02 | 328 | 2 tasks | 10 files |

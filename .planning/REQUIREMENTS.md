@@ -22,7 +22,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### UI System and Visual Quality
 
-- [ ] **UI-02**: User sees milestone UI built with shadcn/ui components in the web app.
+- [x] **UI-02**: User sees milestone UI built with shadcn/ui components in the web app.
 - [ ] **UI-03**: User sees intentionally polished typography, spacing, and hierarchy rather than scaffold-default styling.
 - [ ] **UI-04**: User sees distinct interaction states (loading, empty, and lyrics-not-found) presented with cohesive visual treatment.
 
@@ -62,7 +62,7 @@ Explicitly excluded for v1.1.
 | THEM-01 | Phase 5 | Pending |
 | THEM-02 | Phase 5 | Pending |
 | THEM-03 | Phase 6 | Pending |
-| UI-02 | Phase 5 | Pending |
+| UI-02 | Phase 5 | Complete |
 | UI-03 | Phase 6 | Pending |
 | UI-04 | Phase 7 | Pending |
 
