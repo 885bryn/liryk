@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -17,6 +17,30 @@ describe("AppShell", () => {
     expect(screen.getByRole("heading", { name: "Connection" })).toBeTruthy();
     expect(screen.getByText("Spotify is not connected yet.")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Lyrics" })).toBeTruthy();
+    expect(screen.getByText("Lyrics will appear once a track is playing.")).toBeTruthy();
+  });
+
+  it("shows a header theme toggle before connection", () => {
+    render(<AppShell />);
+
+    expect(screen.getByRole("switch", { name: "Toggle theme" })).toBeTruthy();
+  });
+
+  it("shows theme placement in connected account menu and keeps disconnect action", () => {
+    render(<AppShell isConnected accountName="Avery" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Avery account menu" }));
+    expect(screen.getByRole("switch", { name: "Toggle theme" })).toBeTruthy();
+    expect(screen.getByText("Disconnect Spotify")).toBeTruthy();
+  });
+
+  it("keeps split desktop markers and stacked mobile markers with placeholders", () => {
+    render(<AppShell />);
+
+    const shell = screen.getByTestId("shell-layout");
+    expect(shell.className).toContain("grid-cols-1");
+    expect(shell.className).toContain("lg:grid-cols-2");
+    expect(screen.getByText("Spotify is not connected yet.")).toBeTruthy();
     expect(screen.getByText("Lyrics will appear once a track is playing.")).toBeTruthy();
   });
 
