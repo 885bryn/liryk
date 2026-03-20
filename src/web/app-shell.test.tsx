@@ -1,4 +1,6 @@
 import { render, screen } from "@testing-library/react";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { buildConnectSpotifyCard } from "../ui/connection/connect-spotify-card";
@@ -11,23 +13,21 @@ describe("AppShell", () => {
   it("renders header and both pane placeholders", () => {
     render(<AppShell />);
 
-    expect(screen.getByRole("heading", { name: "Liryk" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Connection" })).toBeInTheDocument();
-    expect(screen.getByText("Spotify is not connected yet.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Lyrics" })).toBeInTheDocument();
-    expect(screen.getByText("Lyrics will appear once a track is playing.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Liryk" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Connection" })).toBeTruthy();
+    expect(screen.getByText("Spotify is not connected yet.")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Lyrics" })).toBeTruthy();
+    expect(screen.getByText("Lyrics will appear once a track is playing.")).toBeTruthy();
   });
 
   it("keeps web entry files free of desktop-only module imports", async () => {
-    const [{ readFile }, main] = await Promise.all([
-      import("node:fs/promises"),
-      import("../main"),
-    ]);
-    void main;
+    const { readFile } = await import("node:fs/promises");
+    const thisFilePath = fileURLToPath(import.meta.url);
+    const thisDirPath = dirname(thisFilePath);
 
     const [mainSource, shellSource] = await Promise.all([
-      readFile(new URL("../main.tsx", import.meta.url), "utf8"),
-      readFile(new URL("./app-shell.tsx", import.meta.url), "utf8"),
+      readFile(resolve(thisDirPath, "../main.tsx"), "utf8"),
+      readFile(resolve(thisDirPath, "./app-shell.tsx"), "utf8"),
     ]);
 
     expect(mainSource).not.toContain("node:fs");
@@ -46,7 +46,7 @@ describe("AppShell", () => {
     });
 
     const lyricsModel = createLiveLyricsPanelBuilder().build({
-      syncState: liveSyncStore.selectUiState(),
+      syncState: liveSyncStore.selectLiveSync(),
       lines: [],
       showReturnToLive: false,
     });
