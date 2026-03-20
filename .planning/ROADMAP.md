@@ -12,7 +12,7 @@ This roadmap starts after completed Phase 4 work and initializes milestone v1.1 
 
 ## Phases
 
-- [ ] **Phase 5: Web Runtime and Theme Foundation** - Establish browser app shell, install shadcn/ui at kickoff, and enable persistent light/dark theming.
+- [x] **Phase 5: Web Runtime and Theme Foundation** - Establish browser app shell, install shadcn/ui at kickoff, and enable persistent light/dark theming.
 - [ ] **Phase 6: Responsive Layout and Visual System** - Build aesthetically pleasing, responsive composition with robust theme token usage.
 - [ ] **Phase 7: Web Lyrics Experience Parity and State Polish** - Finish user-facing web states and lyrics-panel behavior parity in the new design.
 
@@ -36,8 +36,8 @@ Implementation notes:
 
 Plans:
 - [x] 05-01-PLAN.md - Scaffold browser runtime entry and baseline split-first shell with Tailwind foundation.
-- [ ] 05-02-PLAN.md - Initialize shadcn/ui and verify required primitive checkpoint artifacts.
-- [ ] 05-03-PLAN.md - Implement persistent light/dark theming and integrate toggles into shell/account surfaces.
+- [x] 05-02-PLAN.md - Initialize shadcn/ui and verify required primitive checkpoint artifacts.
+- [x] 05-03-PLAN.md - Implement persistent light/dark theming and integrate toggles into shell/account surfaces.
 
 ### Phase 6: Responsive Layout and Visual System
 **Goal**: Users get an aesthetically pleasing, intentional interface that works across desktop and mobile.
@@ -64,6 +64,6 @@ Phases execute in numeric order: 5 -> 6 -> 7
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | In Progress (1/3 plans) |
+| 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Complete |
 | 6. Responsive Layout and Visual System | WEB-02, THEM-03, UI-03 | Pending |
 | 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Pending |

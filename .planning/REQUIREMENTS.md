@@ -16,8 +16,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Theming
 
-- [ ] **THEM-01**: User can switch between light and dark themes from an in-app control.
-- [ ] **THEM-02**: User's selected theme persists across page reloads.
+- [x] **THEM-01**: User can switch between light and dark themes from an in-app control.
+- [x] **THEM-02**: User's selected theme persists across page reloads.
 - [ ] **THEM-03**: User sees readable contrast and consistent color tokens across both themes for primary lyric and navigation surfaces.
 
 ### UI System and Visual Quality
@@ -59,8 +59,8 @@ Explicitly excluded for v1.1.
 | WEB-01 | Phase 5 | Complete |
 | WEB-02 | Phase 6 | Pending |
 | WEB-03 | Phase 7 | Pending |
-| THEM-01 | Phase 5 | Pending |
-| THEM-02 | Phase 5 | Pending |
+| THEM-01 | Phase 5 | Complete |
+| THEM-02 | Phase 5 | Complete |
 | THEM-03 | Phase 6 | Pending |
 | UI-02 | Phase 5 | Complete |
 | UI-03 | Phase 6 | Pending |

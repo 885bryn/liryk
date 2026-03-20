@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-20T09:26:39.072Z"
-last_activity: 2026-03-20 - Completed 05-01 runtime scaffold and Tailwind baseline
+status: in_progress
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-20T09:32:55.010Z"
+last_activity: 2026-03-20 - Completed Phase 05 web runtime and theming foundation
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 05 - Web Runtime and Theme Foundation
-Plan: 03 of 03 (next)
-Status: In progress (05-02 complete)
-Last activity: 2026-03-20 - Completed 05-02 shadcn initialization checkpoint
+Phase: 06 - Responsive Layout and Visual System
+Plan: 01 of 03 (next)
+Status: Ready to begin Phase 06
+Last activity: 2026-03-20 - Phase 05 complete (plans 01-03)
 
 ## Accumulated Context
 
@@ -59,10 +59,12 @@ Recent decisions affecting current work:
 - [Phase 05]: Adopt class-based dark mode tokens in global CSS before shadcn work so later primitives inherit stable theme variables.
 - [Phase 05]: Keep the generated shadcn component set in-repo and validate with a dedicated checkpoint surface before shell composition.
 - [Phase 05]: Bridge shadcn-generated token expectations into existing Tailwind v3 config instead of delaying primitives to a later refactor.
+- [Phase 05]: Hydrate theme state before shell rendering and keep all writes through one store contract tied to localStorage key liryk-theme.
+- [Phase 05]: Expose theme controls both as always-visible header control and connected account dropdown placement using the same toggle component.
 
 ### Pending Todos
 
-- Execute Phase 05-03 persistent theme controls and final shell composition.
+- Begin Phase 06 with responsive layout and visual-system refinement planning.
 
 ### Blockers/Concerns
 
@@ -70,8 +72,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:26:39.069Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-20T09:32:55.008Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -80,3 +82,4 @@ Resume file: None
 |-------|------|--------------|-------|-------|
 | 05 | 01 | 475 | 2 | 13 |
 | Phase 05 P02 | 328 | 2 tasks | 10 files |
+| Phase 05 P03 | 288 | 2 tasks | 8 files |
