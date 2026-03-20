@@ -34,7 +34,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Chinese Script Normalization (Phase 8)
 
-- [ ] **CHN-01**: User sees Chinese lyrics rendered in Simplified Chinese across synced and plain lyric displays.
+- [x] **CHN-01**: User sees Chinese lyrics rendered in Simplified Chinese across synced and plain lyric displays.
 - [x] **CHN-02**: User sees non-Chinese lyric content preserved while Chinese-script content is normalized to Simplified Chinese.
 
 ## v1.2+ Candidate Requirements
