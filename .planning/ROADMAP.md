@@ -48,6 +48,13 @@ Plans:
 2. User sees cohesive typography and spacing hierarchy that goes beyond default scaffold styling.
 3. User sees consistent color-token usage and readable contrast in both light and dark themes.
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md - Refine global theme tokens and typography baseline for readable light/dark surfaces.
+- [ ] 06-02-PLAN.md - Implement responsive shell rhythm (lyrics-first mobile, 40/60 desktop) with hierarchy-focused tests.
+- [ ] 06-03-PLAN.md - Finalize card surface consistency and add explicit visual verification checkpoint artifacts.
+
 ### Phase 7: Web Lyrics Experience Parity and State Polish
 **Goal**: Users get polished web-state handling and lyrics-pane parity with the existing milestone core behavior.
 **Depends on**: Phase 6
