@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { PlaybackRuntimeEvent } from "./playback-runtime";
 import { createLyricsResolutionRuntime } from "./lyrics-resolution-runtime";
+import { createLyricsCacheEntry, evaluateLyricsCacheEntry } from "../core/lyrics/cache-policy";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 import type { LyricTrackMetadata, ResolvedLyrics } from "../core/lyrics/types";
 
@@ -13,7 +14,140 @@ function syncedResult(text: string): ResolvedLyrics {
   };
 }
 
+function plainResult(text: string): ResolvedLyrics {
+  return {
+    sourceState: "plain",
+    renderMode: "plain-static",
+    lines: [{ startMs: null, text, renderMode: "plain-static", isTimestamped: false }],
+  };
+}
+
 describe("createLyricsResolutionRuntime", () => {
+  it("returns fresh cache hits immediately and skips provider resolution", async () => {
+    let listener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    const resolveLyricsForTrack = vi.fn().mockResolvedValue(syncedResult("provider"));
+    const cached = createLyricsCacheEntry({
+      trackId: "track-1",
+      resolvedLyrics: syncedResult("cached"),
+      fetchedAtMs: 1_000,
+    });
+
+    const runtime = createLyricsResolutionRuntime({
+      subscribePlayback: (next) => {
+        listener = next;
+        return () => {
+          listener = null;
+        };
+      },
+      resolveLyricsForTrack,
+      liveSyncStore: store,
+      cache: {
+        read: vi.fn().mockResolvedValue(cached),
+        write: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
+      },
+      evaluateCacheEntry: evaluateLyricsCacheEntry,
+    } as never);
+
+    runtime.start();
+    listener?.({
+      snapshot: { trackId: "track-1", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 1 },
+      transition: "track_changed",
+    });
+    await Promise.resolve();
+
+    expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("cached");
+    expect(resolveLyricsForTrack).not.toHaveBeenCalled();
+  });
+
+  it("returns stale cache entry immediately then refreshes in background", async () => {
+    let listener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    let resolveProvider: ((value: ResolvedLyrics) => void) | null = null;
+    const resolveLyricsForTrack = vi.fn(
+      () =>
+        new Promise<ResolvedLyrics>((resolve) => {
+          resolveProvider = resolve;
+        }),
+    );
+    const cached = createLyricsCacheEntry({
+      trackId: "track-1",
+      resolvedLyrics: plainResult("stale"),
+      fetchedAtMs: 1_000,
+    });
+
+    const runtime = createLyricsResolutionRuntime({
+      subscribePlayback: (next) => {
+        listener = next;
+        return () => {
+          listener = null;
+        };
+      },
+      resolveLyricsForTrack,
+      liveSyncStore: store,
+      cache: {
+        read: vi.fn().mockResolvedValue(cached),
+        write: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
+      },
+      evaluateCacheEntry: () => "stale",
+    } as never);
+
+    runtime.start();
+    listener?.({
+      snapshot: { trackId: "track-1", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 1 },
+      transition: "track_changed",
+    });
+    await Promise.resolve();
+
+    expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("stale");
+    expect(resolveLyricsForTrack).toHaveBeenCalledTimes(1);
+
+    resolveProvider?.(plainResult("fresh"));
+    await Promise.resolve();
+
+    expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("fresh");
+  });
+
+  it("bypasses expired cache entries and resolves from provider", async () => {
+    let listener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    const resolveLyricsForTrack = vi.fn().mockResolvedValue(syncedResult("provider"));
+    const cached = createLyricsCacheEntry({
+      trackId: "track-1",
+      resolvedLyrics: syncedResult("cached"),
+      fetchedAtMs: 1_000,
+    });
+
+    const runtime = createLyricsResolutionRuntime({
+      subscribePlayback: (next) => {
+        listener = next;
+        return () => {
+          listener = null;
+        };
+      },
+      resolveLyricsForTrack,
+      liveSyncStore: store,
+      cache: {
+        read: vi.fn().mockResolvedValue(cached),
+        write: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
+      },
+      evaluateCacheEntry: () => "expired",
+    } as never);
+
+    runtime.start();
+    listener?.({
+      snapshot: { trackId: "track-1", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 1 },
+      transition: "track_changed",
+    });
+    await Promise.resolve();
+
+    expect(resolveLyricsForTrack).toHaveBeenCalledTimes(1);
+    expect(store.selectLiveSync().resolvedLyrics[0]?.text).toBe("provider");
+  });
+
   it("starts fresh on track change and suppresses stale async results", async () => {
     let listener: ((event: PlaybackRuntimeEvent) => void) | null = null;
     const store = new LiveSyncStore();
