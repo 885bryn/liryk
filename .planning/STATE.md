@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: executing
-stopped_at: Completed 07.1-02-PLAN.md
-last_updated: "2026-03-20T21:21:39.373Z"
-last_activity: 2026-03-20 - Completed 07.1-02-PLAN.md
+status: completed
+stopped_at: Completed 07.1-03-PLAN.md
+last_updated: "2026-03-20T21:25:53.354Z"
+last_activity: 2026-03-20 - Completed 07.1-03-PLAN.md
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 ## Current Position
 
 Phase: 07.1 - Web auth flow wiring and verification path
-Plan: 02 of 03 complete
-Status: In progress
-Last activity: 2026-03-20 - Completed 07.1-02-PLAN.md
+Plan: Complete (03 of 03 complete)
+Status: Phase 07.1 complete
+Last activity: 2026-03-20 - Completed 07.1-03-PLAN.md
 
 ## Accumulated Context
 
@@ -77,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 07.1]: Always remove only code/state/error keys after callback completion to preserve unrelated query context.
 - [Phase 07.1]: Use a single useWebAuthRuntime hook to own bootstrap and connect navigation side effects outside AppShell rendering.
 - [Phase 07.1]: Render connection pane states directly from UiAuthState plus hook phase for explicit checking and authorizing copy.
+- [Phase 07.1]: Surface env alignment warning text in the connection pane so localhost misconfiguration is visible during auth verification.
+- [Phase 07.1]: Keep a dedicated phase runbook with exact automated commands and manual URL-cleanup checks for reproducible validation.
 
 ### Roadmap Evolution
 
@@ -92,8 +94,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T21:21:39.368Z
-Stopped at: Completed 07.1-02-PLAN.md
+Last session: 2026-03-20T21:25:53.352Z
+Stopped at: Completed 07.1-03-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -111,3 +113,4 @@ Resume file: None
 | Phase 07 P03 | 120 | 2 tasks | 2 files |
 | Phase 07.1 P01 | 160 | 2 tasks | 4 files |
 | Phase 07.1 P02 | 281 | 2 tasks | 4 files |
+| Phase 07.1 P03 | 158 | 2 tasks | 4 files |
