@@ -15,7 +15,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Playback Detection
 
 - [x] **PLAY-01**: User can see lyrics tied to the currently playing Spotify track without requiring Spotify Premium
-- [ ] **PLAY-02**: User sees lyric sync update based on current playback position (`progress_ms`) while a track is playing
+- [x] **PLAY-02**: User sees lyric sync update based on current playback position (`progress_ms`) while a track is playing
 - [x] **PLAY-03**: User sees lyric sync react correctly when playback is paused, resumed, skipped, or seeked
 
 ### Lyrics Retrieval & Matching
@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Live Sync Experience
 
-- [ ] **SYNC-01**: User sees the correct lyric line highlighted in real time during playback
+- [x] **SYNC-01**: User sees the correct lyric line highlighted in real time during playback
 - [ ] **SYNC-02**: User sees the lyrics view auto-scroll to keep the active line in view as the song progresses
 
 ### Internationalization & Rendering
@@ -78,13 +78,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
 | PLAY-01 | Phase 2 | Complete |
-| PLAY-02 | Phase 2 | Pending |
+| PLAY-02 | Phase 2 | Complete |
 | PLAY-03 | Phase 2 | Complete |
 | LYR-01 | Phase 3 | Pending |
 | LYR-02 | Phase 3 | Pending |
 | LYR-03 | Phase 3 | Pending |
 | LYR-04 | Phase 3 | Pending |
-| SYNC-01 | Phase 2 | Pending |
+| SYNC-01 | Phase 2 | Complete |
 | SYNC-02 | Phase 2 | Pending |
 | I18N-01 | Phase 3 | Pending |
 | CACH-01 | Phase 4 | Pending |
