@@ -12,7 +12,7 @@ This roadmap delivers the core milestone outcome in dependency order: secure Spo
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Spotify Connection Foundation** - Users securely connect Spotify and maintain a working authenticated session.
+- [x] **Phase 1: Spotify Connection Foundation** - Users securely connect Spotify and maintain a working authenticated session.
 - [ ] **Phase 2: Live Playback Sync Engine** - Users get reliable, real-time lyric line progression tied to playback behavior.
 - [ ] **Phase 3: Lyrics Resolution and Rendered Experience** - Users receive the best available lyrics with clear fallback states and multilingual rendering.
 - [ ] **Phase 4: Cache Freshness and Repeat-Load Performance** - Users get fast repeat loads without stale or invalid lyric results.
@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md - Secure env validation and Spotify PKCE auth service foundation
 - [x] 01-02-PLAN.md - Connection UX states, trust messaging, and retry/troubleshooting flow
-- [ ] 01-03-PLAN.md - Session persistence, startup rehydrate, and disconnect/account switch controls
+- [x] 01-03-PLAN.md - Session persistence, startup rehydrate, and disconnect/account switch controls
 
 ### Phase 2: Live Playback Sync Engine
 **Goal**: Users see lyric progression stay aligned with current Spotify playback timing and controls.
@@ -73,7 +73,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Spotify Connection Foundation | 2/3 | In Progress|  |
+| 1. Spotify Connection Foundation | 3/3 | Complete | 2026-03-20 |
 | 2. Live Playback Sync Engine | 0/TBD | Not started | - |
 | 3. Lyrics Resolution and Rendered Experience | 0/TBD | Not started | - |
 | 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |

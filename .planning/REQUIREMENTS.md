@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Authentication & Session
 
 - [x] **AUTH-01**: User can connect their Spotify account through OAuth PKCE without entering credentials into the app
-- [ ] **AUTH-02**: User stays connected across app restarts through secure token refresh handling
+- [x] **AUTH-02**: User stays connected across app restarts through secure token refresh handling
 
 ### Playback Detection
 
@@ -76,7 +76,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AUTH-01 | Phase 1 | Complete |
-| AUTH-02 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Complete |
 | PLAY-01 | Phase 2 | Pending |
 | PLAY-02 | Phase 2 | Pending |
 | PLAY-03 | Phase 2 | Pending |
