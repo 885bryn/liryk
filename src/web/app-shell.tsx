@@ -15,6 +15,7 @@ import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 
 import { createThemeStore, hydrateTheme } from "./theme/theme-store";
 import { ThemeToggle } from "./theme/theme-toggle";
+import { useWebAuthRuntime } from "./use-web-auth-runtime";
 
 type AppShellProps = {
   isConnected?: boolean;
@@ -49,25 +50,30 @@ function buildDefaultLyricsPanel(): LiveLyricsPanelModel {
 export function AppShell(input?: AppShellProps) {
   const themeStore = useRef(createThemeStore({ mode: hydrateTheme() }));
   const [themeMode, setThemeMode] = useState(themeStore.current.getMode());
+  const webAuth = useWebAuthRuntime();
 
   const onToggleTheme = () => {
     setThemeMode(themeStore.current.toggle());
   };
 
-  const accountMenu = input?.isConnected
-    ? buildAccountMenu(
-        {
-          status: "connected_waiting_playback",
-          waitingMessage: "Connected - play a track on Spotify",
-          onboardingExplainer: "Connect Spotify once to keep live lyrics synced with your current track.",
-          permissionSummary: "We only read playback state and never control playback.",
-          accountDisplay: {
-            displayName: input.accountName ?? "Connected account",
-            spotifyUserId: "spotify-user",
-          },
+  const runtimeConnectedState =
+    webAuth.uiState.status === "connected_waiting_playback" || webAuth.uiState.status === "success"
+      ? webAuth.uiState
+      : null;
+  const accountMenuState = input?.isConnected
+    ? {
+        status: "connected_waiting_playback" as const,
+        waitingMessage: "Connected - play a track on Spotify" as const,
+        onboardingExplainer: webAuth.uiState.onboardingExplainer,
+        permissionSummary: webAuth.uiState.permissionSummary,
+        accountDisplay: {
+          displayName: input.accountName ?? "Connected account",
+          spotifyUserId: "spotify-user",
         },
-        input.onDisconnect ?? (async () => undefined),
-      )
+      }
+    : runtimeConnectedState;
+  const accountMenu = accountMenuState
+    ? buildAccountMenu(accountMenuState, input.onDisconnect ?? (async () => undefined))
     : null;
   const lyricsPanel = input?.lyricsPanelOverride ?? buildDefaultLyricsPanel();
   const statusRailClass =
@@ -164,8 +170,45 @@ export function AppShell(input?: AppShellProps) {
           <CardHeader>
             <CardTitle className="text-lg font-medium leading-snug">Connection</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground leading-relaxed">Spotify is not connected yet.</p>
+          <CardContent className="space-y-3">
+            {webAuth.phase === "checking" ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">Checking Spotify connection...</p>
+            ) : null}
+
+            {webAuth.phase !== "checking" && webAuth.uiState.status === "disconnected" ? (
+              <>
+                <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.uiState.onboardingExplainer}</p>
+                <Button type="button" onClick={() => void webAuth.onConnect()}>
+                  Connect Spotify
+                </Button>
+              </>
+            ) : null}
+
+            {webAuth.phase !== "checking" && webAuth.uiState.status === "recoverable_error" ? (
+              <>
+                <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.uiState.userFacingReason}</p>
+                <Button type="button" onClick={() => void webAuth.onConnect()} disabled={!webAuth.uiState.retryEligible}>
+                  Reconnect Spotify
+                </Button>
+              </>
+            ) : null}
+
+            {(webAuth.phase === "busy" || webAuth.uiState.status === "authorizing") && webAuth.phase !== "checking" ? (
+              <>
+                <Button type="button" disabled aria-label="Authorizing Spotify connection...">
+                  Authorizing Spotify connection...
+                </Button>
+                <p className="text-sm text-muted-foreground leading-relaxed">Authorizing Spotify connection...</p>
+              </>
+            ) : null}
+
+            {webAuth.phase !== "checking" && webAuth.uiState.status === "connected_waiting_playback" ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.uiState.waitingMessage}</p>
+            ) : null}
+
+            {webAuth.phase !== "checking" && webAuth.uiState.status === "success" ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.uiState.successMessage}</p>
+            ) : null}
           </CardContent>
         </Card>
       </main>

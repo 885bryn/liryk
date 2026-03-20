@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildConnectSpotifyCard } from "../ui/connection/connect-spotify-card";
 import { createLiveLyricsPanelBuilder } from "../ui/lyrics/live-lyrics-panel";
@@ -57,6 +57,10 @@ function panelOverride(overrides: Record<string, unknown> = {}) {
 }
 
 describe("AppShell", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     hookModel = {
       phase: "checking",
@@ -309,7 +313,7 @@ describe("AppShell", () => {
     render(<AppShell />);
 
     expect(screen.getByRole("heading", { name: "Liryk" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Authorizing Spotify connection..." })).toBeDisabled();
-    expect(screen.getByText("Authorizing Spotify connection...")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Authorizing Spotify connection..." }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getAllByText("Authorizing Spotify connection...").length).toBeGreaterThan(0);
   });
 });
