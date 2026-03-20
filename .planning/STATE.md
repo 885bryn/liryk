@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Planned Phase 04
-last_updated: "2026-03-20T08:20:00.000Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-20T08:24:38.877Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: `.planning/PROJECT.md` (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 04 (cache-freshness-and-repeat-load-performance) — PLANNED, READY FOR EXECUTION
-Plan: 0 of 2
+Phase: 04 (cache-freshness-and-repeat-load-performance) — EXECUTING
+Plan: 1 of 2
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Plan: 0 of 2
 | Phase 03 P02 | 10 | 2 tasks | 6 files |
 | Phase 03 P03 | 11 | 2 tasks | 6 files |
 | Phase 03 P04 | 8 | 2 tasks | 6 files |
+| Phase 04 P01 | 12 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Score candidates with strict normalized title+artist gates before synced-first tie-break to prevent plausible wrong matches.
 - [Phase 03]: Guard lyrics resolution async completions with a session counter so stale requests cannot overwrite new tracks.
 - [Phase 03]: Render plain fallback in explicit plain-static mode with no active highlight and per-line direction/display metadata.
+- [Phase 04]: Keep freshness policy pure in core and storage logic in infra adapter.
+- [Phase 04]: Use shorter TTL windows for not-found cache entries to avoid sticky negative cache results.
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T07:41:54.094Z
-Stopped at: Planned Phase 04
+Last session: 2026-03-20T08:24:38.871Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

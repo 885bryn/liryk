@@ -36,8 +36,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Cache & Performance
 
-- [ ] **CACH-01**: User gets faster repeat lyric loads through local cache keyed by Spotify track ID
-- [ ] **CACH-02**: User gets fresh lyric updates when cache entries become stale or invalid
+- [x] **CACH-01**: User gets faster repeat lyric loads through local cache keyed by Spotify track ID
+- [x] **CACH-02**: User gets fresh lyric updates when cache entries become stale or invalid
 
 ### UI & Implementation Constraints
 
@@ -87,8 +87,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SYNC-01 | Phase 2 | Complete |
 | SYNC-02 | Phase 2 | Complete |
 | I18N-01 | Phase 3 | Complete |
-| CACH-01 | Phase 4 | Pending |
-| CACH-02 | Phase 4 | Pending |
+| CACH-01 | Phase 4 | Complete |
+| CACH-02 | Phase 4 | Complete |
 | UI-01 | Phase 3 | Complete |
 | SECU-01 | Phase 1 | Complete |
 
