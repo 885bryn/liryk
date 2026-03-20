@@ -52,6 +52,33 @@ describe("AppShell", () => {
     expect(screen.getAllByText("Lyrics will appear once a track is playing.").length).toBeGreaterThan(0);
   });
 
+  it("applies explicit typography and spacing hierarchy markers", () => {
+    render(<AppShell />);
+
+    const shell = screen.getAllByTestId("shell-layout")[0];
+    expect(shell.className).toContain("gap-4");
+    expect(shell.className).toContain("sm:gap-5");
+    expect(shell.className).toContain("lg:gap-6");
+    expect(shell.className).toContain("px-4");
+    expect(shell.className).toContain("sm:px-6");
+    expect(shell.className).toContain("py-5");
+    expect(shell.className).toContain("sm:py-6");
+    expect(shell.className).toContain("lg:py-8");
+
+    expect(screen.getByRole("heading", { name: "Liryk" }).className).toContain("tracking-tight");
+    expect(screen.getByRole("heading", { name: "Liryk" }).className).toContain("sm:text-2xl");
+
+    expect(screen.getByRole("heading", { name: "Lyrics" }).className).toContain("text-lg");
+    expect(screen.getByRole("heading", { name: "Lyrics" }).className).toContain("font-medium");
+    expect(screen.getByRole("heading", { name: "Connection" }).className).toContain("text-lg");
+    expect(screen.getByRole("heading", { name: "Connection" }).className).toContain("font-medium");
+
+    expect(screen.getByText("Lyrics will appear once a track is playing.").className).toContain("text-muted-foreground");
+    expect(screen.getByText("Lyrics will appear once a track is playing.").className).toContain("leading-relaxed");
+    expect(screen.getByText("Spotify is not connected yet.").className).toContain("text-muted-foreground");
+    expect(screen.getByText("Spotify is not connected yet.").className).toContain("leading-relaxed");
+  });
+
   it("keeps web entry files free of desktop-only module imports", async () => {
     const { readFile } = await import("node:fs/promises");
     const thisFilePath = fileURLToPath(import.meta.url);
