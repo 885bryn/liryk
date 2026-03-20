@@ -12,6 +12,8 @@ describe("unicode normalization helpers", () => {
     expect(normalizeForMatch("Cafe\u0301")).toBe(normalizeForMatch("Caf\u00e9"));
     expect(normalizeForMatch("Song Name (Live)")).toBe("song name");
     expect(normalizeForMatch("Song Name - Remaster 2011")).toBe("song name");
+    expect(normalizeForMatch("Song Name - 2013 Remaster")).toBe("song name");
+    expect(normalizeForMatch("Song Name (2013 Remaster)")).toBe("song name");
   });
 
   it("returns deterministic direction metadata for Arabic, Korean, and latin lines", () => {
@@ -27,9 +29,15 @@ describe("unicode normalization helpers", () => {
     expect(isUnusableLyricText("\ud55c\uae00")).toBe(false);
   });
 
-  it("normalizes traditional chinese display text to simplified while preserving non-chinese glyphs", () => {
-    expect(normalizeChineseForDisplay("\u611b\u4f60\u9084\u662f\u611b\u6211 ABC")).toBe(
-      "\u7231\u4f60\u8fd8\u662f\u7231\u6211 ABC",
+  it("normalizes deterministic traditional chinese mappings", () => {
+    expect(normalizeChineseForDisplay("\u611b\u5728\u81fa\u5317\u7684\u98a8\u88e1")).toBe(
+      "\u7231\u5728\u53f0\u5317\u7684\u98ce\u91cc",
+    );
+    expect(normalizeChineseForDisplay("\u6b61\u8fce\u5149\u81e8 2026! ABC")).toBe(
+      "\u6b22\u8fce\u5149\u4e34 2026! ABC",
+    );
+    expect(normalizeChineseForDisplay("\u8aaa\u5427\uff0c\ud83c\udfb5")).toBe(
+      "\u8bf4\u5427\uff0c\ud83c\udfb5",
     );
     expect(normalizeChineseForDisplay("\u611b\u4f60\u9084\u662f\u611b\u6211\uff0c\u4e0d\u8aaa")).toBe(
       "\u7231\u4f60\u8fd8\u662f\u7231\u6211\uff0c\u4e0d\u8bf4",
