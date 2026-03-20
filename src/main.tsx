@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 
+import "./styles/globals.css";
 import { AppShell } from "./web/app-shell";
 
 const rootElement = document.getElementById("root");

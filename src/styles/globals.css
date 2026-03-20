@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 40 33% 97%;
+  --foreground: 215 44% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 44% 11%;
+  --border: 33 24% 85%;
+}
+
+.dark {
+  --background: 215 30% 10%;
+  --foreground: 40 33% 97%;
+  --card: 216 28% 14%;
+  --card-foreground: 40 33% 97%;
+  --border: 217 22% 25%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
