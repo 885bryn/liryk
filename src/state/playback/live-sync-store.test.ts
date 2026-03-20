@@ -29,6 +29,56 @@ describe("LiveSyncStore", () => {
     });
   });
 
+  it("represents explicit lyrics source states separately from playback", () => {
+    const store = new LiveSyncStore();
+
+    store.setLyricsSourceState("loading");
+    store.setLyricsSourceState("synced");
+    store.setLyricsSourceState("plain");
+    store.setLyricsSourceState("low-confidence");
+    store.setLyricsSourceState("not-found");
+
+    expect(store.selectLiveSync().lyricsSourceState).toBe("not-found");
+  });
+
+  it("resets resolved lyric state on track change", () => {
+    const store = new LiveSyncStore();
+    store.setResolvedLyrics({
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [{ startMs: 100, text: "line", renderMode: "synced", isTimestamped: true }],
+    });
+    store.setLyricsRetryState({ retryAvailable: true, retryInFlight: true });
+    store.setLyricsWarning("Low confidence");
+
+    store.setTrack("track-1");
+    store.setTrack("track-2");
+
+    expect(store.selectLiveSync().resolvedLyrics).toEqual([]);
+    expect(store.selectLiveSync().lyricsSourceState).toBe("loading");
+    expect(store.selectLiveSync().retryAvailable).toBe(false);
+    expect(store.selectLiveSync().retryInFlight).toBe(false);
+    expect(store.selectLiveSync().lyricsWarning).toBeNull();
+  });
+
+  it("allows retry-in-flight status updates without mutating playback state", () => {
+    const store = new LiveSyncStore();
+    store.setPlaybackState("playing");
+    store.setTrack("track-1");
+    store.setStatusLine("Live sync active.");
+
+    store.setLyricsRetryState({ retryAvailable: true, retryInFlight: true });
+    store.setStatusLine("Retrying lyrics lookup...");
+
+    expect(store.selectLiveSync()).toMatchObject({
+      playbackState: "playing",
+      trackId: "track-1",
+      retryAvailable: true,
+      retryInFlight: true,
+      statusLine: "Retrying lyrics lookup...",
+    });
+  });
+
   it("supports paused and unavailable transitions", () => {
     const store = new LiveSyncStore();
     store.setPlaybackState("paused");
