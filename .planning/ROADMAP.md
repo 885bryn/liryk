@@ -13,7 +13,7 @@ This roadmap delivers the core milestone outcome in dependency order: secure Spo
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Spotify Connection Foundation** - Users securely connect Spotify and maintain a working authenticated session.
-- [ ] **Phase 2: Live Playback Sync Engine** - Users get reliable, real-time lyric line progression tied to playback behavior.
+- [x] **Phase 2: Live Playback Sync Engine** - Users get reliable, real-time lyric line progression tied to playback behavior. (completed 2026-03-20)
 - [ ] **Phase 3: Lyrics Resolution and Rendered Experience** - Users receive the best available lyrics with clear fallback states and multilingual rendering.
 - [ ] **Phase 4: Cache Freshness and Repeat-Load Performance** - Users get fast repeat loads without stale or invalid lyric results.
 
@@ -47,9 +47,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md - Playback snapshot runtime and transition classification foundation
-- [ ] 02-02-PLAN.md - Timestamp-anchored sync engine and live sync state runtime wiring
-- [ ] 02-03-PLAN.md - Live lyrics viewport auto-scroll, dual emphasis, and playback-state UI behavior
+- [x] 02-01-PLAN.md - Playback snapshot runtime and transition classification foundation
+- [x] 02-02-PLAN.md - Timestamp-anchored sync engine and live sync state runtime wiring
+- [x] 02-03-PLAN.md - Live lyrics viewport auto-scroll, dual emphasis, and playback-state UI behavior
 
 ### Phase 3: Lyrics Resolution and Rendered Experience
 **Goal**: Users receive correct, readable lyrics for the active track with explicit fallback outcomes.
@@ -80,6 +80,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Live Playback Sync Engine | 0/3 | Planned | - |
-| 3. Lyrics Resolution and Rendered Experience | 0/TBD | Not started | - |
+| 2. Live Playback Sync Engine | 3/3 | Complete | 2026-03-20 |
+| 3. Lyrics Resolution and Rendered Experience | 0/TBD | Ready to plan | - |
 | 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |
