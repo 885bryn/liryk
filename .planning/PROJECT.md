@@ -16,13 +16,18 @@ When a Spotify track is playing, the app shows the right lyric line at the right
   - Validated in Phase 02: live-playback-sync-engine
 - [x] Highlight lyric lines in real time based on playback position and keep view auto-scrolled
   - Validated in Phase 02: live-playback-sync-engine
+- [x] Fetch lyrics for the exact track version from internet sources, prioritizing timestamped lyrics
+  - Validated in Phase 03: lyrics-resolution-and-rendered-experience
+- [x] Support multilingual lyric rendering (UTF-8, non-Latin scripts)
+  - Validated in Phase 03: lyrics-resolution-and-rendered-experience
+- [x] Gracefully handle missing lyrics by showing "Lyrics not found"
+  - Validated in Phase 03: lyrics-resolution-and-rendered-experience
+- [x] Cache lyrics locally by Spotify track ID to reduce redundant lookups
+  - Validated in Phase 04: cache-freshness-and-repeat-load-performance
 
 ### Active
 
-- [ ] Fetch lyrics for the exact track version from internet sources, prioritizing timestamped lyrics
-- [ ] Support multilingual lyric rendering (UTF-8, non-Latin scripts)
-- [ ] Gracefully handle missing lyrics by showing "Lyrics not found"
-- [ ] Cache lyrics locally by Spotify track ID to reduce redundant lookups
+None - all v1 requirements are validated.
 
 ### Out of Scope
 
@@ -49,8 +54,8 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 
 ## Current State
 
-- Phase 02 complete - live playback snapshots, sync engine projection, and viewport auto-scroll behavior are implemented and verified.
-- Next focus: Phase 03 lyrics retrieval/matching and multilingual rendered fallback experience.
+- Phase 04 complete - cache freshness policy and runtime cache wiring deliver fast repeat loads with stale/invalid recovery.
+- Milestone v1 execution complete across Phases 1-4 with verification artifacts recorded per phase.
 
 ## Key Decisions
 
@@ -62,4 +67,4 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 | shadcn/ui as required UI component system | Project constraint and consistency with existing setup | - Pending |
 
 ---
-*Last updated: 2026-03-20 after Phase 02 completion*
+*Last updated: 2026-03-20 after Phase 04 completion*
