@@ -87,9 +87,9 @@ Phases execute in numeric order: 5 -> 6 -> 7
 **Goal:** Users can complete Spotify connect/callback/session-restore fully in the web shell and reliably verify localhost auth setup from connect through now-playing readiness.
 **Requirements**: AUTH-WEB-01, AUTH-WEB-02, AUTH-WEB-03
 **Depends on:** Phase 7
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 07.1-01-PLAN.md - Define callback and localhost env-alignment contracts with replay-safe URL cleanup tests.
-- [ ] 07.1-02-PLAN.md - Wire runtime auth flow into the shell with explicit checking, authorizing, reconnect, and connected states.
+- [x] 07.1-02-PLAN.md - Wire runtime auth flow into the shell with explicit checking, authorizing, reconnect, and connected states.
 - [ ] 07.1-03-PLAN.md - Add local verification-path integration checks and a reproducible auth verification runbook.

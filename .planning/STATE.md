@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: in_progress
-stopped_at: Completed 07.1-01-PLAN.md
-last_updated: "2026-03-20T21:14:17.758Z"
-last_activity: 2026-03-20 - Completed 07.1-01-PLAN.md
+status: executing
+stopped_at: Completed 07.1-02-PLAN.md
+last_updated: "2026-03-20T21:21:39.373Z"
+last_activity: 2026-03-20 - Completed 07.1-02-PLAN.md
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 ## Current Position
 
 Phase: 07.1 - Web auth flow wiring and verification path
-Plan: 01 of 03 complete
+Plan: 02 of 03 complete
 Status: In progress
-Last activity: 2026-03-20 - Completed 07.1-01-PLAN.md
+Last activity: 2026-03-20 - Completed 07.1-02-PLAN.md
 
 ## Accumulated Context
 
@@ -75,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 07]: Published a dedicated 07 visual checkpoint mapping WEB-03 and UI-04 to automated and manual evidence.
 - [Phase 07.1]: Treat callback mode as code+state pair or error only to avoid partial-query false positives.
 - [Phase 07.1]: Always remove only code/state/error keys after callback completion to preserve unrelated query context.
+- [Phase 07.1]: Use a single useWebAuthRuntime hook to own bootstrap and connect navigation side effects outside AppShell rendering.
+- [Phase 07.1]: Render connection pane states directly from UiAuthState plus hook phase for explicit checking and authorizing copy.
 
 ### Roadmap Evolution
 
@@ -90,8 +92,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T21:14:17.756Z
-Stopped at: Completed 07.1-01-PLAN.md
+Last session: 2026-03-20T21:21:39.368Z
+Stopped at: Completed 07.1-02-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -108,3 +110,4 @@ Resume file: None
 | Phase 07 P02 | 120 | 2 tasks | 2 files |
 | Phase 07 P03 | 120 | 2 tasks | 2 files |
 | Phase 07.1 P01 | 160 | 2 tasks | 4 files |
+| Phase 07.1 P02 | 281 | 2 tasks | 4 files |

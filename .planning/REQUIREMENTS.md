@@ -29,7 +29,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 ### Web Auth Verification Path (Phase 07.1 insertion)
 
 - [x] **AUTH-WEB-01**: User returns to the same shell route after Spotify callback handling and callback query params are removed to prevent replay.
-- [ ] **AUTH-WEB-02**: User sees explicit checking, authorizing, reconnect-required, and connected-waiting-playback auth states in the web shell.
+- [x] **AUTH-WEB-02**: User sees explicit checking, authorizing, reconnect-required, and connected-waiting-playback auth states in the web shell.
 - [x] **AUTH-WEB-03**: User can diagnose localhost auth config mismatch via actionable APP_BASE_URL and SPOTIFY_REDIRECT_URI origin/path diagnostics.
 
 ## v1.2+ Candidate Requirements
@@ -72,7 +72,7 @@ Explicitly excluded for v1.1.
 | UI-03 | Phase 6 | Complete |
 | UI-04 | Phase 7 | Complete |
 | AUTH-WEB-01 | Phase 07.1 | Complete |
-| AUTH-WEB-02 | Phase 07.1 | Pending |
+| AUTH-WEB-02 | Phase 07.1 | Complete |
 | AUTH-WEB-03 | Phase 07.1 | Complete |
 
 **Coverage:**
