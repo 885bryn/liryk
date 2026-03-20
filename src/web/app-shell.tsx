@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,12 @@ import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 import { createThemeStore, hydrateTheme } from "./theme/theme-store";
 import { ThemeToggle } from "./theme/theme-toggle";
 import { getEnvAlignmentDiagnostics } from "./auth/env-alignment";
+import { fetchWebNowPlaying, type WebNowPlaying } from "./auth/now-playing";
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
+import { createLrclibClient } from "@/infra/providers/lrclib-client";
+import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
+import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
+import type { ResolvedLyrics } from "@/core/lyrics/types";
 
 type AppShellProps = {
   isConnected?: boolean;
@@ -40,18 +45,12 @@ const baseSyncState: LiveSyncUiState = {
   retryInFlight: false,
 };
 
-function buildDefaultLyricsPanel(): LiveLyricsPanelModel {
-  return createLiveLyricsPanelBuilder().build({
-    syncState: baseSyncState,
-    lines: [],
-    showReturnToLive: false,
-  });
-}
-
 export function AppShell(input?: AppShellProps) {
   const themeStore = useRef(createThemeStore({ mode: hydrateTheme() }));
   const [themeMode, setThemeMode] = useState(themeStore.current.getMode());
   const webAuth = useWebAuthRuntime();
+  const [nowPlaying, setNowPlaying] = useState<WebNowPlaying | null>(null);
+  const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
 
   const onToggleTheme = () => {
     setThemeMode(themeStore.current.toggle());
@@ -76,7 +75,47 @@ export function AppShell(input?: AppShellProps) {
   const accountMenu = accountMenuState
     ? buildAccountMenu(accountMenuState, input.onDisconnect ?? (async () => undefined))
     : null;
-  const lyricsPanel = input?.lyricsPanelOverride ?? buildDefaultLyricsPanel();
+  const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
+  const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
+  const activeSyncedIndex =
+    nowPlaying && syncedLines.length > 0
+      ? Math.max(
+          0,
+          syncedLines.reduce((best, line, index) => {
+            if ((line.startMs ?? 0) <= nowPlaying.progressMs) {
+              return index;
+            }
+            return best;
+          }, 0),
+        )
+      : null;
+  const nextSyncedIndex =
+    typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length ? activeSyncedIndex + 1 : null;
+
+  const lyricsPanel =
+    input?.lyricsPanelOverride ??
+    createLiveLyricsPanelBuilder().build({
+      syncState: {
+        ...baseSyncState,
+        playbackState: nowPlaying ? (nowPlaying.isPlaying ? "playing" : "paused") : "idle",
+        trackId: nowPlaying?.trackId ?? null,
+        activeLineIndex: resolvedLyrics?.renderMode === "synced" ? activeSyncedIndex : null,
+        nextLineIndex: resolvedLyrics?.renderMode === "synced" ? nextSyncedIndex : null,
+        lyricsSourceState: resolvedLyrics?.sourceState ?? "loading",
+        lyricsRenderMode: resolvedLyrics?.renderMode ?? null,
+        resolvedLyrics: resolvedLyrics?.lines ?? [],
+        statusLine:
+          resolvedLyrics?.sourceState === "not-found"
+            ? "Lyrics not found"
+            : resolvedLyrics
+              ? "Lyrics ready"
+              : "Resolving lyrics...",
+      },
+      lines: lyricTexts,
+      trackTitle: nowPlaying?.title,
+      trackArtist: nowPlaying?.artist,
+      showReturnToLive: false,
+    });
   const envDiagnostics = (() => {
     try {
       return getEnvAlignmentDiagnostics({
@@ -93,6 +132,80 @@ export function AppShell(input?: AppShellProps) {
       : lyricsPanel.stateRailVariant === "idle"
         ? "text-muted-foreground"
         : "text-foreground";
+
+  useEffect(() => {
+    if (!webAuth.sessionAccessToken) {
+      setNowPlaying(null);
+      return;
+    }
+
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const poll = async () => {
+      try {
+        const current = await fetchWebNowPlaying(webAuth.sessionAccessToken);
+        if (active) {
+          setNowPlaying(current);
+        }
+      } catch {
+        if (active) {
+          setNowPlaying(null);
+        }
+      } finally {
+        if (active) {
+          timer = setTimeout(() => {
+            void poll();
+          }, 1000);
+        }
+      }
+    };
+
+    void poll();
+
+    return () => {
+      active = false;
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [webAuth.sessionAccessToken]);
+
+  useEffect(() => {
+    if (!webAuth.sessionAccessToken || !nowPlaying?.trackId) {
+      setResolvedLyrics(null);
+      return;
+    }
+
+    let active = true;
+    const lrclib = createLrclibClient({ fetchFn: fetch });
+
+    const resolve = async () => {
+      try {
+        const resolved = await resolveLyricsForTrack(
+          {
+            trackId: nowPlaying.trackId,
+            title: nowPlaying.title,
+            artist: nowPlaying.artist,
+          },
+          lrclib,
+        );
+        if (active) {
+          setResolvedLyrics(resolved);
+        }
+      } catch {
+        if (active) {
+          setResolvedLyrics({ sourceState: "not-found", renderMode: "plain-static", lines: [] });
+        }
+      }
+    };
+
+    void resolve();
+
+    return () => {
+      active = false;
+    };
+  }, [webAuth.sessionAccessToken, nowPlaying?.trackId, nowPlaying?.title, nowPlaying?.artist]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
@@ -196,8 +309,12 @@ export function AppShell(input?: AppShellProps) {
 
             {webAuth.phase !== "checking" && webAuth.uiState.status === "disconnected" ? (
               <>
-                <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.uiState.onboardingExplainer}</p>
-                <Button type="button" onClick={() => void webAuth.onConnect()}>
+                <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.statusCopy}</p>
+                <Button
+                  type="button"
+                  onClick={() => void webAuth.onConnect()}
+                  disabled={webAuth.statusCopy.startsWith("Spotify auth setup issue:")}
+                >
                   Connect Spotify
                 </Button>
               </>
@@ -205,7 +322,7 @@ export function AppShell(input?: AppShellProps) {
 
             {webAuth.phase !== "checking" && webAuth.uiState.status === "recoverable_error" ? (
               <>
-                <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.uiState.userFacingReason}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{webAuth.statusCopy}</p>
                 <Button type="button" onClick={() => void webAuth.onConnect()} disabled={!webAuth.uiState.retryEligible}>
                   Reconnect Spotify
                 </Button>
