@@ -9,6 +9,28 @@ import { AuthStore } from "../state/auth/auth-store";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 import { AppShell } from "./app-shell";
 
+function panelOverride(overrides: Record<string, unknown> = {}) {
+  return {
+    status: "syncing",
+    statusLine: "Live sync active.",
+    sourceState: "synced",
+    renderMode: "synced",
+    showPrimaryAction: false,
+    showLyrics: true,
+    showReturnToLive: false,
+    title: "Live Lyrics",
+    trackLabel: "Track A",
+    nowPlayingTitle: "Track A",
+    nowPlayingArtist: "Artist A",
+    isNowPlayingKnown: true,
+    stateRailMessage: "Live sync active.",
+    stateRailVariant: "info",
+    activeLineText: "line a",
+    nextLineText: "line b",
+    ...overrides,
+  };
+}
+
 describe("AppShell", () => {
   it("renders header and both pane placeholders", () => {
     render(<AppShell />);
@@ -112,5 +134,88 @@ describe("AppShell", () => {
 
     expect(connectionModel.ctaLabel).toBe("Connect Spotify");
     expect(lyricsModel.title).toBe("Live Lyrics");
+  });
+
+  it("renders now-playing metadata in the lyrics pane", () => {
+    render(
+      <AppShell
+        lyricsPanelOverride={panelOverride({
+          nowPlayingTitle: "Track Z",
+          nowPlayingArtist: "Artist Z",
+        })}
+      />,
+    );
+
+    const nowPlaying = screen.getByTestId("lyrics-now-playing");
+    expect(nowPlaying).toBeTruthy();
+    expect(within(nowPlaying).getByText("Track Z")).toBeTruthy();
+    expect(within(nowPlaying).getByText("Artist Z")).toBeTruthy();
+  });
+
+  it("renders distinct syncing, empty, and not-found states", () => {
+    const { rerender } = render(
+      <AppShell
+        lyricsPanelOverride={panelOverride({
+          status: "syncing",
+          sourceState: "loading",
+          stateRailMessage: "Syncing latest playback position...",
+          stateRailVariant: "info",
+          showLyrics: false,
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("lyrics-status-rail").textContent).toContain("Syncing latest playback position...");
+
+    rerender(
+      <AppShell
+        lyricsPanelOverride={panelOverride({
+          status: "no-track",
+          sourceState: "loading",
+          stateRailMessage: "Waiting for an active Spotify track...",
+          stateRailVariant: "idle",
+          showLyrics: false,
+        })}
+      />,
+    );
+
+    expect(screen.getByTestId("lyrics-empty-state").textContent).toContain("Waiting for an active Spotify track");
+
+    rerender(
+      <AppShell
+        lyricsPanelOverride={panelOverride({
+          sourceState: "not-found",
+          stateRailMessage: "Lyrics not found",
+          stateRailVariant: "warning",
+          showLyrics: false,
+          showPrimaryAction: true,
+          primaryActionLabel: "Retry",
+        })}
+      />,
+    );
+
+    const notFoundState = screen.getByTestId("lyrics-not-found-state");
+    expect(notFoundState.textContent).toContain("Lyrics not found");
+    expect(within(notFoundState).getByRole("button", { name: "Retry" })).toBeTruthy();
+  });
+
+  it("keeps one stable lyrics status rail container across state variants", () => {
+    const { rerender } = render(<AppShell lyricsPanelOverride={panelOverride({ stateRailVariant: "info" })} />);
+
+    expect(screen.getAllByTestId("lyrics-status-rail")).toHaveLength(1);
+
+    rerender(<AppShell lyricsPanelOverride={panelOverride({ stateRailVariant: "idle", showLyrics: false })} />);
+    expect(screen.getAllByTestId("lyrics-status-rail")).toHaveLength(1);
+
+    rerender(
+      <AppShell
+        lyricsPanelOverride={panelOverride({
+          sourceState: "not-found",
+          stateRailVariant: "warning",
+          showLyrics: false,
+        })}
+      />,
+    );
+    expect(screen.getAllByTestId("lyrics-status-rail")).toHaveLength(1);
   });
 });
