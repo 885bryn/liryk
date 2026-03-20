@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: completed
-stopped_at: Completed 07-03-PLAN.md
-last_updated: "2026-03-20T20:38:34.921Z"
-last_activity: 2026-03-20 - Completed 07-02-PLAN.md
+status: in_progress
+stopped_at: Completed 07.1-01-PLAN.md
+last_updated: "2026-03-20T21:14:17.758Z"
+last_activity: 2026-03-20 - Completed 07.1-01-PLAN.md
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 12
+  completed_plans: 10
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: `.planning/PROJECT.md` (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 07 - Web Lyrics Experience Parity and State Polish
-Plan: Complete (03 of 03 complete)
-Status: Phase 07 complete
-Last activity: 2026-03-20 - Completed 07-03-PLAN.md
+Phase: 07.1 - Web auth flow wiring and verification path
+Plan: 01 of 03 complete
+Status: In progress
+Last activity: 2026-03-20 - Completed 07.1-01-PLAN.md
 
 ## Accumulated Context
 
@@ -73,6 +73,12 @@ Recent decisions affecting current work:
 - [Phase 07]: Added AppShell lyricsPanelOverride to inject deterministic panel states for shell-level parity tests.
 - [Phase 07]: Guarded phase-07 visual parity with marker and token class assertions instead of snapshots.
 - [Phase 07]: Published a dedicated 07 visual checkpoint mapping WEB-03 and UI-04 to automated and manual evidence.
+- [Phase 07.1]: Treat callback mode as code+state pair or error only to avoid partial-query false positives.
+- [Phase 07.1]: Always remove only code/state/error keys after callback completion to preserve unrelated query context.
+
+### Roadmap Evolution
+
+- Phase 07.1 inserted after Phase 7: Wire end-to-end web auth flow (connect redirect callback token restore), verify localhost env/redirect alignment, and add a real connection-to-now-playing verification path (URGENT)
 
 ### Pending Todos
 
@@ -84,8 +90,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T20:38:34.919Z
-Stopped at: Completed 07-03-PLAN.md
+Last session: 2026-03-20T21:14:17.756Z
+Stopped at: Completed 07.1-01-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -101,3 +107,4 @@ Resume file: None
 | Phase 07 P01 | 120 | 2 tasks | 3 files |
 | Phase 07 P02 | 120 | 2 tasks | 2 files |
 | Phase 07 P03 | 120 | 2 tasks | 2 files |
+| Phase 07.1 P01 | 160 | 2 tasks | 4 files |
