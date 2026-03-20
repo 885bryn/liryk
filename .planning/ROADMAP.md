@@ -61,7 +61,13 @@ Plans:
   3. User sees "Lyrics not found" when no usable lyrics source succeeds for the current track.
   4. User can read rendered lyrics in supported UTF-8 scripts, including CJK, Arabic, and Korean text.
   5. User sees the milestone UI built using the project's existing shadcn/ui component system.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 03-01-PLAN.md - Core lyric contracts, Unicode-safe normalization, and synced/plain line preparation
+- [ ] 03-02-PLAN.md - LRCLIB provider adapter and deterministic lyric candidate resolution
+- [ ] 03-03-PLAN.md - Runtime/store wiring for track-session lyric resolution, retry, and not-found states
+- [ ] 03-04-PLAN.md - Presenter, panel, and viewport updates for fallback UX and multilingual rendering
 
 ### Phase 4: Cache Freshness and Repeat-Load Performance
 **Goal**: Users get faster repeated lyric loads while still receiving updated results when cached data is stale.
