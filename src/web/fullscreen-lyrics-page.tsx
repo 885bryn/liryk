@@ -145,25 +145,22 @@ export function FullscreenLyricsPage() {
   }, [webAuth.sessionAccessToken, nowPlaying?.trackId, nowPlaying?.title, nowPlaying?.artist]);
 
   return (
-    <div data-testid="fullscreen-lyrics-layout" className="min-h-screen w-full bg-background text-foreground">
+    <div data-testid="fullscreen-lyrics-layout" className="min-h-screen w-full bg-black text-white">
       <main
         data-testid="fullscreen-lyrics-column"
         className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-20 text-left sm:px-8 sm:py-24 lg:py-28"
       >
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">Now playing</p>
         <p className="text-3xl font-semibold leading-tight sm:text-4xl">{lyricsPanel.nowPlayingTitle}</p>
-        <p className="text-lg text-muted-foreground sm:text-xl">{lyricsPanel.nowPlayingArtist}</p>
-
-        <p className="text-base text-muted-foreground sm:text-lg">{lyricsPanel.stateRailMessage}</p>
+        <p className="text-lg text-white/70 sm:text-xl">{lyricsPanel.nowPlayingArtist}</p>
 
         {lyricsPanel.sourceState === "not-found" ? (
-          <p className="text-lg text-muted-foreground">Lyrics not found</p>
+          <p className="text-lg text-white/70">Lyrics not found</p>
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
-          <p className="text-lg text-muted-foreground">Lyrics will appear once a track is playing.</p>
+          <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
         ) : (
           <div className="space-y-3 text-2xl leading-relaxed sm:text-3xl">
-            {lyricsPanel.activeLineText ? <p className="font-semibold text-foreground">{lyricsPanel.activeLineText}</p> : null}
-            {lyricsPanel.nextLineText ? <p className="text-muted-foreground">{lyricsPanel.nextLineText}</p> : null}
+            {lyricsPanel.activeLineText ? <p className="font-semibold text-white">{lyricsPanel.activeLineText}</p> : null}
+            {lyricsPanel.nextLineText ? <p className="text-white/70">{lyricsPanel.nextLineText}</p> : null}
           </div>
         )}
       </main>
