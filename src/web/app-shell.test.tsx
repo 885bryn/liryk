@@ -1,13 +1,38 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildConnectSpotifyCard } from "../ui/connection/connect-spotify-card";
 import { createLiveLyricsPanelBuilder } from "../ui/lyrics/live-lyrics-panel";
+import type { UiAuthState } from "../state/auth/auth-store";
 import { AuthStore } from "../state/auth/auth-store";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 import { AppShell } from "./app-shell";
+
+type HookModel = {
+  phase: "checking" | "ready" | "busy";
+  statusCopy: string;
+  uiState: UiAuthState;
+  onConnect: () => Promise<void>;
+};
+
+const disconnectedState: UiAuthState = {
+  status: "disconnected",
+  onboardingExplainer: "Connect Spotify once to keep live lyrics synced with your current track.",
+  permissionSummary: "We only read playback state and never control playback.",
+};
+
+let hookModel: HookModel = {
+  phase: "checking",
+  statusCopy: "Checking Spotify connection...",
+  uiState: disconnectedState,
+  onConnect: async () => undefined,
+};
+
+vi.mock("./use-web-auth-runtime", () => ({
+  useWebAuthRuntime: () => hookModel,
+}));
 
 function panelOverride(overrides: Record<string, unknown> = {}) {
   return {
@@ -32,12 +57,21 @@ function panelOverride(overrides: Record<string, unknown> = {}) {
 }
 
 describe("AppShell", () => {
+  beforeEach(() => {
+    hookModel = {
+      phase: "checking",
+      statusCopy: "Checking Spotify connection...",
+      uiState: disconnectedState,
+      onConnect: async () => undefined,
+    };
+  });
+
   it("renders header and both pane placeholders", () => {
     render(<AppShell />);
 
     expect(screen.getByRole("heading", { name: "Liryk" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Connection" })).toBeTruthy();
-    expect(screen.getByText("Spotify is not connected yet.")).toBeTruthy();
+    expect(screen.getByText("Checking Spotify connection...")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Lyrics" })).toBeTruthy();
     expect(screen.getByText("Lyrics will appear once a track is playing.")).toBeTruthy();
   });
@@ -70,7 +104,7 @@ describe("AppShell", () => {
     expect(connectionPane.className).toContain("lg:col-span-2");
     expect(lyricsPane.compareDocumentPosition(connectionPane) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
 
-    expect(screen.getAllByText("Spotify is not connected yet.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Checking Spotify connection...").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Lyrics will appear once a track is playing.").length).toBeGreaterThan(0);
   });
 
@@ -97,8 +131,8 @@ describe("AppShell", () => {
 
     expect(screen.getAllByText("Lyrics will appear once a track is playing.")[0].className).toContain("text-muted-foreground");
     expect(screen.getAllByText("Lyrics will appear once a track is playing.")[0].className).toContain("leading-relaxed");
-    expect(screen.getAllByText("Spotify is not connected yet.")[0].className).toContain("text-muted-foreground");
-    expect(screen.getAllByText("Spotify is not connected yet.")[0].className).toContain("leading-relaxed");
+    expect(screen.getAllByText("Checking Spotify connection...")[0].className).toContain("text-muted-foreground");
+    expect(screen.getAllByText("Checking Spotify connection...")[0].className).toContain("leading-relaxed");
   });
 
   it("keeps web entry files free of desktop-only module imports", async () => {
@@ -235,5 +269,47 @@ describe("AppShell", () => {
     shell = screen.getAllByTestId("shell-layout").at(-1);
     expect(shell).toBeTruthy();
     expect(within(shell as HTMLElement).getAllByTestId("lyrics-status-rail")).toHaveLength(1);
+  });
+
+  it("shows reconnect CTA with reason-aware helper text for recoverable auth state", () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Network connection was interrupted. Check your connection and retry.",
+      uiState: {
+        status: "recoverable_error",
+        reason: "network",
+        userFacingReason: "Network connection was interrupted. Check your connection and retry.",
+        retryEligible: true,
+        troubleshootingSuggested: false,
+        attempts: 1,
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+    };
+
+    render(<AppShell />);
+
+    expect(screen.getByRole("button", { name: "Reconnect Spotify" })).toBeTruthy();
+    expect(screen.getByText("Network connection was interrupted. Check your connection and retry.")).toBeTruthy();
+  });
+
+  it("keeps shell visible and disables connect action while authorizing", () => {
+    hookModel = {
+      phase: "busy",
+      statusCopy: "Authorizing Spotify connection...",
+      uiState: {
+        status: "authorizing",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+    };
+
+    render(<AppShell />);
+
+    expect(screen.getByRole("heading", { name: "Liryk" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Authorizing Spotify connection..." })).toBeDisabled();
+    expect(screen.getByText("Authorizing Spotify connection...")).toBeTruthy();
   });
 });
