@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Spotify Connection Foundation** - Users securely connect Spotify and maintain a working authenticated session.
 - [x] **Phase 2: Live Playback Sync Engine** - Users get reliable, real-time lyric line progression tied to playback behavior. (completed 2026-03-20)
-- [ ] **Phase 3: Lyrics Resolution and Rendered Experience** - Users receive the best available lyrics with clear fallback states and multilingual rendering.
+- [x] **Phase 3: Lyrics Resolution and Rendered Experience** - Users receive the best available lyrics with clear fallback states and multilingual rendering. (completed 2026-03-20)
 - [ ] **Phase 4: Cache Freshness and Repeat-Load Performance** - Users get fast repeat loads without stale or invalid lyric results.
 
 ## Phase Details
@@ -64,10 +64,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md - Core lyric contracts, Unicode-safe normalization, and synced/plain line preparation
-- [ ] 03-02-PLAN.md - LRCLIB provider adapter and deterministic lyric candidate resolution
-- [ ] 03-03-PLAN.md - Runtime/store wiring for track-session lyric resolution, retry, and not-found states
-- [ ] 03-04-PLAN.md - Presenter, panel, and viewport updates for fallback UX and multilingual rendering
+- [x] 03-01-PLAN.md - Core lyric contracts, Unicode-safe normalization, and synced/plain line preparation
+- [x] 03-02-PLAN.md - LRCLIB provider adapter and deterministic lyric candidate resolution
+- [x] 03-03-PLAN.md - Runtime/store wiring for track-session lyric resolution, retry, and not-found states
+- [x] 03-04-PLAN.md - Presenter, panel, and viewport updates for fallback UX and multilingual rendering
 
 ### Phase 4: Cache Freshness and Repeat-Load Performance
 **Goal**: Users get faster repeated lyric loads while still receiving updated results when cached data is stale.
@@ -87,5 +87,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
 | 2. Live Playback Sync Engine | 3/3 | Complete | 2026-03-20 |
-| 3. Lyrics Resolution and Rendered Experience | 0/TBD | Ready to plan | - |
+| 3. Lyrics Resolution and Rendered Experience | 4/4 | Complete   | 2026-03-20 |
 | 4. Cache Freshness and Repeat-Load Performance | 0/TBD | Not started | - |

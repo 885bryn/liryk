@@ -20,10 +20,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Lyrics Retrieval & Matching
 
-- [ ] **LYR-01**: User gets lyrics fetched from internet sources for the active Spotify track
-- [ ] **LYR-02**: User gets the best-matching lyric version using track metadata (title, artist, album, duration)
-- [ ] **LYR-03**: User gets timestamped lyrics when available, with plain-lyrics fallback when timestamps are unavailable
-- [ ] **LYR-04**: User sees "Lyrics not found" when no usable lyrics are available
+- [x] **LYR-01**: User gets lyrics fetched from internet sources for the active Spotify track
+- [x] **LYR-02**: User gets the best-matching lyric version using track metadata (title, artist, album, duration)
+- [x] **LYR-03**: User gets timestamped lyrics when available, with plain-lyrics fallback when timestamps are unavailable
+- [x] **LYR-04**: User sees "Lyrics not found" when no usable lyrics are available
 
 ### Live Sync Experience
 
@@ -32,7 +32,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Internationalization & Rendering
 
-- [ ] **I18N-01**: User can read lyrics in any supported UTF-8 language, including CJK, Arabic, and Korean scripts
+- [x] **I18N-01**: User can read lyrics in any supported UTF-8 language, including CJK, Arabic, and Korean scripts
 
 ### Cache & Performance
 
@@ -41,7 +41,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI & Implementation Constraints
 
-- [ ] **UI-01**: User sees the milestone UI implemented with the project's existing shadcn/ui components
+- [x] **UI-01**: User sees the milestone UI implemented with the project's existing shadcn/ui components
 
 ### Security & Configuration
 
@@ -80,16 +80,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLAY-01 | Phase 2 | Complete |
 | PLAY-02 | Phase 2 | Complete |
 | PLAY-03 | Phase 2 | Complete |
-| LYR-01 | Phase 3 | Pending |
-| LYR-02 | Phase 3 | Pending |
-| LYR-03 | Phase 3 | Pending |
-| LYR-04 | Phase 3 | Pending |
+| LYR-01 | Phase 3 | Complete |
+| LYR-02 | Phase 3 | Complete |
+| LYR-03 | Phase 3 | Complete |
+| LYR-04 | Phase 3 | Complete |
 | SYNC-01 | Phase 2 | Complete |
 | SYNC-02 | Phase 2 | Complete |
-| I18N-01 | Phase 3 | Pending |
+| I18N-01 | Phase 3 | Complete |
 | CACH-01 | Phase 4 | Pending |
 | CACH-02 | Phase 4 | Pending |
-| UI-01 | Phase 3 | Pending |
+| UI-01 | Phase 3 | Complete |
 | SECU-01 | Phase 1 | Complete |
 
 **Coverage:**

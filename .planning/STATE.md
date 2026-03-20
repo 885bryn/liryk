@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-20T06:38:02.524Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-03-20T07:41:54.096Z"
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 3
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,28 +19,28 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-19)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** Phase 03 — lyrics-resolution-and-rendered-experience
+**Current focus:** Phase 04 — cache-freshness-and-repeat-load-performance
 
 ## Current Position
 
-Phase: 03 (lyrics-resolution-and-rendered-experience) — READY FOR PLANNING
+Phase: 04 (cache-freshness-and-repeat-load-performance) — READY FOR PLANNING
 Plan: 0 of TBD
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
-- Average duration: 4.8 min
-- Total execution time: 0.3 hours
+- Total plans completed: 11
+- Average duration: 7.3 min
+- Total execution time: 1.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Spotify Connection Foundation | 4 | 19 min | 4.8 min |
-| 2. Live Playback Sync Engine | 0 | 0 min | 0 min |
-| 3. Lyrics Resolution and Rendered Experience | 0 | 0 min | 0 min |
+| 2. Live Playback Sync Engine | 3 | 20 min | 6.7 min |
+| 3. Lyrics Resolution and Rendered Experience | 4 | 41 min | 10.3 min |
 | 4. Cache Freshness and Repeat-Load Performance | 0 | 0 min | 0 min |
 
 **Recent Trend:**
@@ -51,6 +51,10 @@ Plan: 0 of TBD
 | Phase 02 P01 | 6 min | 2 tasks | 6 files |
 | Phase 02 P02 | 8 min | 3 tasks | 8 files |
 | Phase 02 P03 | 6 min | 2 tasks | 8 files |
+| Phase 03 P01 | 12 | 2 tasks | 7 files |
+| Phase 03 P02 | 10 | 2 tasks | 6 files |
+| Phase 03 P03 | 11 | 2 tasks | 6 files |
+| Phase 03 P04 | 8 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -70,6 +74,10 @@ Recent decisions affecting current work:
 - [Phase 01-spotify-connection-foundation]: Treat persisted auth tokens as secure-secret-store data only and clear malformed entries eagerly.
 - [Phase 01-spotify-connection-foundation]: Use bounded startup refresh retries with visible recoverable status before reconnect fallback.
 - [Phase 01-spotify-connection-foundation]: Capture callback token exchange inside runtime wiring so persistence remains outside renderer-facing auth lifecycle state.
+- [Phase 03]: Use a canonical resolved lyric line contract across synced and plain-static modes to avoid downstream shape drift.
+- [Phase 03]: Score candidates with strict normalized title+artist gates before synced-first tie-break to prevent plausible wrong matches.
+- [Phase 03]: Guard lyrics resolution async completions with a session counter so stale requests cannot overwrite new tracks.
+- [Phase 03]: Render plain fallback in explicit plain-static mode with no active highlight and per-line direction/display metadata.
 
 ### Pending Todos
 
@@ -81,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T06:38:02.519Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-lyrics-resolution-and-rendered-experience/03-CONTEXT.md
+Last session: 2026-03-20T07:41:54.094Z
+Stopped at: Completed 03-04-PLAN.md
+Resume file: None
