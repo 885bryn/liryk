@@ -39,7 +39,15 @@ describe("AppShell", () => {
 
     const shell = screen.getAllByTestId("shell-layout")[0];
     expect(shell.className).toContain("grid-cols-1");
-    expect(shell.className).toContain("lg:grid-cols-2");
+    expect(shell.className).toContain("lg:grid-cols-5");
+
+    const lyricsPane = screen.getByLabelText("Lyrics pane");
+    const connectionPane = screen.getByLabelText("Connection pane");
+
+    expect(lyricsPane.className).toContain("lg:col-span-3");
+    expect(connectionPane.className).toContain("lg:col-span-2");
+    expect(lyricsPane.compareDocumentPosition(connectionPane) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+
     expect(screen.getAllByText("Spotify is not connected yet.").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Lyrics will appear once a track is playing.").length).toBeGreaterThan(0);
   });
