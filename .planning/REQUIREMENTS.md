@@ -10,13 +10,13 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Fullscreen Experience
 
-- [ ] **FULL-01**: User can open a dedicated fullscreen lyrics page that occupies the full viewport without utility-shell clutter.
+- [x] **FULL-01**: User can open a dedicated fullscreen lyrics page that occupies the full viewport without utility-shell clutter.
 - [ ] **FULL-02**: User sees the lyrics hero column centered on the page with left-aligned lyric text and generous vertical breathing room.
 
 ### Visual Direction
 
-- [ ] **VIS-01**: User sees an immersive deep warm red/burgundy atmospheric background with subtle vignette treatment.
-- [ ] **VIS-02**: User sees large, bold, typographic lyric rendering where the active line is clearly dominant and nearby lines have depth-based emphasis.
+- [ ] **VIS-01**: User sees a pure black fullscreen background in immersive mode.
+- [ ] **VIS-02**: User sees white lyric text hierarchy where the active line is brightest and surrounding lines remain readable with lower emphasis.
 - [ ] **VIS-03**: User does not see card-heavy chrome, bordered utility panels, or distracting non-lyric UI in fullscreen mode.
 
 ### Karaoke Motion
@@ -58,7 +58,7 @@ Explicitly excluded for v1.2.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FULL-01 | Phase 9 | Pending |
+| FULL-01 | Phase 9 | Complete |
 | FULL-02 | Phase 9 | Pending |
 | VIS-01 | Phase 10 | Pending |
 | VIS-02 | Phase 10 | Pending |

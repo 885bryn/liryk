@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: immersive-fullscreen-lyrics-mode
+milestone: v1.1
+milestone_name: milestone
 current_plan: 0
-status: defining_requirements
-stopped_at: Milestone v1.2 started
-last_updated: "2026-03-20T23:11:28.375Z"
+status: Defining requirements
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-20T23:37:10.579Z"
 last_activity: 2026-03-20
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -85,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Kept Chinese display normalization deterministic with explicit per-character mappings and mixed-script preservation.
 - [Phase 08]: Normalized Chinese display text at synced/plain line construction boundaries while preserving source text for traceability.
 - [Phase 08]: Added shell-level fallback normalization plus a CHN verification runbook to guarantee final user-visible Simplified output.
+- [Phase 09]: Kept fullscreen entry as a dedicated router branch while preserving shell fallback for unknown paths.
+- [Phase 09]: Locked route exclusivity with marker-based tests so shell and fullscreen never render together.
 
 ### Roadmap Evolution
 
@@ -100,8 +102,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:11:28.373Z
-Stopped at: Milestone v1.2 started
+Last session: 2026-03-20T23:37:10.577Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -123,3 +125,4 @@ Resume file: None
 | Phase 08 P01 | 166 | 2 tasks | 2 files |
 | Phase 08 P02 | 123 | 2 tasks | 4 files |
 | Phase 08 P03 | 200 | 2 tasks | 3 files |
+| Phase 09 P01 | 106 | 2 tasks | 3 files |

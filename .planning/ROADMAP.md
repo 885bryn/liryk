@@ -27,7 +27,7 @@ This milestone follows completed v1.1 delivery and introduces a dedicated immers
 2. User sees centered column layout with left-aligned lyric text and generous top/bottom spacing.
 3. User sees Chinese lyrics rendered in Simplified Chinese while non-Chinese text remains intact.
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 09-01-PLAN.md - Add route-entry contract and app bootstrap wiring for dedicated `/fullscreen` path.
@@ -69,6 +69,5 @@ Phases execute in numeric order: 9 -> 10 -> 11
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 9. Fullscreen Route and Content Foundation | FULL-01, FULL-02, CHN-03, CHN-04 | Not started |
-| 10. Cinematic Visual Language and Typography | VIS-01, VIS-02, VIS-03 | Not started |
+| 9. Fullscreen Route and Content Foundation | 1/3 | In Progress|  | 10. Cinematic Visual Language and Typography | VIS-01, VIS-02, VIS-03 | Not started |
 | 11. Karaoke Motion and Minimal Overlay Polish | MOT-01, MOT-02, MOT-03, META-01 | Not started |
