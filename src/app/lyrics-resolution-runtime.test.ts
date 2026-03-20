@@ -393,6 +393,7 @@ describe("createLyricsResolutionRuntime", () => {
       snapshot: { trackId: "track-2", deviceId: "d", isPlaying: true, progressMs: 0, capturedAtMs: 2 },
       transition: "track_changed",
     });
+    await flushRuntimeWork();
 
     deferred[0]?.(plainResult("stale-refresh"));
     deferred[1]?.(plainResult("track-2"));

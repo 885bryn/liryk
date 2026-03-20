@@ -121,6 +121,10 @@ export function createLyricsResolutionRuntime(
           void resolveAndProjectFresh(metadata, { retry: false }, session);
           return;
         }
+
+        if (cacheState === "invalid") {
+          await dependencies.cache.delete(metadata.trackId);
+        }
       }
     }
 
