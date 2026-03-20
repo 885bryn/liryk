@@ -8,15 +8,16 @@ Liryk is a browser-based Spotify companion that shows synced lyrics for the curr
 
 When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
 
-## Current Milestone: v1.1 Web App Foundation and Theming
+## Current Milestone: v1.2 Immersive Fullscreen Lyrics Mode
 
-**Goal:** Convert the experience into a polished web app with responsive layout, light/dark themes, and shadcn/ui-driven interface consistency.
+**Goal:** Deliver a dedicated fullscreen lyrics page that feels cinematic, minimal, and music-first with smooth karaoke-style progression and Simplified Chinese rendering.
 
 **Target features:**
-- Browser-accessible app shell that replaces desktop-only delivery assumptions
-- Aesthetic, responsive lyrics interface with intentional typography and visual hierarchy
-- Light and dark theme support with user toggle and persisted preference
-- Explicit shadcn/ui setup checkpoint during implementation (install immediately after web scaffold and Tailwind base setup)
+- Full-viewport immersive lyrics mode with minimal chrome and deep warm burgundy atmosphere
+- Large bold typography-led layout with centered column and left-aligned lyric flow
+- Smooth auto-scroll progression with active-line emphasis near vertical center
+- Subtle metadata/progress affordances that never compete with lyric content
+- Chinese lyric display normalized to Simplified Chinese in this immersive mode
 
 ## Requirements
 
@@ -37,10 +38,11 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 
 ### Active
 
-- [ ] Deliver web app foundation and browser runtime wiring for the existing lyrics experience
-- [ ] Ship light/dark theme system with persistent user preference
-- [ ] Implement milestone UI with shadcn/ui components after explicit install checkpoint
-- [ ] Improve visual polish (layout, typography, spacing, and interaction states) for desktop and mobile web
+- [ ] Add a dedicated immersive fullscreen lyrics page with minimal UI chrome
+- [ ] Implement cinematic visual direction (deep burgundy gradient, vignette, typographic hero layout)
+- [ ] Implement smooth karaoke-style vertical progression with center-focused active line transitions
+- [ ] Keep optional metadata/progress controls subtle and non-distracting
+- [ ] Ensure Chinese lyrics display as Simplified Chinese in immersive mode
 
 ### Out of Scope
 
@@ -67,7 +69,8 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 ## Current State
 
 - Milestone v1.0 complete (Phases 1-4).
-- Milestone v1.1 initialized for web app conversion and theming.
+- Milestone v1.1 complete (Phases 5-8 and inserted Phase 07.1).
+- Milestone v1.2 initialized for immersive fullscreen lyrics experience.
 
 ## Key Decisions
 
@@ -76,6 +79,8 @@ When a Spotify track is playing, the app shows the right lyric line at the right
 | Keep Spotify Web API as playback source during web migration | Preserves validated sync core while changing delivery surface | - Pending |
 | Start v1.1 with light and dark themes in initial build | User requirement and reduces later redesign churn | - Pending |
 | Use shadcn/ui in web milestone and install at implementation kickoff | Maintains component consistency and speeds polished UI delivery | - Pending |
+| Build immersive fullscreen mode as a dedicated page rather than incremental tweaks to the existing shell | Protects focused visual language without compromising utility shell workflows | - Pending |
+| Prioritize typographic lyric hero treatment over panel/card UI in v1.2 | Matches user direction for premium cinematic reading experience | - Pending |
 
 ---
-*Last updated: 2026-03-20 after milestone v1.1 initialization*
+*Last updated: 2026-03-20 after milestone v1.2 initialization*

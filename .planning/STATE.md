@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: milestone
-current_plan: 3
-status: executing
-stopped_at: Completed 08-03-PLAN.md
+milestone: v1.2
+milestone_name: immersive-fullscreen-lyrics-mode
+current_plan: 0
+status: defining_requirements
+stopped_at: Milestone v1.2 started
 last_updated: "2026-03-20T23:11:28.375Z"
 last_activity: 2026-03-20
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-20)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** Milestone v1.1 initialization complete; requirements and roadmap approved
+**Current focus:** Milestone v1.2 kickoff; defining requirements for immersive fullscreen lyrics mode
 
 ## Current Position
 
-Phase: 08 - Live playback and lyrics data flow hardening
-Plan: 01 of 03 complete
-Current Plan: 3
-Total Plans in Phase: 3
-Status: Phase 08 in progress
+Phase: Not started (defining requirements)
+Plan: -
+Current Plan: 0
+Total Plans in Phase: 0
+Status: Defining requirements
 Last Activity: 2026-03-20
 
 ## Accumulated Context
@@ -101,7 +101,7 @@ None currently.
 ## Session Continuity
 
 Last session: 2026-03-20T23:11:28.373Z
-Stopped at: Completed 08-03-PLAN.md
+Stopped at: Milestone v1.2 started
 Resume file: None
 
 ## Performance Metrics
