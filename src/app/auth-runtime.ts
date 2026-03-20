@@ -6,6 +6,7 @@ import {
   getRuntimeSpotifyClient,
   type SpotifyRuntimeAuthClient,
 } from "../infra/spotify/spotify-auth-client";
+import { getAuthEnv } from "../infra/config/env";
 import { AuthStore, type AccountDisplay, type UiAuthState } from "../state/auth/auth-store";
 
 export type RuntimeSession = {
@@ -46,6 +47,7 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
   const spotifyClient = dependencies.spotifyClient ?? getRuntimeSpotifyClient();
   const hasPlayback = dependencies.hasPlayback ?? (() => false);
   const getAccountDisplay = dependencies.getAccountDisplay ?? (() => undefined);
+  const env = getAuthEnv();
 
   let currentSession: RuntimeSession | null = null;
   let lastExchange: SpotifyTokenExchangeResult | null = null;
@@ -129,13 +131,14 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
         refreshAccessToken: async (refreshToken: string) => {
           const refreshed = await spotifyClient.refreshAccessToken({
             refreshToken,
-            clientId: "",
+            clientId: env.spotifyClientId,
           });
           return refreshed;
         },
         applyConnectedSession,
         hasPlayback: hasPlayback(),
         accountDisplay: getAccountDisplay(),
+        now,
       };
 
       return bootstrapAuth(bootstrapDependencies);

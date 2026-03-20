@@ -18,6 +18,10 @@ export type BootstrapAuthDependencies = {
   accountDisplay?: AccountDisplay;
   hasPlayback: boolean;
   onStatus?: (status: string) => void;
+  now?: () => number;
+  wait?: (ms: number) => Promise<void>;
+  maxRefreshAttempts?: number;
+  retryDelayMs?: number;
 };
 
 export async function bootstrapAuth(
@@ -31,5 +35,9 @@ export async function bootstrapAuth(
     accountDisplay: dependencies.accountDisplay,
     hasPlayback: dependencies.hasPlayback,
     onStatus: dependencies.onStatus,
+    now: dependencies.now,
+    wait: dependencies.wait,
+    maxRefreshAttempts: dependencies.maxRefreshAttempts,
+    retryDelayMs: dependencies.retryDelayMs,
   });
 }
