@@ -15,6 +15,7 @@ This roadmap starts after completed Phase 4 work and initializes milestone v1.1 
 - [x] **Phase 5: Web Runtime and Theme Foundation** - Establish browser app shell, install shadcn/ui at kickoff, and enable persistent light/dark theming.
 - [x] **Phase 6: Responsive Layout and Visual System** - Build aesthetically pleasing, responsive composition with robust theme token usage. (completed 2026-03-20)
 - [x] **Phase 7: Web Lyrics Experience Parity and State Polish** - Finish user-facing web states and lyrics-panel behavior parity in the new design. (completed 2026-03-20)
+- [ ] **Phase 8: Live Playback and Lyrics Data Flow Hardening** - Ensure connected users consistently see active now-playing metadata and resolved live lyrics in the web shell.
 
 ## Phase Details
 
@@ -71,16 +72,33 @@ Plans:
 - [x] 07-02-PLAN.md - Integrate state-driven lyrics parity rendering into web shell with explicit state coverage tests.
 - [x] 07-03-PLAN.md - Add visual regression guards and a reproducible Phase 7 visual checkpoint artifact.
 
+### Phase 8: Live Playback and Lyrics Data Flow Hardening
+**Goal**: Connected users reliably see active now-playing track data and lyric lines (or explicit not-found state) while playback is running.
+**Depends on**: Phase 07.1
+**Requirements**: WEB-04, LYR-WEB-01, LYR-WEB-02
+**Success Criteria**:
+1. User with active Spotify playback sees now-playing track metadata populate in the lyrics pane instead of persistent idle/no-track state.
+2. User sees lyrics resolve from real track metadata, including remaster-title variants, with explicit fallback if lyrics are unavailable.
+3. User sees active/next lyric rendering update during playback with stable status messaging.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md - Harden now-playing contract parsing and shell metadata visibility checks.
+- [ ] 08-02-PLAN.md - Wire resilient lyrics-resolution metadata mapping with remaster-variant fallback coverage.
+- [ ] 08-03-PLAN.md - Lock active/next lyric progression behavior and publish phase live playback verification artifact.
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 5 -> 6 -> 7
+Phases execute in numeric order: 5 -> 6 -> 7 -> 07.1 -> 8
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
 | 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Complete |
 | 6. Responsive Layout and Visual System | 3/3 | Complete |
 | 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Complete |
+| 8. Live Playback and Lyrics Data Flow Hardening | WEB-04, LYR-WEB-01, LYR-WEB-02 | Not started |
 
 ### Phase 07.1: Wire end-to-end web auth flow (connect redirect callback token restore), verify localhost env/redirect alignment, and add a real connection-to-now-playing verification path (INSERTED)
 
