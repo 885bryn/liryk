@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
+import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
 import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 import { createLiveLyricsPanelBuilder } from "@/ui/lyrics/live-lyrics-panel";
@@ -30,7 +31,7 @@ export function FullscreenLyricsPage() {
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
 
   const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
-  const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? line.text);
+  const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
   const activeSyncedIndex =
     nowPlaying && syncedLines.length > 0
       ? Math.max(
