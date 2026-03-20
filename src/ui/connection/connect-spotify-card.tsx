@@ -1,4 +1,5 @@
 import type { UiAuthState } from "../../state/auth/auth-store";
+import type { SpotifyCallbackInput } from "../../core/auth/types";
 import { buildPermissionSummary } from "./permission-summary";
 
 export type ConnectSpotifyCardModel = {
@@ -26,5 +27,24 @@ export function buildConnectSpotifyCard(input: {
     showPermissionSummary:
       input.state.status === "disconnected" || input.state.status === "recoverable_error",
     onConnect: input.onConnect,
+  };
+}
+
+type RuntimeConnectApi = {
+  connectSpotify(): Promise<{ authorizeUrl: string }>;
+  completeSpotifyCallback(input: SpotifyCallbackInput): Promise<UiAuthState>;
+};
+
+export function createConnectFlowActions(input: {
+  runtime: RuntimeConnectApi;
+  onAuthorizationUrl?: (url: string) => void;
+}) {
+  return {
+    onConnect: async (): Promise<void> => {
+      const started = await input.runtime.connectSpotify();
+      input.onAuthorizationUrl?.(started.authorizeUrl);
+    },
+    onSpotifyCallback: async (callback: SpotifyCallbackInput): Promise<UiAuthState> =>
+      input.runtime.completeSpotifyCallback(callback),
   };
 }

@@ -1,10 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { createAuthRuntime } from "../../app/auth-runtime";
 import { AuthStore } from "../../state/auth/auth-store";
-import { buildConnectSpotifyCard } from "./connect-spotify-card";
+import { buildConnectSpotifyCard, createConnectFlowActions } from "./connect-spotify-card";
 import { buildConnectedStatus } from "./connected-status";
 import { buildPermissionSummary } from "./permission-summary";
 import { buildRetryCard } from "./retry-card";
+
+vi.mock("../../infra/config/env", () => {
+  return {
+    getAuthEnv: () => ({
+      spotifyClientId: "spotify-client-id",
+      spotifyRedirectUri: "http://127.0.0.1:8888/callback",
+      appBaseUrl: "http://localhost:3000",
+      spotifyAuthScopes: ["user-read-currently-playing", "user-read-playback-state"],
+    }),
+  };
+});
 
 describe("connection flow UI models", () => {
   it("shows first-run connect entry with onboarding and trust messaging", () => {
@@ -76,6 +88,59 @@ describe("connection flow UI models", () => {
     expect(retryCard?.autoRetryStatus).toBe("Auto-retrying in 3s...");
     expect(retryCard?.showRetry).toBe(true);
     expect(retryCard?.isPersistent).toBe(true);
+  });
+
+  it("wires connect action through runtime and transitions to connected waiting state", async () => {
+    const authStore = new AuthStore();
+    const authorizationUrls: string[] = [];
+
+    const runtime = createAuthRuntime({
+      authStore,
+      spotifyClient: {
+        beginAuthorization: vi.fn(() => ({
+          authorizeUrl: "https://accounts.spotify.com/authorize?state=state-abc",
+          state: "state-abc",
+          codeVerifier: "verifier-abc",
+        })),
+        exchangeAuthorizationCode: vi.fn(async () => ({
+          accessToken: "access",
+          refreshToken: "refresh",
+          scope: "user-read-currently-playing user-read-playback-state",
+          expiresInSeconds: 3600,
+        })),
+        refreshAccessToken: vi.fn(async () => ({
+          accessToken: "next-access",
+          refreshToken: "next-refresh",
+          scope: "user-read-currently-playing user-read-playback-state",
+          expiresInSeconds: 3600,
+        })),
+      },
+      tokenStore: {
+        loadTokens: vi.fn(async () => null),
+        saveTokens: vi.fn(async () => undefined),
+        clearTokens: vi.fn(async () => undefined),
+      },
+      now: () => 1000,
+      hasPlayback: () => false,
+      getAccountDisplay: () => ({ displayName: "Avery" }),
+    });
+
+    const actions = createConnectFlowActions({
+      runtime,
+      onAuthorizationUrl: (url) => {
+        authorizationUrls.push(url);
+      },
+    });
+
+    await actions.onConnect();
+    expect(authStore.selectUiState().status).toBe("authorizing");
+    expect(authorizationUrls[0]).toContain("accounts.spotify.com/authorize");
+
+    const callbackState = await actions.onSpotifyCallback({
+      code: "spotify-code",
+      state: "state-abc",
+    });
+    expect(callbackState.status).toBe("connected_waiting_playback");
   });
 
   it("shows troubleshooting branch after repeated failures and dispatches store actions", () => {
