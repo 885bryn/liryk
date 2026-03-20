@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 3
 status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-03-20T23:07:48.174Z"
+stopped_at: Completed 08-03-PLAN.md
+last_updated: "2026-03-20T23:11:28.375Z"
 last_activity: 2026-03-20
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -84,6 +84,7 @@ Recent decisions affecting current work:
 - [Phase 07.1]: Keep a dedicated phase runbook with exact automated commands and manual URL-cleanup checks for reproducible validation.
 - [Phase 08]: Kept Chinese display normalization deterministic with explicit per-character mappings and mixed-script preservation.
 - [Phase 08]: Normalized Chinese display text at synced/plain line construction boundaries while preserving source text for traceability.
+- [Phase 08]: Added shell-level fallback normalization plus a CHN verification runbook to guarantee final user-visible Simplified output.
 
 ### Roadmap Evolution
 
@@ -99,8 +100,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:07:48.172Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-03-20T23:11:28.373Z
+Stopped at: Completed 08-03-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -121,3 +122,4 @@ Resume file: None
 | Phase 07.1 P03 | 158 | 2 tasks | 4 files |
 | Phase 08 P01 | 166 | 2 tasks | 2 files |
 | Phase 08 P02 | 123 | 2 tasks | 4 files |
+| Phase 08 P03 | 200 | 2 tasks | 3 files |
