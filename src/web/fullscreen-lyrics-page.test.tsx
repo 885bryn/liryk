@@ -89,8 +89,9 @@ describe("FullscreenLyricsPage", () => {
     render(<FullscreenLyricsPage />);
 
     expect(screen.queryByTestId("shell-layout")).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Connection" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Liryk" })).toBeNull();
+    expect(screen.queryByText("Connection")).toBeNull();
+    expect(screen.queryByText("Connect Spotify")).toBeNull();
+    expect(screen.queryByText("Liryk")).toBeNull();
   });
 
   it("keeps fullscreen wrapper and column class contracts", () => {
@@ -99,8 +100,11 @@ describe("FullscreenLyricsPage", () => {
     const layout = screen.getByTestId("fullscreen-lyrics-layout");
     expect(layout.className).toContain("min-h-screen");
     expect(layout.className).toContain("w-full");
-    expect(layout.className).toContain("bg-background");
-    expect(layout.className).toContain("text-foreground");
+    expect(layout.className).toContain("bg-black");
+    expect(layout.className).toContain("text-white");
+    expect(layout.className).not.toContain("bg-card");
+    expect(layout.className).not.toContain("ring-border");
+    expect(layout.className).not.toContain("border");
 
     const column = screen.getByTestId("fullscreen-lyrics-column");
     expect(column.className).toContain("mx-auto");
@@ -109,6 +113,9 @@ describe("FullscreenLyricsPage", () => {
     expect(column.className).toContain("py-20");
     expect(column.className).toContain("sm:py-24");
     expect(column.className).toContain("lg:py-28");
+    expect(column.className).not.toContain("bg-card");
+    expect(column.className).not.toContain("ring-border");
+    expect(column.className).not.toContain("border");
   });
 
   it("renders simplified chinese lines while preserving mixed non-chinese content", async () => {
