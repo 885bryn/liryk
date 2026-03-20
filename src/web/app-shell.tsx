@@ -15,6 +15,7 @@ import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 
 import { createThemeStore, hydrateTheme } from "./theme/theme-store";
 import { ThemeToggle } from "./theme/theme-toggle";
+import { getEnvAlignmentDiagnostics } from "./auth/env-alignment";
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
 
 type AppShellProps = {
@@ -76,6 +77,16 @@ export function AppShell(input?: AppShellProps) {
     ? buildAccountMenu(accountMenuState, input.onDisconnect ?? (async () => undefined))
     : null;
   const lyricsPanel = input?.lyricsPanelOverride ?? buildDefaultLyricsPanel();
+  const envDiagnostics = (() => {
+    try {
+      return getEnvAlignmentDiagnostics({
+        currentUrl: new URL(window.location.href),
+        requiredCallbackPath: "/callback",
+      });
+    } catch {
+      return null;
+    }
+  })();
   const statusRailClass =
     lyricsPanel.stateRailVariant === "warning"
       ? "text-amber-600 dark:text-amber-400"
@@ -171,6 +182,14 @@ export function AppShell(input?: AppShellProps) {
             <CardTitle className="text-lg font-medium leading-snug">Connection</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {envDiagnostics?.status === "warning"
+              ? envDiagnostics.messages.map((message) => (
+                  <p key={message} className="text-sm leading-relaxed text-amber-700 dark:text-amber-300">
+                    {message}
+                  </p>
+                ))
+              : null}
+
             {webAuth.phase === "checking" ? (
               <p className="text-sm text-muted-foreground leading-relaxed">Checking Spotify connection...</p>
             ) : null}
