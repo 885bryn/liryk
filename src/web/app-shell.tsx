@@ -88,7 +88,7 @@ export function AppShell(input?: AppShellProps) {
       >
         <Card aria-label="Lyrics pane" className="lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-lg font-medium">Lyrics</CardTitle>
+            <CardTitle className="text-lg font-medium leading-snug">Lyrics</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground leading-relaxed">Lyrics will appear once a track is playing.</p>
@@ -97,7 +97,7 @@ export function AppShell(input?: AppShellProps) {
 
         <Card aria-label="Connection pane" className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg font-medium">Connection</CardTitle>
+            <CardTitle className="text-lg font-medium leading-snug">Connection</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground leading-relaxed">Spotify is not connected yet.</p>
