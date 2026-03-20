@@ -18,12 +18,12 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **THEM-01**: User can switch between light and dark themes from an in-app control.
 - [x] **THEM-02**: User's selected theme persists across page reloads.
-- [ ] **THEM-03**: User sees readable contrast and consistent color tokens across both themes for primary lyric and navigation surfaces.
+- [x] **THEM-03**: User sees readable contrast and consistent color tokens across both themes for primary lyric and navigation surfaces.
 
 ### UI System and Visual Quality
 
 - [x] **UI-02**: User sees milestone UI built with shadcn/ui components in the web app.
-- [ ] **UI-03**: User sees intentionally polished typography, spacing, and hierarchy rather than scaffold-default styling.
+- [x] **UI-03**: User sees intentionally polished typography, spacing, and hierarchy rather than scaffold-default styling.
 - [ ] **UI-04**: User sees distinct interaction states (loading, empty, and lyrics-not-found) presented with cohesive visual treatment.
 
 ## v1.2+ Candidate Requirements
@@ -61,9 +61,9 @@ Explicitly excluded for v1.1.
 | WEB-03 | Phase 7 | Pending |
 | THEM-01 | Phase 5 | Complete |
 | THEM-02 | Phase 5 | Complete |
-| THEM-03 | Phase 6 | Pending |
+| THEM-03 | Phase 6 | Complete |
 | UI-02 | Phase 5 | Complete |
-| UI-03 | Phase 6 | Pending |
+| UI-03 | Phase 6 | Complete |
 | UI-04 | Phase 7 | Pending |
 
 **Coverage:**

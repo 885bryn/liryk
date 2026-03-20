@@ -48,10 +48,10 @@ Plans:
 2. User sees cohesive typography and spacing hierarchy that goes beyond default scaffold styling.
 3. User sees consistent color-token usage and readable contrast in both light and dark themes.
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 06-01-PLAN.md - Refine global theme tokens and typography baseline for readable light/dark surfaces.
+- [x] 06-01-PLAN.md - Refine global theme tokens and typography baseline for readable light/dark surfaces.
 - [ ] 06-02-PLAN.md - Implement responsive shell rhythm (lyrics-first mobile, 40/60 desktop) with hierarchy-focused tests.
 - [ ] 06-03-PLAN.md - Finalize card surface consistency and add explicit visual verification checkpoint artifacts.
 
@@ -72,5 +72,5 @@ Phases execute in numeric order: 5 -> 6 -> 7
 | Phase | Requirements | Status |
 |-------|--------------|--------|
 | 5. Web Runtime and Theme Foundation | WEB-01, THEM-01, THEM-02, UI-02 | Complete |
-| 6. Responsive Layout and Visual System | WEB-02, THEM-03, UI-03 | Pending |
+| 6. Responsive Layout and Visual System | 1/3 | In Progress |
 | 7. Web Lyrics Experience Parity and State Polish | WEB-03, UI-04 | Pending |
