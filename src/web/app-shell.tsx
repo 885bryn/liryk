@@ -48,7 +48,7 @@ export function AppShell(input?: AppShellProps) {
     <div className="min-h-screen bg-background text-foreground transition-colors duration-200">
       <header className="border-b px-4 py-4 sm:px-6">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold">Liryk</h1>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Liryk</h1>
 
           <div className="flex items-center gap-3">
             <ThemeToggle mode={themeMode} onToggle={onToggleTheme} />
@@ -82,22 +82,25 @@ export function AppShell(input?: AppShellProps) {
         </div>
       </header>
 
-      <main data-testid="shell-layout" className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-4 py-6 sm:px-6 lg:grid-cols-5">
+      <main
+        data-testid="shell-layout"
+        className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-4 py-5 sm:gap-5 sm:px-6 sm:py-6 lg:grid-cols-5 lg:gap-6 lg:py-8"
+      >
         <Card aria-label="Lyrics pane" className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Lyrics</CardTitle>
+            <CardTitle className="text-lg font-medium">Lyrics</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Lyrics will appear once a track is playing.</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">Lyrics will appear once a track is playing.</p>
           </CardContent>
         </Card>
 
         <Card aria-label="Connection pane" className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Connection</CardTitle>
+            <CardTitle className="text-lg font-medium">Connection</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Spotify is not connected yet.</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">Spotify is not connected yet.</p>
           </CardContent>
         </Card>
       </main>

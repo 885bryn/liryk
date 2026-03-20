@@ -65,18 +65,18 @@ describe("AppShell", () => {
     expect(shell.className).toContain("sm:py-6");
     expect(shell.className).toContain("lg:py-8");
 
-    expect(screen.getByRole("heading", { name: "Liryk" }).className).toContain("tracking-tight");
-    expect(screen.getByRole("heading", { name: "Liryk" }).className).toContain("sm:text-2xl");
+    expect(screen.getAllByRole("heading", { name: "Liryk" })[0].className).toContain("tracking-tight");
+    expect(screen.getAllByRole("heading", { name: "Liryk" })[0].className).toContain("sm:text-2xl");
 
-    expect(screen.getByRole("heading", { name: "Lyrics" }).className).toContain("text-lg");
-    expect(screen.getByRole("heading", { name: "Lyrics" }).className).toContain("font-medium");
-    expect(screen.getByRole("heading", { name: "Connection" }).className).toContain("text-lg");
-    expect(screen.getByRole("heading", { name: "Connection" }).className).toContain("font-medium");
+    expect(screen.getAllByRole("heading", { name: "Lyrics" })[0].className).toContain("text-lg");
+    expect(screen.getAllByRole("heading", { name: "Lyrics" })[0].className).toContain("font-medium");
+    expect(screen.getAllByRole("heading", { name: "Connection" })[0].className).toContain("text-lg");
+    expect(screen.getAllByRole("heading", { name: "Connection" })[0].className).toContain("font-medium");
 
-    expect(screen.getByText("Lyrics will appear once a track is playing.").className).toContain("text-muted-foreground");
-    expect(screen.getByText("Lyrics will appear once a track is playing.").className).toContain("leading-relaxed");
-    expect(screen.getByText("Spotify is not connected yet.").className).toContain("text-muted-foreground");
-    expect(screen.getByText("Spotify is not connected yet.").className).toContain("leading-relaxed");
+    expect(screen.getAllByText("Lyrics will appear once a track is playing.")[0].className).toContain("text-muted-foreground");
+    expect(screen.getAllByText("Lyrics will appear once a track is playing.")[0].className).toContain("leading-relaxed");
+    expect(screen.getAllByText("Spotify is not connected yet.")[0].className).toContain("text-muted-foreground");
+    expect(screen.getAllByText("Spotify is not connected yet.")[0].className).toContain("leading-relaxed");
   });
 
   it("keeps web entry files free of desktop-only module imports", async () => {
