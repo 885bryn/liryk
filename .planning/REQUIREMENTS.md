@@ -10,8 +10,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Motion Windowing
 
-- [ ] **MOT-04**: User sees the active lyric line remain visually anchored during most of its active interval (no continuous upward drift).
-- [ ] **MOT-05**: User sees lyric track movement begin only in a pre-change transition window near the next line start.
+- [x] **MOT-04**: User sees the active lyric line remain visually anchored during most of its active interval (no continuous upward drift).
+- [x] **MOT-05**: User sees lyric track movement begin only in a pre-change transition window near the next line start.
 - [ ] **MOT-06**: User sees each line change finish in a stable settled resting position with no residual motion.
 
 ### Adaptive Transition Timing
@@ -52,8 +52,8 @@ Explicitly excluded for v1.4.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOT-04 | Phase 15 | Pending |
-| MOT-05 | Phase 15 | Pending |
+| MOT-04 | Phase 15 | Complete |
+| MOT-05 | Phase 15 | Complete |
 | MOT-06 | Phase 16 | Pending |
 | TRN-01 | Phase 15 | Complete |
 | TRN-02 | Phase 16 | Pending |

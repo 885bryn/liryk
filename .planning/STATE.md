@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-21T05:19:33.005Z"
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-21T05:22:41.529Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -63,6 +63,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Apply cueing only to synced active-line selection; keep tier rendering and motion contracts unchanged.
 - [Phase 15]: Use Math.floor plus non-negative normalization for all motion-window timing inputs.
 - [Phase 15]: Model transition state as hold/transition/complete with phaseProgress pinned to 0..1.
+- [Phase 15]: Use cue-adjusted progress with getTransitionPhase so fullscreen motion aligns with early-cue active-line selection.
+- [Phase 15]: Keep tier styling keyed to integer active index while only translateY uses interpolated floating index.
 
 ### Roadmap Evolution
 
@@ -81,6 +83,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T05:19:33.003Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-21T05:22:41.527Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
