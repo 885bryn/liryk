@@ -1,13 +1,30 @@
 import { describe, expect, it } from "vitest";
 
-import { getAdaptiveTransitionMs, getTransitionPhase } from "./lyric-motion-window";
+import {
+  DEFAULT_MAX_TRANSITION_MS,
+  DEFAULT_MIN_TRANSITION_MS,
+  DEFAULT_TRANSITION_WINDOW_FRACTION,
+  getAdaptiveTransitionMs,
+  getTransitionPhase,
+} from "./lyric-motion-window";
 
 describe("getAdaptiveTransitionMs", () => {
+  it("exports readable default transition tuning constants", () => {
+    expect(DEFAULT_TRANSITION_WINDOW_FRACTION).toBe(0.42);
+    expect(DEFAULT_MIN_TRANSITION_MS).toBe(220);
+    expect(DEFAULT_MAX_TRANSITION_MS).toBe(520);
+  });
+
   it("returns floor(gap * fraction) clamped to min/max bounds", () => {
     expect(getAdaptiveTransitionMs(1_000)).toBe(420);
     expect(getAdaptiveTransitionMs(2_000)).toBe(520);
     expect(getAdaptiveTransitionMs(400)).toBe(220);
     expect(getAdaptiveTransitionMs(1_000, 100, 300, 0.5)).toBe(300);
+  });
+
+  it("clamps very short and very long gaps to readable default bounds", () => {
+    expect(getAdaptiveTransitionMs(100)).toBe(DEFAULT_MIN_TRANSITION_MS);
+    expect(getAdaptiveTransitionMs(50_000)).toBe(DEFAULT_MAX_TRANSITION_MS);
   });
 
   it("returns min bound for invalid and very small gaps", () => {
