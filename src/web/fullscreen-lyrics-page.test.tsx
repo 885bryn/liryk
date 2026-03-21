@@ -320,12 +320,11 @@ describe("FullscreenLyricsPage", () => {
       expect(activeLines.length).toBe(1);
       expect(renderedLines.length).toBeGreaterThan(0);
       expect(
-        renderedLines.every((line) => line.className.includes("transition-[transform,opacity,color]")),
+        renderedLines.every((line) => line.className.includes("transition-[opacity,color]")),
       ).toBe(true);
-      expect(renderedLines.every((line) => line.className.includes("duration-[420ms]"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("duration-[360ms]"))).toBe(true);
       expect(renderedLines.every((line) => line.className.includes("ease-out"))).toBe(true);
       expect(renderedLines.every((line) => line.className.includes("motion-reduce:transition-none"))).toBe(true);
-      expect(renderedLines.every((line) => line.className.includes("motion-reduce:transform-none"))).toBe(true);
     });
   });
 
@@ -474,7 +473,15 @@ describe("FullscreenLyricsPage", () => {
   it("gates offset animation to valid transition phase only", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
     expect(source.includes("if (!shouldAnimateTrackOffset)")).toBe(true);
-    expect(source.includes("transition.phase === \"transition\" && nextSyncedIndex > activeSyncedIndex")).toBe(true);
+    expect(source.includes("transition.phase !== \"transition\" || nextSyncedIndex <= activeSyncedIndex")).toBe(true);
+  });
+
+  it("avoids overlap-prone per-line transform classes during track motion", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source.includes("scale-[")).toBe(false);
+    expect(source.includes("scale-95")).toBe(false);
+    expect(source.includes("translate-y-")).toBe(false);
+    expect(source.includes("transition-[transform,opacity,color]")).toBe(false);
   });
 
   it("keeps short-gap transitions readable with hold-first then clamped transition", async () => {

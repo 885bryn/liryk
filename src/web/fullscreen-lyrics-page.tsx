@@ -90,15 +90,11 @@ export function FullscreenLyricsPage() {
   const syncedMotionState =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && typeof activeSyncedIndex === "number"
       ? (() => {
-        if (typeof nextSyncedIndex !== "number") {
+          const currentAnchorOffsetPx = -activeSyncedIndex * SYNC_LINE_STEP_PX;
+
+          if (typeof nextSyncedIndex !== "number") {
             return {
-              targetOffsetPx: getTargetScrollOffset({
-              currentIndex: activeSyncedIndex,
-              nextIndex: null,
-              phaseProgress: 0,
-              phase: "hold",
-              stepPx: SYNC_LINE_STEP_PX,
-              }),
+              targetOffsetPx: currentAnchorOffsetPx,
               shouldAnimate: false,
             };
           }
@@ -107,13 +103,7 @@ export function FullscreenLyricsPage() {
           const nextLine = syncedDisplayLines[nextSyncedIndex];
           if (!currentLine || !nextLine) {
             return {
-              targetOffsetPx: getTargetScrollOffset({
-              currentIndex: activeSyncedIndex,
-              nextIndex: null,
-              phaseProgress: 0,
-              phase: "hold",
-              stepPx: SYNC_LINE_STEP_PX,
-              }),
+              targetOffsetPx: currentAnchorOffsetPx,
               shouldAnimate: false,
             };
           }
@@ -127,6 +117,13 @@ export function FullscreenLyricsPage() {
             transitionFraction: DEFAULT_TRANSITION_WINDOW_FRACTION,
           });
 
+          if (transition.phase !== "transition" || nextSyncedIndex <= activeSyncedIndex) {
+            return {
+              targetOffsetPx: currentAnchorOffsetPx,
+              shouldAnimate: false,
+            };
+          }
+
           const targetOffsetPx = getTargetScrollOffset({
             currentIndex: activeSyncedIndex,
             nextIndex: nextSyncedIndex,
@@ -137,7 +134,7 @@ export function FullscreenLyricsPage() {
 
           return {
             targetOffsetPx,
-            shouldAnimate: transition.phase === "transition" && nextSyncedIndex > activeSyncedIndex,
+            shouldAnimate: true,
           };
         })()
       : { targetOffsetPx: 0, shouldAnimate: false };
@@ -487,7 +484,7 @@ export function FullscreenLyricsPage() {
                 ? syncedDisplayLines.map((line, index) => {
                     const distance = Math.abs(index - activeSyncedRenderIndex);
                     const transitionClassName =
-                      "transition-[transform,opacity,color] duration-[420ms] ease-out motion-reduce:transition-none motion-reduce:transform-none";
+                      "transition-[opacity,color] duration-[360ms] ease-out motion-reduce:transition-none";
                     const tier = !hasStartedSyncedLyrics
                       ? index === 0
                         ? "near"
@@ -499,10 +496,10 @@ export function FullscreenLyricsPage() {
                           : "distant";
                     const tierClassName =
                       tier === "active"
-                        ? `h-[88px] text-white font-semibold text-4xl sm:text-5xl scale-100 translate-y-0 ${transitionClassName}`
+                        ? `h-[88px] flex items-center text-white font-semibold text-4xl sm:text-5xl ${transitionClassName}`
                         : tier === "near"
-                          ? `h-[88px] text-zinc-300 font-medium text-3xl sm:text-4xl scale-[0.98] translate-y-1 ${transitionClassName}`
-                        : `h-[88px] text-zinc-500 font-normal text-2xl sm:text-3xl scale-95 translate-y-2 ${transitionClassName}`;
+                          ? `h-[88px] flex items-center text-zinc-300 font-medium text-3xl sm:text-4xl ${transitionClassName}`
+                          : `h-[88px] flex items-center text-zinc-500 font-normal text-2xl sm:text-3xl ${transitionClassName}`;
 
                   return (
                     <p key={`${index}-${line.text}`} data-testid={`fullscreen-lyric-line-${tier}`} className={tierClassName}>
