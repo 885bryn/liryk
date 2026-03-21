@@ -60,10 +60,12 @@ Plans:
 3. User may see small metadata/progress overlays that remain secondary to lyric content.
 4. User can enter fullscreen from the standard shell and exit fullscreen from the fullscreen page using visible controls.
 
-**Plans:** 0 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] TBD (run `/gsd-plan-phase 11`)
+- [ ] 11-01-PLAN.md - Add visible shell/fullscreen route controls for entering and exiting immersive mode.
+- [ ] 11-02-PLAN.md - Implement center-anchored karaoke motion with explicit transform/opacity/color transitions.
+- [ ] 11-03-PLAN.md - Add subtle metadata/progress overlays and publish phase verification runbook.
 
 ## Progress
 

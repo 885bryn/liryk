@@ -12,8 +12,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **FULL-01**: User can open a dedicated fullscreen lyrics page that occupies the full viewport without utility-shell clutter.
 - [x] **FULL-02**: User sees the lyrics hero column centered on the page with left-aligned lyric text and generous vertical breathing room.
-- [ ] **FULL-03**: User can enter fullscreen lyrics mode from the main app shell using a visible in-app control.
-- [ ] **FULL-04**: User can exit fullscreen lyrics mode from the fullscreen page using a visible in-app control.
+- [x] **FULL-03**: User can enter fullscreen lyrics mode from the main app shell using a visible in-app control.
+- [x] **FULL-04**: User can exit fullscreen lyrics mode from the fullscreen page using a visible in-app control.
 
 ### Visual Direction
 
@@ -62,8 +62,8 @@ Explicitly excluded for v1.2.
 |-------------|-------|--------|
 | FULL-01 | Phase 9 | Complete |
 | FULL-02 | Phase 9 | Complete |
-| FULL-03 | Phase 11 | Pending |
-| FULL-04 | Phase 11 | Pending |
+| FULL-03 | Phase 11 | Complete |
+| FULL-04 | Phase 11 | Complete |
 | VIS-01 | Phase 10 | Complete |
 | VIS-02 | Phase 10 | Complete |
 | VIS-03 | Phase 10 | Complete |

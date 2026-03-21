@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 10-03-PLAN.md
-last_updated: "2026-03-21T00:03:56.949Z"
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-21T01:27:05.353Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
 ---
 
 # Project State
@@ -97,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Keep Chinese display fallback path unchanged while expanding fullscreen rendering to a five-line synced window.
 - [Phase 10]: Add a dedicated fullscreen invariant regression test checking no utility buttons, single active line, and monochrome root tokens together.
 - [Phase 10]: Publish a phase-specific verification runbook with exact command strings so VIS evidence stays reproducible.
+- [Phase 11]: Use semantic anchor links for fullscreen entry and exit controls so route targets stay deterministic and directly testable.
+- [Phase 11]: Keep the fullscreen exit affordance subdued and top-aligned so lyrics remain visually primary.
 
 ### Roadmap Evolution
 
@@ -112,8 +114,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T00:03:56.947Z
-Stopped at: Completed 10-03-PLAN.md
+Last session: 2026-03-21T01:27:05.351Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -141,3 +143,4 @@ Resume file: None
 | Phase 10 P01 | 74 | 2 tasks | 2 files |
 | Phase 10 P02 | 92 | 2 tasks | 2 files |
 | Phase 10 P03 | 88 | 2 tasks | 2 files |
+| Phase 11 P01 | 89 | 2 tasks | 4 files |
