@@ -14,7 +14,7 @@ This milestone follows completed v1.1 delivery and introduces a dedicated immers
 
 - [x] **Phase 9: Fullscreen Route and Content Foundation** - Add dedicated fullscreen lyrics page structure and bind normalized lyrics content. (completed 2026-03-20)
 - [x] **Phase 10: Monochrome Visual Language and Typography** - Implement pure black/white immersive visual direction with premium lyric hierarchy. (completed 2026-03-21)
-- [ ] **Phase 11: Karaoke Motion and Minimal Overlay Polish** - Finalize smooth progression motion, active-line transitions, and subtle metadata overlays.
+- [x] **Phase 11: Karaoke Motion and Minimal Overlay Polish** - Finalize smooth progression motion, active-line transitions, and subtle metadata overlays. (completed 2026-03-21)
 
 ## Phase Details
 
@@ -60,7 +60,7 @@ Plans:
 3. User may see small metadata/progress overlays that remain secondary to lyric content.
 4. User can enter fullscreen from the standard shell and exit fullscreen from the fullscreen page using visible controls.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 11-01-PLAN.md - Add visible shell/fullscreen route controls for entering and exiting immersive mode.

@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-03-21T01:29:54.007Z"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-03-21T01:32:29.452Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -101,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 11]: Keep the fullscreen exit affordance subdued and top-aligned so lyrics remain visually primary.
 - [Phase 11]: Use a dedicated fullscreen lyrics track with translateY center anchoring instead of window slicing for smoother progression.
 - [Phase 11]: Attach transition and motion-reduce tokens directly to lyric tier classes so motion behavior stays deterministic and accessible.
+- [Phase 11]: Keep fullscreen metadata and elapsed progress as subdued text overlays so lyric tiers stay visually dominant.
+- [Phase 11]: Require both automated class-contract checks and a manual 20-second playback observation for motion stability evidence.
 
 ### Roadmap Evolution
 
@@ -116,8 +118,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T01:29:54.005Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-03-21T01:32:29.450Z
+Stopped at: Completed 11-03-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -147,3 +149,4 @@ Resume file: None
 | Phase 10 P03 | 88 | 2 tasks | 2 files |
 | Phase 11 P01 | 89 | 2 tasks | 4 files |
 | Phase 11 P02 | 49 | 2 tasks | 2 files |
+| Phase 11 P03 | 70 | 3 tasks | 3 files |

@@ -25,7 +25,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **MOT-01**: User sees smooth auto-scrolling lyric progression with the active line positioned near vertical center during playback.
 - [x] **MOT-02**: User sees elegant color/opacity/transform transitions as lines move between inactive, near-active, and active states.
-- [ ] **MOT-03**: User sees motion remain readable and stable (no jumpy line transitions) across track progression.
+- [x] **MOT-03**: User sees motion remain readable and stable (no jumpy line transitions) across track progression.
 
 ### Chinese Rendering
 
@@ -34,7 +34,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Optional Minimal Overlay
 
-- [ ] **META-01**: User may see understated song metadata/progress affordances that remain visually secondary to lyrics.
+- [x] **META-01**: User may see understated song metadata/progress affordances that remain visually secondary to lyrics.
 
 ## v1.3+ Candidate Requirements
 
@@ -69,10 +69,10 @@ Explicitly excluded for v1.2.
 | VIS-03 | Phase 10 | Complete |
 | MOT-01 | Phase 11 | Complete |
 | MOT-02 | Phase 11 | Complete |
-| MOT-03 | Phase 11 | Pending |
+| MOT-03 | Phase 11 | Complete |
 | CHN-03 | Phase 9 | Complete |
 | CHN-04 | Phase 9 | Complete |
-| META-01 | Phase 11 | Pending |
+| META-01 | Phase 11 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 13 total
