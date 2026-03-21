@@ -1,8 +1,8 @@
 export type TransitionPhase = "hold" | "transition" | "complete";
 
-const DEFAULT_MIN_TRANSITION_MS = 220;
-const DEFAULT_MAX_TRANSITION_MS = 520;
-const DEFAULT_TRANSITION_FRACTION = 0.42;
+export const DEFAULT_TRANSITION_WINDOW_FRACTION = 0.42;
+export const DEFAULT_MIN_TRANSITION_MS = 220;
+export const DEFAULT_MAX_TRANSITION_MS = 520;
 
 function normalizeNonNegativeInt(value: number, fallback: number): number {
   if (!Number.isFinite(value)) {
@@ -30,7 +30,7 @@ function getTransitionBounds(
 
 function getTransitionFraction(transitionFraction: number | undefined): number {
   if (!Number.isFinite(transitionFraction) || (transitionFraction as number) <= 0) {
-    return DEFAULT_TRANSITION_FRACTION;
+    return DEFAULT_TRANSITION_WINDOW_FRACTION;
   }
 
   return transitionFraction as number;
@@ -40,7 +40,7 @@ export function getAdaptiveTransitionMs(
   gapMs: number,
   minTransitionMs: number = DEFAULT_MIN_TRANSITION_MS,
   maxTransitionMs: number = DEFAULT_MAX_TRANSITION_MS,
-  transitionFraction: number = DEFAULT_TRANSITION_FRACTION,
+  transitionFraction: number = DEFAULT_TRANSITION_WINDOW_FRACTION,
 ): number {
   const { minMs, maxMs } = getTransitionBounds(minTransitionMs, maxTransitionMs);
   const normalizedGapMs = normalizeNonNegativeInt(gapMs, 0);
