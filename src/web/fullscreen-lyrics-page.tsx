@@ -166,6 +166,13 @@ export function FullscreenLyricsPage() {
         data-testid="fullscreen-lyrics-column"
         className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-20 text-left sm:px-8 sm:py-24 lg:py-28"
       >
+        <a
+          href="/"
+          className="self-start text-sm text-white/60 transition-colors duration-200 hover:text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        >
+          Exit Fullscreen Lyrics
+        </a>
+
         <p className="text-3xl font-semibold leading-tight sm:text-4xl">{lyricsPanel.nowPlayingTitle}</p>
         <p className="text-lg text-white/70 sm:text-xl">{lyricsPanel.nowPlayingArtist}</p>
 

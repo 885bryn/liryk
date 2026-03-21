@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -214,6 +214,10 @@ export function AppShell(input?: AppShellProps) {
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Liryk</h1>
 
           <div className="flex items-center gap-3">
+            <a className={buttonVariants({ variant: "outline", size: "sm" })} href="/fullscreen">
+              Open Fullscreen Lyrics
+            </a>
+
             <ThemeToggle mode={themeMode} onToggle={onToggleTheme} />
 
             {accountMenu ? (
