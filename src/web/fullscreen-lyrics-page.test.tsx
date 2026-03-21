@@ -186,6 +186,65 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
+  it("applies center-anchor track transform and motion transition contracts", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-motion",
+      title: "Motion Track",
+      artist: "Motion Artist",
+      progressMs: 9_000,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 5", renderMode: "synced", isTimestamped: true },
+        { startMs: 10_000, text: "Line 6", renderMode: "synced", isTimestamped: true },
+        { startMs: 12_000, text: "Line 7", renderMode: "synced", isTimestamped: true },
+        { startMs: 14_000, text: "Line 8", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      const activeLines = screen.queryAllByTestId("fullscreen-lyric-line-active");
+      const nearLines = screen.queryAllByTestId("fullscreen-lyric-line-near");
+      const distantLines = screen.queryAllByTestId("fullscreen-lyric-line-distant");
+      const renderedLines = [...activeLines, ...nearLines, ...distantLines];
+
+      expect(track.style.transform).toContain("translateY(");
+      expect(activeLines.length).toBe(1);
+      expect(renderedLines.length).toBeGreaterThan(0);
+      expect(
+        renderedLines.every((line) => line.className.includes("transition-[transform,opacity,color]")),
+      ).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("duration-300"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("ease-out"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("motion-reduce:transition-none"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("motion-reduce:transform-none"))).toBe(true);
+    });
+  });
+
   it("keeps fullscreen lyric-first invariants without utility controls", async () => {
     hookModel = {
       phase: "ready",
