@@ -67,7 +67,7 @@ describe("createLiveSyncRuntime", () => {
     expect(requestAnimationFrameFn).toHaveBeenCalledTimes(2);
   });
 
-  it("stores drift delta as estimated minus polled with correction state", () => {
+  it("shows bounded in-band drift convergence without hard reset state", () => {
     let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
     const store = new LiveSyncStore();
     const engine = createLyricSyncEngine({ nowPerfMs: () => 100 });
@@ -113,6 +113,70 @@ describe("createLiveSyncRuntime", () => {
     expect(store.selectLiveSync().polledProgressMs).toBe(500);
     expect(store.selectLiveSync().driftDeltaMs).toBe(-300);
     expect(store.selectLiveSync().correctionState).toBe("estimated");
+
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 500,
+        capturedAtMs: 300,
+      },
+      transition: "no_change",
+    });
+
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(300);
+    expect(store.selectLiveSync().polledProgressMs).toBe(500);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(-200);
+    expect(store.selectLiveSync().correctionState).toBe("estimated");
+  });
+
+  it("marks large no-change drift as hard-reset diagnostics state", () => {
+    let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    const engine = createLyricSyncEngine({ nowPerfMs: () => 100 });
+
+    const runtime = createLiveSyncRuntime({
+      subscribePlayback: (listener) => {
+        playbackListener = listener;
+        return () => {
+          playbackListener = null;
+        };
+      },
+      syncEngine: engine,
+      liveSyncStore: store,
+      getTimelineForTrack: () => [{ startMs: 0, text: "a" }],
+      requestAnimationFrameFn: vi.fn(() => 0),
+      cancelAnimationFrameFn: vi.fn(),
+    });
+
+    runtime.start();
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 100,
+        capturedAtMs: 100,
+      },
+      transition: "no_change",
+    });
+
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 2_000,
+        capturedAtMs: 200,
+      },
+      transition: "no_change",
+    });
+
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(2_000);
+    expect(store.selectLiveSync().polledProgressMs).toBe(2_000);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("hard-reset");
   });
 
   it("cancels pending requestAnimationFrame when playback pauses", () => {

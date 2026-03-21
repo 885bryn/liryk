@@ -493,6 +493,60 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("static");
   });
 
+  it("keeps diagnostics overlay readable for idle paused and playing states", async () => {
+    render(<FullscreenLyricsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show Diagnostics" }));
+    expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("static");
+
+    cleanup();
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-paused-diagnostics",
+      title: "Paused Diagnostics",
+      artist: "Diagnostics Artist",
+      progressMs: 3_210,
+      isPlaying: false,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+    render(<FullscreenLyricsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show Diagnostics" }));
+    expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("3210");
+    expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("3210");
+    expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("synced");
+
+    cleanup();
+    nowPlayingResponse = {
+      trackId: "track-playing-diagnostics",
+      title: "Playing Diagnostics",
+      artist: "Diagnostics Artist",
+      progressMs: 6_543,
+      isPlaying: true,
+    };
+    render(<FullscreenLyricsPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Show Diagnostics" }));
+    expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("6543");
+    expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("6543");
+    expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("synced");
+  });
+
   it("renders simplified chinese lines while preserving mixed non-chinese content", async () => {
     hookModel = {
       phase: "ready",
