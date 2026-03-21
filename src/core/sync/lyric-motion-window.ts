@@ -1,8 +1,8 @@
 export type TransitionPhase = "hold" | "transition" | "complete";
 
-export const DEFAULT_TRANSITION_WINDOW_FRACTION = 0.42;
-export const DEFAULT_MIN_TRANSITION_MS = 220;
-export const DEFAULT_MAX_TRANSITION_MS = 520;
+export const DEFAULT_TRANSITION_WINDOW_FRACTION = 0.55;
+export const DEFAULT_MIN_TRANSITION_MS = 280;
+export const DEFAULT_MAX_TRANSITION_MS = 760;
 
 function normalizeNonNegativeInt(value: number, fallback: number): number {
   if (!Number.isFinite(value)) {
@@ -134,7 +134,7 @@ export function getTargetScrollOffset(input: {
     return currentOffsetPx;
   }
 
-  const nextIndex = normalizeNonNegativeInt(input.nextIndex, currentIndex);
+  const nextIndex = Math.max(currentIndex, normalizeNonNegativeInt(input.nextIndex, currentIndex));
   const nextOffsetPx = -nextIndex * input.stepPx;
 
   if (input.phase === "complete") {

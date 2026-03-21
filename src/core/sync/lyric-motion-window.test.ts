@@ -36,15 +36,15 @@ describe("easeInOutCubic", () => {
 
 describe("getAdaptiveTransitionMs", () => {
   it("exports readable default transition tuning constants", () => {
-    expect(DEFAULT_TRANSITION_WINDOW_FRACTION).toBe(0.42);
-    expect(DEFAULT_MIN_TRANSITION_MS).toBe(220);
-    expect(DEFAULT_MAX_TRANSITION_MS).toBe(520);
+    expect(DEFAULT_TRANSITION_WINDOW_FRACTION).toBe(0.55);
+    expect(DEFAULT_MIN_TRANSITION_MS).toBe(280);
+    expect(DEFAULT_MAX_TRANSITION_MS).toBe(760);
   });
 
   it("returns floor(gap * fraction) clamped to min/max bounds", () => {
-    expect(getAdaptiveTransitionMs(1_000)).toBe(420);
-    expect(getAdaptiveTransitionMs(2_000)).toBe(520);
-    expect(getAdaptiveTransitionMs(400)).toBe(220);
+    expect(getAdaptiveTransitionMs(1_000)).toBe(550);
+    expect(getAdaptiveTransitionMs(2_000)).toBe(760);
+    expect(getAdaptiveTransitionMs(400)).toBe(280);
     expect(getAdaptiveTransitionMs(1_000, 100, 300, 0.5)).toBe(300);
   });
 
@@ -54,26 +54,26 @@ describe("getAdaptiveTransitionMs", () => {
   });
 
   it("returns min bound for invalid and very small gaps", () => {
-    expect(getAdaptiveTransitionMs(Number.NaN)).toBe(220);
-    expect(getAdaptiveTransitionMs(-50)).toBe(220);
-    expect(getAdaptiveTransitionMs(10)).toBe(220);
+    expect(getAdaptiveTransitionMs(Number.NaN)).toBe(280);
+    expect(getAdaptiveTransitionMs(-50)).toBe(280);
+    expect(getAdaptiveTransitionMs(10)).toBe(280);
   });
 });
 
 describe("getTransitionPhase", () => {
   it("resolves hold, transition, and complete around transition boundaries", () => {
     const hold = getTransitionPhase({
-      progressMs: 1_579,
+      progressMs: 1_449,
       currentStartMs: 1_000,
       nextStartMs: 2_000,
     });
     expect(hold.phase).toBe("hold");
     expect(hold.phaseProgress).toBe(0);
-    expect(hold.transitionStartMs).toBe(1_580);
-    expect(hold.transitionDurationMs).toBe(420);
+    expect(hold.transitionStartMs).toBe(1_450);
+    expect(hold.transitionDurationMs).toBe(550);
 
     const transitionStart = getTransitionPhase({
-      progressMs: 1_580,
+      progressMs: 1_450,
       currentStartMs: 1_000,
       nextStartMs: 2_000,
     });
@@ -81,7 +81,7 @@ describe("getTransitionPhase", () => {
     expect(transitionStart.phaseProgress).toBe(0);
 
     const transitionMid = getTransitionPhase({
-      progressMs: 1_790,
+      progressMs: 1_725,
       currentStartMs: 1_000,
       nextStartMs: 2_000,
     });
@@ -99,14 +99,14 @@ describe("getTransitionPhase", () => {
 
   it("returns eased phaseProgress during transition instead of raw linear ratio", () => {
     const transitionMid = getTransitionPhase({
-      progressMs: 1_685,
+      progressMs: 1_560,
       currentStartMs: 1_000,
       nextStartMs: 2_000,
     });
 
     expect(transitionMid.phase).toBe("transition");
-    expect(transitionMid.phaseProgress).toBeCloseTo(0.0625, 6);
-    expect(transitionMid.phaseProgress).not.toBeCloseTo(0.25, 6);
+    expect(transitionMid.phaseProgress).toBeCloseTo(0.032, 6);
+    expect(transitionMid.phaseProgress).not.toBeCloseTo(0.2, 6);
   });
 });
 
@@ -177,7 +177,7 @@ describe("getTargetScrollOffset", () => {
     expect(complete).toBe(-352);
   });
 
-  it("settles exactly to next offset and stays bounded even when next index is lower", () => {
+  it("prevents reverse motion when next index is lower than current", () => {
     const transition = getTargetScrollOffset({
       currentIndex: 4,
       nextIndex: 2,
@@ -186,7 +186,7 @@ describe("getTargetScrollOffset", () => {
       stepPx: 88,
     });
 
-    expect(transition).toBeCloseTo(-264, 6);
+    expect(transition).toBeCloseTo(-352, 6);
     expect(transition).toBeLessThanOrEqual(-176);
     expect(transition).toBeGreaterThanOrEqual(-352);
 
@@ -198,6 +198,6 @@ describe("getTargetScrollOffset", () => {
       stepPx: 88,
     });
 
-    expect(complete).toBe(-176);
+    expect(complete).toBe(-352);
   });
 });

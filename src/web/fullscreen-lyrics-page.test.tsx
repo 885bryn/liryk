@@ -322,7 +322,7 @@ describe("FullscreenLyricsPage", () => {
       expect(
         renderedLines.every((line) => line.className.includes("transition-[transform,opacity,color]")),
       ).toBe(true);
-      expect(renderedLines.every((line) => line.className.includes("duration-300"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("duration-[420ms]"))).toBe(true);
       expect(renderedLines.every((line) => line.className.includes("ease-out"))).toBe(true);
       expect(renderedLines.every((line) => line.className.includes("motion-reduce:transition-none"))).toBe(true);
       expect(renderedLines.every((line) => line.className.includes("motion-reduce:transform-none"))).toBe(true);
@@ -357,7 +357,7 @@ describe("FullscreenLyricsPage", () => {
       trackId: "track-hold-window",
       title: "Hold Window Track",
       artist: "Window Artist",
-      progressMs: 8_200,
+      progressMs: 8_000,
       isPlaying: true,
     };
 
@@ -407,7 +407,7 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeCloseTo(-161.40009103322714, 10);
+      expect(value).toBeCloseTo(-171.32351654760168, 10);
       expect(value).toBeLessThan(-88);
       expect(value).toBeGreaterThan(-176);
     });
@@ -682,7 +682,7 @@ describe("FullscreenLyricsPage", () => {
       expect(progressOverlay.className).not.toContain("font-semibold");
 
       expect(track.className).toContain("transition-transform");
-      expect(track.className).toContain("duration-500");
+      expect(track.className).toContain("duration-700");
     });
   });
 

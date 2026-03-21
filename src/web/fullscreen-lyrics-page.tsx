@@ -393,14 +393,14 @@ export function FullscreenLyricsPage() {
           <div className="relative" style={{ paddingTop: syncedVerticalPadding, paddingBottom: syncedVerticalPadding }}>
               <div
                 data-testid="fullscreen-lyrics-track"
-                className="space-y-3 leading-relaxed transition-transform duration-500 ease-out motion-reduce:transition-none"
+                className="space-y-3 leading-relaxed transition-transform duration-700 ease-out motion-reduce:transition-none"
                 style={{ transform: `translateY(${syncedTrackTranslateY})` }}
               >
               {resolvedLyrics?.renderMode === "synced"
                 ? syncedDisplayLines.map((line, index) => {
                     const distance = Math.abs(index - activeSyncedRenderIndex);
                     const transitionClassName =
-                      "transition-[transform,opacity,color] duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none";
+                      "transition-[transform,opacity,color] duration-[420ms] ease-out motion-reduce:transition-none motion-reduce:transform-none";
                     const tier = !hasStartedSyncedLyrics
                       ? index === 0
                         ? "near"
