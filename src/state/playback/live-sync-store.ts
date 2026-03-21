@@ -16,6 +16,7 @@ export type LiveSyncUiState = {
   lyricsWarning: string | null;
   retryAvailable: boolean;
   retryInFlight: boolean;
+  estimatedProgressMs: number;
 };
 
 const initialState: LiveSyncUiState = {
@@ -31,6 +32,7 @@ const initialState: LiveSyncUiState = {
   lyricsWarning: null,
   retryAvailable: false,
   retryInFlight: false,
+  estimatedProgressMs: 0,
 };
 
 export class LiveSyncStore {
@@ -76,11 +78,22 @@ export class LiveSyncStore {
         lyricsWarning: null,
         retryAvailable: false,
         retryInFlight: false,
+        estimatedProgressMs: 0,
       };
       return this.state;
     }
 
+    if (trackId === null) {
+      this.state = { ...this.state, trackId, estimatedProgressMs: 0 };
+      return this.state;
+    }
+
     this.state = { ...this.state, trackId };
+    return this.state;
+  }
+
+  setEstimatedProgressMs(progressMs: number): LiveSyncUiState {
+    this.state = { ...this.state, estimatedProgressMs: progressMs };
     return this.state;
   }
 
