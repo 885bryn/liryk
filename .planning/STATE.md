@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-03-21T04:30:02.749Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-21T04:40:37.237Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
 ---
 
 # Project State
@@ -55,6 +55,8 @@ Recent decisions affecting current work:
 - [Phase 13]: Define pre-first progress as active null with next pointing to index zero for deterministic UI behavior.
 - [Phase 13]: Use a hard snap threshold of 1200ms to avoid prolonged desync when drift is large.
 - [Phase 13]: Clamp soft correction to 100ms per sample so in-band drift converges without abrupt jumps.
+- [Phase 14]: Diagnostics drift is computed as estimated minus latest trusted polled progress from the same sample.
+- [Phase 14]: Fullscreen diagnostics remain optional via a subdued toggle so lyric hierarchy stays primary.
 
 ### Roadmap Evolution
 
@@ -73,6 +75,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:30:02.747Z
-Stopped at: Completed 13-03-PLAN.md
+Last session: 2026-03-21T04:40:37.235Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None

@@ -21,7 +21,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Diagnostics and Tuning
 
-- [ ] **DBG-01**: User can enable a minimal timing diagnostics overlay showing estimated progress, polled progress, and measured drift for debugging.
+- [x] **DBG-01**: User can enable a minimal timing diagnostics overlay showing estimated progress, polled progress, and measured drift for debugging.
 - [ ] **CUE-01**: User sees slight early karaoke cueing applied only after baseline drift stabilization is verified.
 
 ## Future Candidate Requirements

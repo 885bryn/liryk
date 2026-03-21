@@ -59,7 +59,7 @@ Plans:
 2. Instrumentation makes drift source identification reproducible during manual playback checks.
 3. Early cueing applies a small configurable lead while preserving stable line ordering and readability.
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 14-01-PLAN.md - Add toggleable fullscreen diagnostics overlay with runtime timing fields.
