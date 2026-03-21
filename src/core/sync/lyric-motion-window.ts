@@ -16,6 +16,17 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+export function easeInOutCubic(progress: number): number {
+  const normalized = clamp(progress, 0, 1);
+
+  if (normalized < 0.5) {
+    return 4 * normalized * normalized * normalized;
+  }
+
+  const shifted = -2 * normalized + 2;
+  return 1 - (shifted * shifted * shifted) / 2;
+}
+
 function getTransitionBounds(
   minTransitionMs: number | undefined,
   maxTransitionMs: number | undefined,
@@ -100,7 +111,7 @@ export function getTransitionPhase(input: {
   }
 
   const denominator = Math.max(1, transitionDurationMs);
-  const phaseProgress = clamp((progressMs - transitionStartMs) / denominator, 0, 1);
+  const phaseProgress = easeInOutCubic(clamp((progressMs - transitionStartMs) / denominator, 0, 1));
   return {
     phase: "transition",
     phaseProgress,
