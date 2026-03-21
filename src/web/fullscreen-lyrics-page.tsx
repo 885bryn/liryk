@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
+import { applyEarlyCue, DEFAULT_CUE_LEAD_MS } from "@/core/sync/early-cue";
 import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
 import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
@@ -54,14 +55,15 @@ export function FullscreenLyricsPage() {
     text: line.displayText ?? normalizeChineseForDisplay(line.text),
     startMs: line.startMs ?? 0,
   }));
+  const cueAdjustedProgressMs = applyEarlyCue(nowPlaying?.progressMs ?? 0, DEFAULT_CUE_LEAD_MS);
   const firstSyncedStartMs = syncedDisplayLines[0]?.startMs ?? 0;
-  const hasStartedSyncedLyrics = Boolean(nowPlaying && syncedDisplayLines.length > 0 && nowPlaying.progressMs >= firstSyncedStartMs);
+  const hasStartedSyncedLyrics = Boolean(nowPlaying && syncedDisplayLines.length > 0 && cueAdjustedProgressMs >= firstSyncedStartMs);
   const activeSyncedIndex =
     hasStartedSyncedLyrics && nowPlaying && syncedLines.length > 0
       ? Math.max(
           0,
           syncedLines.reduce((best, line, index) => {
-            if ((line.startMs ?? 0) <= nowPlaying.progressMs) {
+            if ((line.startMs ?? 0) <= cueAdjustedProgressMs) {
               return index;
             }
             return best;
