@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-03-21T04:23:41.333Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-03-21T04:26:45.168Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -51,6 +51,8 @@ Recent decisions affecting current work:
 - [Phase 12]: Use deferred overlap race fixtures plus build gate as repeatable CLK-02 verification proof.
 - [Phase 13]: Use dependency-injected requestAnimationFrame/cancelAnimationFrame hooks for deterministic runtime tests.
 - [Phase 13]: Invalidate frame callbacks with loop tokens so stale scheduled callbacks cannot update state after cancellation.
+- [Phase 13]: Resolve active line as latest startMs less than or equal to progress, not by inferred end bounds.
+- [Phase 13]: Define pre-first progress as active null with next pointing to index zero for deterministic UI behavior.
 
 ### Roadmap Evolution
 
@@ -69,6 +71,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:23:41.331Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-03-21T04:26:45.166Z
+Stopped at: Completed 13-02-PLAN.md
 Resume file: None

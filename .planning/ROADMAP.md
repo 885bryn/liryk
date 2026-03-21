@@ -43,7 +43,7 @@ Plans:
 2. Active line is selected using binary search over monotonic lyric start times.
 3. Drift reconciliation policy applies hard reset above threshold and bounded soft correction below threshold.
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 13-01-PLAN.md - Replace interval ticker with requestAnimationFrame-driven live lyric frame updates.
@@ -73,4 +73,4 @@ Phases execute in numeric order: 12 -> 13 -> 14
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 12. Playback Clock Backbone and Poll Safety | 3/3 | Complete   | 2026-03-21 | 13. Frame-Synced Lyric Engine and Drift Reconciliation | 1/3 | In Progress|  | 14. Timing Diagnostics and Early Cueing | DBG-01, CUE-01 | Not started |
+| 12. Playback Clock Backbone and Poll Safety | 3/3 | Complete   | 2026-03-21 | 13. Frame-Synced Lyric Engine and Drift Reconciliation | 2/3 | In Progress|  | 14. Timing Diagnostics and Early Cueing | DBG-01, CUE-01 | Not started |
