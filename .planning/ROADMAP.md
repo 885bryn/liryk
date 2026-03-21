@@ -43,12 +43,12 @@ Plans:
 2. Active line is selected using binary search over monotonic lyric start times.
 3. Drift reconciliation policy applies hard reset above threshold and bounded soft correction below threshold.
 
-**Plans:** 0/3 plans complete
+**Plans:** 3 plans
 
 Plans:
-- [ ] 13-01-PLAN.md - Add frame-tick timing loop contract and wiring for fullscreen lyric runtime.
-- [ ] 13-02-PLAN.md - Implement binary-search active-line resolver with edge-case coverage.
-- [ ] 13-03-PLAN.md - Implement and verify hard-reset plus soft-correction drift reconciliation policy.
+- [ ] 13-01-PLAN.md - Replace interval ticker with requestAnimationFrame-driven live lyric frame updates.
+- [ ] 13-02-PLAN.md - Harden binary-search active-line resolver and boundary semantics with tests.
+- [ ] 13-03-PLAN.md - Finalize deterministic hard-reset and bounded soft-correction drift policy.
 
 ### Phase 14: Timing Diagnostics and Early Cueing
 **Goal**: Drift behavior becomes observable, then early cueing is layered in safely.
