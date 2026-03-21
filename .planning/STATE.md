@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: stable-line-change-motion-model
+milestone: v1.3
+milestone_name: milestone
 current_plan: 0
-status: Ready for phase planning
-stopped_at: Milestone v1.4 roadmap created; phase 15 planning not started
-last_updated: "2026-03-21T05:45:00.000Z"
+status: planning
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-21T05:19:33.005Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 9
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -61,6 +61,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Gate early cueing on explicit automated and manual diagnostics baseline verification.
 - [Phase 14]: Use a conservative default early cue lead of 120ms, exported for tuning without renderer rewrites.
 - [Phase 14]: Apply cueing only to synced active-line selection; keep tier rendering and motion contracts unchanged.
+- [Phase 15]: Use Math.floor plus non-negative normalization for all motion-window timing inputs.
+- [Phase 15]: Model transition state as hold/transition/complete with phaseProgress pinned to 0..1.
 
 ### Roadmap Evolution
 
@@ -79,6 +81,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:48:34.335Z
-Stopped at: Completed 14-03-PLAN.md
+Last session: 2026-03-21T05:19:33.003Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None

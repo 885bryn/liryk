@@ -16,7 +16,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Adaptive Transition Timing
 
-- [ ] **TRN-01**: User sees transition duration adapt to each line gap and clamp to readable min/max bounds.
+- [x] **TRN-01**: User sees transition duration adapt to each line gap and clamp to readable min/max bounds.
 - [ ] **TRN-02**: User sees short gaps handled smoothly (no violent snaps) and long gaps held still until near line change.
 
 ### Visual Continuity
@@ -55,7 +55,7 @@ Explicitly excluded for v1.4.
 | MOT-04 | Phase 15 | Pending |
 | MOT-05 | Phase 15 | Pending |
 | MOT-06 | Phase 16 | Pending |
-| TRN-01 | Phase 15 | Pending |
+| TRN-01 | Phase 15 | Complete |
 | TRN-02 | Phase 16 | Pending |
 | VIS-04 | Phase 16 | Pending |
 | VIS-05 | Phase 17 | Pending |

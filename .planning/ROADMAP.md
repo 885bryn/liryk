@@ -27,7 +27,7 @@ This milestone follows completed v1.3 timing stabilization and focuses on visual
 2. User sees upward lyric motion begin only near the next line boundary, not continuously across the whole gap.
 3. User sees transition timing adapt to per-line gap with readable min/max clamp behavior.
 
-**Plans:** 0/3 plans complete
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 15-01-PLAN.md - Add transition-window helper contracts (`getAdaptiveTransitionMs`, `getTransitionPhase`) with deterministic tests.
@@ -73,6 +73,5 @@ Phases execute in numeric order: 15 -> 16 -> 17
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 15. Hold-and-Transition Motion Windowing | MOT-04, MOT-05, TRN-01 | Not started |
-| 16. Smooth Transition Execution and Settling | MOT-06, TRN-02, VIS-04 | Not started |
+| 15. Hold-and-Transition Motion Windowing | 1/3 | In Progress|  | 16. Smooth Transition Execution and Settling | MOT-06, TRN-02, VIS-04 | Not started |
 | 17. Visual Continuity and Timing Guardrails | VIS-05, SAFE-01 | Not started |
