@@ -26,6 +26,7 @@ describe("createLiveSyncRuntime", () => {
         { startMs: 0, text: "a" },
         { startMs: 1_000, text: "b" },
       ],
+      nowPerfMs: () => nowPerfMs,
       setIntervalFn: vi.fn((callback) => {
         tickerCallback = callback;
         return 0 as unknown as ReturnType<typeof setInterval>;
