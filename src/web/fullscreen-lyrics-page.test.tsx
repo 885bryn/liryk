@@ -245,6 +245,64 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
+  it("renders subdued metadata overlays and stable track transition cadence", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-overlay",
+      title: "Overlay Track",
+      artist: "Overlay Artist",
+      progressMs: 78_000,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 5", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const metadataOverlay = screen.getByTestId("fullscreen-meta-overlay");
+      const progressOverlay = screen.getByTestId("fullscreen-progress-overlay");
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+
+      expect(metadataOverlay.className).toContain("text-sm");
+      expect(metadataOverlay.className).toContain("text-white/70");
+      expect(progressOverlay.className).toContain("text-xs");
+      expect(progressOverlay.className).toContain("text-white/60");
+
+      expect(metadataOverlay.className).not.toContain("text-4xl");
+      expect(metadataOverlay.className).not.toContain("sm:text-5xl");
+      expect(metadataOverlay.className).not.toContain("font-semibold");
+      expect(progressOverlay.className).not.toContain("text-4xl");
+      expect(progressOverlay.className).not.toContain("sm:text-5xl");
+      expect(progressOverlay.className).not.toContain("font-semibold");
+
+      expect(track.className).toContain("transition-transform");
+      expect(track.className).toContain("duration-500");
+    });
+  });
+
   it("keeps fullscreen lyric-first invariants without utility controls", async () => {
     hookModel = {
       phase: "ready",
