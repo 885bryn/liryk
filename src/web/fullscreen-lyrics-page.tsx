@@ -25,6 +25,15 @@ const baseSyncState: LiveSyncUiState = {
   retryInFlight: false,
 };
 
+function formatElapsedProgress(progressMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(progressMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
 export function FullscreenLyricsPage() {
   const webAuth = useWebAuthRuntime();
   const [nowPlaying, setNowPlaying] = useState<WebNowPlaying | null>(null);
@@ -55,6 +64,7 @@ export function FullscreenLyricsPage() {
     resolvedLyrics?.renderMode === "synced" && syncedDisplayLines.length > 0
       ? `${160 - activeSyncedRenderIndex * 72}px`
       : "0px";
+  const elapsedProgressLabel = formatElapsedProgress(nowPlaying?.progressMs ?? 0);
 
   const lyricsPanel = createLiveLyricsPanelBuilder().build({
     syncState: {
@@ -166,8 +176,14 @@ export function FullscreenLyricsPage() {
           Exit Fullscreen Lyrics
         </a>
 
-        <p className="text-3xl font-semibold leading-tight sm:text-4xl">{lyricsPanel.nowPlayingTitle}</p>
-        <p className="text-lg text-white/70 sm:text-xl">{lyricsPanel.nowPlayingArtist}</p>
+        <div data-testid="fullscreen-meta-overlay" className="space-y-1 text-sm text-white/70">
+          <p>{lyricsPanel.nowPlayingTitle}</p>
+          <p>{lyricsPanel.nowPlayingArtist}</p>
+        </div>
+
+        <p data-testid="fullscreen-progress-overlay" className="text-xs text-white/60 tracking-wide">
+          {`Elapsed ${elapsedProgressLabel}`}
+        </p>
 
         {lyricsPanel.sourceState === "not-found" ? (
           <p className="text-lg text-white/70">Lyrics not found</p>
