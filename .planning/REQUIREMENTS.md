@@ -21,7 +21,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Visual Continuity
 
-- [ ] **VIS-04**: User sees lyric movement eased with calm interpolation (no bounce/overshoot/springy jumps).
+- [x] **VIS-04**: User sees lyric movement eased with calm interpolation (no bounce/overshoot/springy jumps).
 - [ ] **VIS-05**: User sees nearby line style transitions (opacity/color/scale emphasis) update smoothly during line handoff.
 
 ### Timing Guardrails
@@ -57,7 +57,7 @@ Explicitly excluded for v1.4.
 | MOT-06 | Phase 16 | Pending |
 | TRN-01 | Phase 15 | Complete |
 | TRN-02 | Phase 16 | Pending |
-| VIS-04 | Phase 16 | Pending |
+| VIS-04 | Phase 16 | Complete |
 | VIS-05 | Phase 17 | Pending |
 | SAFE-01 | Phase 17 | Pending |
 

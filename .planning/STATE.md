@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 15-03-PLAN.md
-last_updated: "2026-03-21T05:25:58.814Z"
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-21T05:32:57.820Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
 ---
 
 # Project State
@@ -67,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 15]: Keep tier styling keyed to integer active index while only translateY uses interpolated floating index.
 - [Phase 15]: Export transition defaults with clear names so tuning is discoverable and reusable across layers.
 - [Phase 15]: Prove fullscreen constant wiring with explicit regression checks plus combined test/build verification.
+- [Phase 16]: Use a pure cubic ease-in-out helper in core to keep motion calm, bounded, and renderer-agnostic.
+- [Phase 16]: Validate eased transition output with explicit non-linear midpoint coverage so linear regressions are caught early.
 
 ### Roadmap Evolution
 
@@ -85,6 +87,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T05:25:58.812Z
-Stopped at: Completed 15-03-PLAN.md
+Last session: 2026-03-21T05:32:57.818Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None
