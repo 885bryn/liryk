@@ -121,6 +121,14 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("switch", { name: "Toggle theme" }).length).toBeGreaterThan(0);
   });
 
+  it("shows a visible control to open fullscreen lyrics", () => {
+    render(<AppShell />);
+
+    const openFullscreenLink = screen.getByRole("link", { name: "Open Fullscreen Lyrics" });
+    expect(openFullscreenLink).toBeTruthy();
+    expect(openFullscreenLink.getAttribute("href")).toBe("/fullscreen");
+  });
+
   it("shows theme placement in connected account menu and keeps disconnect action", () => {
     render(<AppShell isConnected accountName="Avery" />);
 

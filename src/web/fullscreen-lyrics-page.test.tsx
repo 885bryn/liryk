@@ -94,6 +94,15 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.queryByText("Liryk")).toBeNull();
   });
 
+  it("shows a visible control to exit fullscreen lyrics while keeping shell layout hidden", () => {
+    render(<FullscreenLyricsPage />);
+
+    const exitFullscreenLink = screen.getByRole("link", { name: "Exit Fullscreen Lyrics" });
+    expect(exitFullscreenLink).toBeTruthy();
+    expect(exitFullscreenLink.getAttribute("href")).toBe("/");
+    expect(screen.queryByTestId("shell-layout")).toBeNull();
+  });
+
   it("keeps fullscreen wrapper and column class contracts", () => {
     render(<FullscreenLyricsPage />);
 
