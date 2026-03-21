@@ -119,3 +119,32 @@ export function getTransitionPhase(input: {
     transitionDurationMs,
   };
 }
+
+export function getTargetScrollOffset(input: {
+  currentIndex: number;
+  nextIndex: number | null;
+  phaseProgress: number;
+  phase: TransitionPhase;
+  stepPx: number;
+}): number {
+  const currentIndex = normalizeNonNegativeInt(input.currentIndex, 0);
+  const currentOffsetPx = -currentIndex * input.stepPx;
+
+  if (input.nextIndex === null) {
+    return currentOffsetPx;
+  }
+
+  const nextIndex = Math.max(currentIndex, normalizeNonNegativeInt(input.nextIndex, currentIndex));
+  const nextOffsetPx = -nextIndex * input.stepPx;
+
+  if (input.phase === "complete") {
+    return nextOffsetPx;
+  }
+
+  if (input.phase !== "transition") {
+    return currentOffsetPx;
+  }
+
+  const progress = clamp(input.phaseProgress, 0, 1);
+  return currentOffsetPx + (nextOffsetPx - currentOffsetPx) * progress;
+}
