@@ -23,8 +23,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Karaoke Motion
 
-- [ ] **MOT-01**: User sees smooth auto-scrolling lyric progression with the active line positioned near vertical center during playback.
-- [ ] **MOT-02**: User sees elegant color/opacity/transform transitions as lines move between inactive, near-active, and active states.
+- [x] **MOT-01**: User sees smooth auto-scrolling lyric progression with the active line positioned near vertical center during playback.
+- [x] **MOT-02**: User sees elegant color/opacity/transform transitions as lines move between inactive, near-active, and active states.
 - [ ] **MOT-03**: User sees motion remain readable and stable (no jumpy line transitions) across track progression.
 
 ### Chinese Rendering
@@ -67,8 +67,8 @@ Explicitly excluded for v1.2.
 | VIS-01 | Phase 10 | Complete |
 | VIS-02 | Phase 10 | Complete |
 | VIS-03 | Phase 10 | Complete |
-| MOT-01 | Phase 11 | Pending |
-| MOT-02 | Phase 11 | Pending |
+| MOT-01 | Phase 11 | Complete |
+| MOT-02 | Phase 11 | Complete |
 | MOT-03 | Phase 11 | Pending |
 | CHN-03 | Phase 9 | Complete |
 | CHN-04 | Phase 9 | Complete |

@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-21T01:27:05.353Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-21T01:29:54.007Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -99,6 +99,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Publish a phase-specific verification runbook with exact command strings so VIS evidence stays reproducible.
 - [Phase 11]: Use semantic anchor links for fullscreen entry and exit controls so route targets stay deterministic and directly testable.
 - [Phase 11]: Keep the fullscreen exit affordance subdued and top-aligned so lyrics remain visually primary.
+- [Phase 11]: Use a dedicated fullscreen lyrics track with translateY center anchoring instead of window slicing for smoother progression.
+- [Phase 11]: Attach transition and motion-reduce tokens directly to lyric tier classes so motion behavior stays deterministic and accessible.
 
 ### Roadmap Evolution
 
@@ -114,8 +116,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T01:27:05.351Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-21T01:29:54.005Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -144,3 +146,4 @@ Resume file: None
 | Phase 10 P02 | 92 | 2 tasks | 2 files |
 | Phase 10 P03 | 88 | 2 tasks | 2 files |
 | Phase 11 P01 | 89 | 2 tasks | 4 files |
+| Phase 11 P02 | 49 | 2 tasks | 2 files |

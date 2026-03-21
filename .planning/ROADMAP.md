@@ -60,7 +60,7 @@ Plans:
 3. User may see small metadata/progress overlays that remain secondary to lyric content.
 4. User can enter fullscreen from the standard shell and exit fullscreen from the fullscreen page using visible controls.
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 11-01-PLAN.md - Add visible shell/fullscreen route controls for entering and exiting immersive mode.
