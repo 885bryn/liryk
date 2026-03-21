@@ -14,7 +14,7 @@ This milestone follows completed v1.2 fullscreen delivery and focuses on elimina
 
 - [x] **Phase 12: Playback Clock Backbone and Poll Safety** - Introduce playback anchor model, local progress estimation, and stale-response guards for overlapping polls. (completed 2026-03-21)
 - [x] **Phase 13: Frame-Synced Lyric Engine and Drift Reconciliation** - Drive active-line timing on animation frames with binary-search selection and deterministic drift correction policy. (completed 2026-03-21)
-- [ ] **Phase 14: Timing Diagnostics and Early Cueing** - Add instrumentation overlay and then apply conservative early cueing once baseline stability is verified.
+- [x] **Phase 14: Timing Diagnostics and Early Cueing** - Add instrumentation overlay and then apply conservative early cueing once baseline stability is verified. (completed 2026-03-21)
 
 ## Phase Details
 
@@ -59,7 +59,7 @@ Plans:
 2. Instrumentation makes drift source identification reproducible during manual playback checks.
 3. Early cueing applies a small configurable lead while preserving stable line ordering and readability.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md - Add toggleable fullscreen diagnostics overlay with runtime timing fields.

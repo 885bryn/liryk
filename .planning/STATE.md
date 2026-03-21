@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-21T04:45:37.307Z"
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-03-21T04:48:34.337Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -59,6 +59,8 @@ Recent decisions affecting current work:
 - [Phase 14]: Fullscreen diagnostics remain optional via a subdued toggle so lyric hierarchy stays primary.
 - [Phase 14]: Mark large no-change drift corrections as hard-reset diagnostics state to distinguish them from in-band estimated corrections.
 - [Phase 14]: Gate early cueing on explicit automated and manual diagnostics baseline verification.
+- [Phase 14]: Use a conservative default early cue lead of 120ms, exported for tuning without renderer rewrites.
+- [Phase 14]: Apply cueing only to synced active-line selection; keep tier rendering and motion contracts unchanged.
 
 ### Roadmap Evolution
 
@@ -77,6 +79,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:45:37.305Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-21T04:48:34.335Z
+Stopped at: Completed 14-03-PLAN.md
 Resume file: None
