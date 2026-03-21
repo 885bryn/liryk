@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-21T05:22:41.529Z"
+stopped_at: Completed 15-03-PLAN.md
+last_updated: "2026-03-21T05:25:58.814Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [Phase 15]: Model transition state as hold/transition/complete with phaseProgress pinned to 0..1.
 - [Phase 15]: Use cue-adjusted progress with getTransitionPhase so fullscreen motion aligns with early-cue active-line selection.
 - [Phase 15]: Keep tier styling keyed to integer active index while only translateY uses interpolated floating index.
+- [Phase 15]: Export transition defaults with clear names so tuning is discoverable and reusable across layers.
+- [Phase 15]: Prove fullscreen constant wiring with explicit regression checks plus combined test/build verification.
 
 ### Roadmap Evolution
 
@@ -83,6 +85,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T05:22:41.527Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-21T05:25:58.812Z
+Stopped at: Completed 15-03-PLAN.md
 Resume file: None
