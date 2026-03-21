@@ -33,7 +33,7 @@ export type LyricSyncEngineDependencies = {
 };
 
 const HARD_DRIFT_SNAP_MS = 1_200;
-const SOFT_DRIFT_ESTIMATED_MS = 300;
+const MAX_SOFT_CORRECTION_MS = 100;
 
 export function createLyricSyncEngine(
   dependencies: LyricSyncEngineDependencies = {},
@@ -73,9 +73,23 @@ export function createLyricSyncEngine(
       return { progressMs: input.observedMs, confidence: "synced" };
     }
 
+    if (drift === 0) {
+      return { progressMs: input.estimatedMs, confidence: "synced" };
+    }
+
+    const boundedCorrection = Math.max(
+      -MAX_SOFT_CORRECTION_MS,
+      Math.min(MAX_SOFT_CORRECTION_MS, drift),
+    );
+    const correctedProgress = Math.max(0, Math.floor(input.estimatedMs + boundedCorrection));
+
+    if (boundedCorrection === drift) {
+      return { progressMs: input.observedMs, confidence: "synced" };
+    }
+
     return {
-      progressMs: Math.max(0, Math.floor(input.estimatedMs + drift * 0.25)),
-      confidence: Math.abs(drift) > SOFT_DRIFT_ESTIMATED_MS ? "estimated" : "synced",
+      progressMs: correctedProgress,
+      confidence: "estimated",
     };
   }
 
