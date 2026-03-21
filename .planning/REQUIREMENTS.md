@@ -18,7 +18,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 ### Visual Direction
 
 - [x] **VIS-01**: User sees a pure black fullscreen background in immersive mode.
-- [ ] **VIS-02**: User sees white lyric text hierarchy where the active line is brightest and surrounding lines remain readable with lower emphasis.
+- [x] **VIS-02**: User sees white lyric text hierarchy where the active line is brightest and surrounding lines remain readable with lower emphasis.
 - [x] **VIS-03**: User does not see card-heavy chrome, bordered utility panels, or distracting non-lyric UI in fullscreen mode.
 
 ### Karaoke Motion
@@ -65,7 +65,7 @@ Explicitly excluded for v1.2.
 | FULL-03 | Phase 11 | Pending |
 | FULL-04 | Phase 11 | Pending |
 | VIS-01 | Phase 10 | Complete |
-| VIS-02 | Phase 10 | Pending |
+| VIS-02 | Phase 10 | Complete |
 | VIS-03 | Phase 10 | Complete |
 | MOT-01 | Phase 11 | Pending |
 | MOT-02 | Phase 11 | Pending |

@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 current_plan: 0
 status: Defining requirements
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-20T23:58:37.769Z"
-last_activity: 2026-03-20
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-21T00:01:34.800Z"
+last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Plan: -
 Current Plan: 0
 Total Plans in Phase: 0
 Status: Defining requirements
-Last Activity: 2026-03-20
+Last Activity: 2026-03-21
 
 ## Accumulated Context
 
@@ -93,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 09]: Standardized fullscreen lyric mapping to displayText fallback normalization for active and adjacent lines.
 - [Phase 10]: Use explicit bg-black/text-white class tokens on fullscreen root to keep VIS-01 deterministic.
 - [Phase 10]: Remove utility label and standalone state rail copy so lyric lines remain dominant in fullscreen mode.
+- [Phase 10]: Bind hierarchy styling to absolute distance from active synced index so emphasis stays stable during playback progression.
+- [Phase 10]: Keep Chinese display fallback path unchanged while expanding fullscreen rendering to a five-line synced window.
 
 ### Roadmap Evolution
 
@@ -108,8 +110,8 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:58:37.767Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-21T00:01:34.798Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None
 
 ## Performance Metrics
@@ -135,3 +137,4 @@ Resume file: None
 | Phase 09 P02 | 118 | 2 tasks | 3 files |
 | Phase 09 P03 | 139 | 2 tasks | 3 files |
 | Phase 10 P01 | 74 | 2 tasks | 2 files |
+| Phase 10 P02 | 92 | 2 tasks | 2 files |
