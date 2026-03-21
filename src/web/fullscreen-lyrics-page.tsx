@@ -50,18 +50,11 @@ export function FullscreenLyricsPage() {
       : null;
   const nextSyncedIndex =
     typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length ? activeSyncedIndex + 1 : null;
-  const activeSyncedWindowIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
-  const syncedWindow =
-    resolvedLyrics?.renderMode === "synced" && typeof activeSyncedIndex === "number" && syncedDisplayLines.length > 0
-      ? (() => {
-          const windowStart = Math.max(0, activeSyncedIndex - 2);
-          const windowEnd = Math.min(syncedDisplayLines.length, windowStart + 5);
-          return syncedDisplayLines.slice(windowStart, windowEnd).map((line, index) => ({
-            text: line.text,
-            absoluteIndex: windowStart + index,
-          }));
-        })()
-      : [];
+  const activeSyncedRenderIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
+  const syncedTrackTranslateY =
+    resolvedLyrics?.renderMode === "synced" && syncedDisplayLines.length > 0
+      ? `${160 - activeSyncedRenderIndex * 72}px`
+      : "0px";
 
   const lyricsPanel = createLiveLyricsPanelBuilder().build({
     syncState: {
@@ -181,31 +174,39 @@ export function FullscreenLyricsPage() {
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
           <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
         ) : (
-          <div className="space-y-3 leading-relaxed">
-            {syncedWindow.length > 0
-              ? syncedWindow.map((line) => {
-                  const distance = Math.abs(line.absoluteIndex - activeSyncedWindowIndex);
+          <div className="relative overflow-hidden">
+            <div
+              data-testid="fullscreen-lyrics-track"
+              className="space-y-3 leading-relaxed transition-transform duration-500 ease-out motion-reduce:transition-none"
+              style={{ transform: `translateY(${syncedTrackTranslateY})` }}
+            >
+              {resolvedLyrics?.renderMode === "synced"
+                ? syncedDisplayLines.map((line, index) => {
+                    const distance = Math.abs(index - activeSyncedRenderIndex);
+                    const transitionClassName =
+                      "transition-[transform,opacity,color] duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none";
                   const tier = distance === 0 ? "active" : distance === 1 ? "near" : "distant";
                   const tierClassName =
                     tier === "active"
-                      ? "text-white font-semibold text-4xl sm:text-5xl"
+                      ? `text-white font-semibold text-4xl sm:text-5xl scale-100 translate-y-0 ${transitionClassName}`
                       : tier === "near"
-                        ? "text-zinc-300 font-medium text-3xl sm:text-4xl"
-                        : "text-zinc-500 font-normal text-2xl sm:text-3xl";
+                        ? `text-zinc-300 font-medium text-3xl sm:text-4xl scale-[0.98] translate-y-1 ${transitionClassName}`
+                        : `text-zinc-500 font-normal text-2xl sm:text-3xl scale-95 translate-y-2 ${transitionClassName}`;
 
                   return (
-                    <p key={`${line.absoluteIndex}-${line.text}`} data-testid={`fullscreen-lyric-line-${tier}`} className={tierClassName}>
+                    <p key={`${index}-${line.text}`} data-testid={`fullscreen-lyric-line-${tier}`} className={tierClassName}>
                       {line.text}
                     </p>
                   );
                 })
-              : null}
-            {syncedWindow.length === 0 && lyricsPanel.activeLineText ? (
-              <p className="text-white font-semibold text-4xl sm:text-5xl">{lyricsPanel.activeLineText}</p>
-            ) : null}
-            {syncedWindow.length === 0 && lyricsPanel.nextLineText ? (
-              <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
-            ) : null}
+                : null}
+              {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.activeLineText ? (
+                <p className="text-white font-semibold text-4xl sm:text-5xl">{lyricsPanel.activeLineText}</p>
+              ) : null}
+              {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.nextLineText ? (
+                <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
+              ) : null}
+            </div>
           </div>
         )}
       </main>
