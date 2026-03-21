@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
 import { applyEarlyCue, DEFAULT_CUE_LEAD_MS } from "@/core/sync/early-cue";
-import { getTransitionPhase } from "@/core/sync/lyric-motion-window";
+import {
+  DEFAULT_MAX_TRANSITION_MS,
+  DEFAULT_MIN_TRANSITION_MS,
+  DEFAULT_TRANSITION_WINDOW_FRACTION,
+  getTransitionPhase,
+} from "@/core/sync/lyric-motion-window";
 import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
 import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
@@ -93,6 +98,9 @@ export function FullscreenLyricsPage() {
             progressMs: cueAdjustedProgressMs,
             currentStartMs: currentLine.startMs,
             nextStartMs: nextLine.startMs,
+            minTransitionMs: DEFAULT_MIN_TRANSITION_MS,
+            maxTransitionMs: DEFAULT_MAX_TRANSITION_MS,
+            transitionFraction: DEFAULT_TRANSITION_WINDOW_FRACTION,
           });
 
           if (transition.phase === "transition") {
