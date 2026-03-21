@@ -6,6 +6,7 @@ import {
   DEFAULT_TRANSITION_WINDOW_FRACTION,
   easeInOutCubic,
   getAdaptiveTransitionMs,
+  getTargetScrollOffset,
   getTransitionPhase,
 } from "./lyric-motion-window";
 
@@ -106,5 +107,73 @@ describe("getTransitionPhase", () => {
     expect(transitionMid.phase).toBe("transition");
     expect(transitionMid.phaseProgress).toBeCloseTo(0.0625, 6);
     expect(transitionMid.phaseProgress).not.toBeCloseTo(0.25, 6);
+  });
+});
+
+describe("getTargetScrollOffset", () => {
+  it("returns exact current-line offset during hold", () => {
+    expect(
+      getTargetScrollOffset({
+        currentIndex: 2,
+        nextIndex: 3,
+        phase: "hold",
+        phaseProgress: 0.4,
+        stepPx: 88,
+      }),
+    ).toBe(-176);
+  });
+
+  it("returns bounded interpolated offset during transition", () => {
+    const offset = getTargetScrollOffset({
+      currentIndex: 2,
+      nextIndex: 3,
+      phase: "transition",
+      phaseProgress: 0.25,
+      stepPx: 88,
+    });
+
+    expect(offset).toBeCloseTo(-198, 6);
+    expect(offset).toBeLessThan(-176);
+    expect(offset).toBeGreaterThan(-264);
+  });
+
+  it("returns exact next-line offset at complete", () => {
+    expect(
+      getTargetScrollOffset({
+        currentIndex: 2,
+        nextIndex: 3,
+        phase: "complete",
+        phaseProgress: 0.45,
+        stepPx: 88,
+      }),
+    ).toBe(-264);
+  });
+
+  it("keeps stable current offset when next index is null across phases", () => {
+    const hold = getTargetScrollOffset({
+      currentIndex: 4,
+      nextIndex: null,
+      phase: "hold",
+      phaseProgress: 0,
+      stepPx: 88,
+    });
+    const transition = getTargetScrollOffset({
+      currentIndex: 4,
+      nextIndex: null,
+      phase: "transition",
+      phaseProgress: 0.67,
+      stepPx: 88,
+    });
+    const complete = getTargetScrollOffset({
+      currentIndex: 4,
+      nextIndex: null,
+      phase: "complete",
+      phaseProgress: 1,
+      stepPx: 88,
+    });
+
+    expect(hold).toBe(-352);
+    expect(transition).toBe(-352);
+    expect(complete).toBe(-352);
   });
 });
