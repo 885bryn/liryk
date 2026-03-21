@@ -66,14 +66,19 @@ export function createPlaybackRuntime(dependencies: PlaybackRuntimeDependencies)
     const requestId = ++requestCounter;
     const incoming = await dependencies.fetchCurrentPlayback();
 
-    if (requestId < latestResolvedRequest) {
+    const staleByRequestOrder = requestId < latestResolvedRequest;
+    if (staleByRequestOrder) {
       return;
     }
-    latestResolvedRequest = requestId;
 
-    if (incoming && latestSnapshot && !isNewerSnapshot(latestSnapshot, incoming)) {
+    const staleBySnapshotFreshness =
+      incoming !== null && latestSnapshot !== null && !isNewerSnapshot(latestSnapshot, incoming);
+    if (staleBySnapshotFreshness) {
+      latestResolvedRequest = requestId;
       return;
     }
+
+    latestResolvedRequest = requestId;
 
     const transition = incoming
       ? classifyPlaybackTransition(latestSnapshot, incoming)
