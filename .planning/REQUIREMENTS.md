@@ -16,7 +16,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Lyric Timing Engine
 
-- [ ] **LYR-01**: User sees active lyric updates driven by animation-frame timing rather than polling cadence.
+- [x] **LYR-01**: User sees active lyric updates driven by animation-frame timing rather than polling cadence.
 - [ ] **LYR-02**: User sees accurate active-line selection derived by binary search over sorted lyric start times.
 
 ### Diagnostics and Tuning
