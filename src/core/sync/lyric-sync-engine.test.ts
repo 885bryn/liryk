@@ -83,14 +83,14 @@ describe("lyric sync engine", () => {
       nextLineIndex: 0,
     });
 
-    engine.reanchor({ snapshot: snapshot({ progressMs: 1_250, capturedAtMs: 1_100 }), transition: "no_change" });
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_250, capturedAtMs: 1_100 }), transition: "seeked" });
     expect(engine.estimateFrame()).toMatchObject({
       activeLineIndex: 1,
       nextLineIndex: 2,
     });
 
     now = 1_300;
-    engine.reanchor({ snapshot: snapshot({ progressMs: 1_500, capturedAtMs: 1_200 }), transition: "no_change" });
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_500, capturedAtMs: 1_200 }), transition: "seeked" });
     expect(engine.estimateFrame()).toMatchObject({
       activeLineIndex: 2,
       nextLineIndex: null,
