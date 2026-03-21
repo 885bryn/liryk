@@ -4,9 +4,34 @@ import {
   DEFAULT_MAX_TRANSITION_MS,
   DEFAULT_MIN_TRANSITION_MS,
   DEFAULT_TRANSITION_WINDOW_FRACTION,
+  easeInOutCubic,
   getAdaptiveTransitionMs,
   getTransitionPhase,
 } from "./lyric-motion-window";
+
+describe("easeInOutCubic", () => {
+  it("returns exact boundary values for 0 and 1", () => {
+    expect(easeInOutCubic(0)).toBe(0);
+    expect(easeInOutCubic(1)).toBe(1);
+  });
+
+  it("stays within 0..1 for representative in-range values", () => {
+    const outputs = [0.1, 0.25, 0.5, 0.75, 0.9].map((value) => easeInOutCubic(value));
+    for (const output of outputs) {
+      expect(output).toBeGreaterThanOrEqual(0);
+      expect(output).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("is monotonic increasing without overshoot", () => {
+    const samples = [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1].map((value) => easeInOutCubic(value));
+    for (let i = 1; i < samples.length; i += 1) {
+      expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1]);
+    }
+    expect(Math.min(...samples)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...samples)).toBeLessThanOrEqual(1);
+  });
+});
 
 describe("getAdaptiveTransitionMs", () => {
   it("exports readable default transition tuning constants", () => {
@@ -69,5 +94,17 @@ describe("getTransitionPhase", () => {
     });
     expect(complete.phase).toBe("complete");
     expect(complete.phaseProgress).toBe(1);
+  });
+
+  it("returns eased phaseProgress during transition instead of raw linear ratio", () => {
+    const transitionMid = getTransitionPhase({
+      progressMs: 1_685,
+      currentStartMs: 1_000,
+      nextStartMs: 2_000,
+    });
+
+    expect(transitionMid.phase).toBe("transition");
+    expect(transitionMid.phaseProgress).toBeCloseTo(0.0625, 6);
+    expect(transitionMid.phaseProgress).not.toBeCloseTo(0.25, 6);
   });
 });
