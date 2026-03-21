@@ -9,11 +9,11 @@ describe("createLiveSyncRuntime", () => {
   it("schedules requestAnimationFrame while playing and updates progress on callbacks", () => {
     let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
     let nextFrameId = 1;
-    const pendingFrames = new Map<number, () => void>();
+    const pendingFrames = new Map<number, FrameRequestCallback>();
     let nowPerfMs = 1_000;
     const store = new LiveSyncStore();
     const engine = createLyricSyncEngine({ nowPerfMs: () => nowPerfMs });
-    const requestAnimationFrameFn = vi.fn((callback: () => void) => {
+    const requestAnimationFrameFn = vi.fn((callback: FrameRequestCallback) => {
       const frameId = nextFrameId;
       nextFrameId += 1;
       pendingFrames.set(frameId, callback);
@@ -39,7 +39,7 @@ describe("createLiveSyncRuntime", () => {
       nowPerfMs: () => nowPerfMs,
       requestAnimationFrameFn,
       cancelAnimationFrameFn,
-    } as never);
+    });
 
     runtime.start();
     playbackListener?.({
@@ -59,7 +59,7 @@ describe("createLiveSyncRuntime", () => {
     expect(requestAnimationFrameFn).toHaveBeenCalledTimes(1);
 
     nowPerfMs = 1_750;
-    pendingFrames.get(1)?.();
+    pendingFrames.get(1)?.(0);
     expect(store.selectLiveSync().estimatedProgressMs).toBe(1_150);
     expect(requestAnimationFrameFn).toHaveBeenCalledTimes(2);
   });
@@ -67,10 +67,10 @@ describe("createLiveSyncRuntime", () => {
   it("cancels pending requestAnimationFrame when playback pauses", () => {
     let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
     let nextFrameId = 1;
-    const pendingFrames = new Map<number, () => void>();
+    const pendingFrames = new Map<number, FrameRequestCallback>();
     const store = new LiveSyncStore();
     const engine = createLyricSyncEngine({ nowPerfMs: () => 1_000 });
-    const requestAnimationFrameFn = vi.fn((callback: () => void) => {
+    const requestAnimationFrameFn = vi.fn((callback: FrameRequestCallback) => {
       const frameId = nextFrameId;
       nextFrameId += 1;
       pendingFrames.set(frameId, callback);
@@ -92,7 +92,7 @@ describe("createLiveSyncRuntime", () => {
       getTimelineForTrack: () => [{ startMs: 0, text: "a" }],
       requestAnimationFrameFn,
       cancelAnimationFrameFn,
-    } as never);
+    });
 
     runtime.start();
     playbackListener?.({
@@ -120,7 +120,7 @@ describe("createLiveSyncRuntime", () => {
     });
 
     expect(cancelAnimationFrameFn).toHaveBeenCalledWith(1);
-    pendingFrames.get(1)?.();
+    pendingFrames.get(1)?.(0);
     expect(store.selectPlaybackState()).toBe("paused");
     expect(store.selectLiveSync().estimatedProgressMs).toBe(500);
     expect(requestAnimationFrameFn).toHaveBeenCalledTimes(1);
@@ -129,11 +129,11 @@ describe("createLiveSyncRuntime", () => {
   it("cancels pending requestAnimationFrame for idle snapshots and runtime stop", () => {
     let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
     let nextFrameId = 1;
-    const pendingFrames = new Map<number, () => void>();
+    const pendingFrames = new Map<number, FrameRequestCallback>();
     let nowPerfMs = 1_000;
     const store = new LiveSyncStore();
     const engine = createLyricSyncEngine({ nowPerfMs: () => nowPerfMs });
-    const requestAnimationFrameFn = vi.fn((callback: () => void) => {
+    const requestAnimationFrameFn = vi.fn((callback: FrameRequestCallback) => {
       const frameId = nextFrameId;
       nextFrameId += 1;
       pendingFrames.set(frameId, callback);
@@ -156,7 +156,7 @@ describe("createLiveSyncRuntime", () => {
       nowPerfMs: () => nowPerfMs,
       requestAnimationFrameFn,
       cancelAnimationFrameFn,
-    } as never);
+    });
 
     runtime.start();
     playbackListener?.({
@@ -192,7 +192,7 @@ describe("createLiveSyncRuntime", () => {
     expect(requestAnimationFrameFn).toHaveBeenCalledTimes(2);
     runtime.stop();
     expect(cancelAnimationFrameFn).toHaveBeenCalledWith(2);
-    pendingFrames.get(2)?.();
+    pendingFrames.get(2)?.(0);
     expect(store.selectLiveSync().estimatedProgressMs).toBe(450);
   });
 
@@ -213,7 +213,7 @@ describe("createLiveSyncRuntime", () => {
       getTimelineForTrack: (trackId) => (trackId === "known" ? [{ startMs: 0, text: "line" }] : null),
       requestAnimationFrameFn: vi.fn(() => 0),
       cancelAnimationFrameFn: vi.fn(),
-    } as never);
+    });
 
     runtime.start();
     playbackListener?.({
@@ -256,7 +256,7 @@ describe("createLiveSyncRuntime", () => {
       }),
       requestAnimationFrameFn: vi.fn(() => 0),
       cancelAnimationFrameFn: vi.fn(),
-    } as never);
+    });
 
     runtime.start();
     playbackListener?.({

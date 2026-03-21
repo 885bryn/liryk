@@ -12,12 +12,10 @@ export type LiveSyncRuntimeDependencies = {
   liveSyncStore: LiveSyncStore;
   getTimelineForTrack: (trackId: string) => LyricLine[] | null;
   getResolvedLyricsForTrack?: (trackId: string) => ResolvedLyrics | null;
-  setIntervalFn?: (callback: () => void, delayMs: number) => ReturnType<typeof setInterval>;
-  clearIntervalFn?: (timer: ReturnType<typeof setInterval>) => void;
+  requestAnimationFrameFn?: (callback: FrameRequestCallback) => number;
+  cancelAnimationFrameFn?: (frameId: number) => void;
   nowPerfMs?: () => number;
 };
-
-const FRAME_MS = 250;
 
 export type LiveSyncRuntime = {
   start(): void;
@@ -38,12 +36,14 @@ function statusForState(playbackState: "idle" | "playing" | "paused" | "unavaila
 }
 
 export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies): LiveSyncRuntime {
-  const setIntervalFn = dependencies.setIntervalFn ?? setInterval;
-  const clearIntervalFn = dependencies.clearIntervalFn ?? clearInterval;
+  const requestAnimationFrameFn = dependencies.requestAnimationFrameFn ?? requestAnimationFrame;
+  const cancelAnimationFrameFn = dependencies.cancelAnimationFrameFn ?? cancelAnimationFrame;
   const nowPerfMs = dependencies.nowPerfMs ?? (() => performance.now());
 
   let unsubscribePlayback: (() => void) | null = null;
-  let frameTimer: ReturnType<typeof setInterval> | null = null;
+  let frameRequestId: number | null = null;
+  let frameLoopToken = 0;
+  let frameLoopRunning = false;
   let playbackClockAnchor: PlaybackClockAnchor | null = null;
 
   function applyEstimatedProgress(): void {
@@ -66,19 +66,38 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
   }
 
   function stopTicker(): void {
-    if (frameTimer) {
-      clearIntervalFn(frameTimer);
-      frameTimer = null;
+    frameLoopRunning = false;
+    frameLoopToken += 1;
+    if (frameRequestId !== null) {
+      cancelAnimationFrameFn(frameRequestId);
+      frameRequestId = null;
     }
   }
 
-  function ensureTicker(): void {
-    if (frameTimer) {
+  function scheduleNextFrame(frameToken: number): void {
+    if (!frameLoopRunning || frameToken !== frameLoopToken || frameRequestId !== null) {
       return;
     }
-    frameTimer = setIntervalFn(() => {
+
+    frameRequestId = requestAnimationFrameFn(() => {
+      frameRequestId = null;
+      if (!frameLoopRunning || frameToken !== frameLoopToken) {
+        return;
+      }
+
       applyFrame();
-    }, FRAME_MS);
+      scheduleNextFrame(frameToken);
+    });
+  }
+
+  function ensureTicker(): void {
+    if (frameLoopRunning) {
+      return;
+    }
+
+    frameLoopRunning = true;
+    frameLoopToken += 1;
+    scheduleNextFrame(frameLoopToken);
   }
 
   function onSnapshot(event: PlaybackRuntimeEvent): void {
