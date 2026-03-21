@@ -119,9 +119,7 @@ describe("FullscreenLyricsPage", () => {
     expect(column.className).toContain("mx-auto");
     expect(column.className).toContain("max-w-3xl");
     expect(column.className).toContain("text-left");
-    expect(column.className).toContain("py-20");
-    expect(column.className).toContain("sm:py-24");
-    expect(column.className).toContain("lg:py-28");
+    expect(column.className).toContain("justify-start");
     expect(column.className).not.toContain("bg-card");
     expect(column.className).not.toContain("ring-border");
     expect(column.className).not.toContain("border");
@@ -183,6 +181,48 @@ describe("FullscreenLyricsPage", () => {
       expect(distantLines.every((line) => line.className.includes("font-normal"))).toBe(true);
       expect(distantLines.every((line) => line.className.includes("text-2xl"))).toBe(true);
       expect(distantLines.every((line) => line.className.includes("sm:text-3xl"))).toBe(true);
+    });
+  });
+
+  it("does not highlight active lyric before first synced timestamp", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-before-first-line",
+      title: "Intro Track",
+      artist: "Intro Artist",
+      progressMs: 2_000,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 10_000, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 12_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 14_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(0);
+      expect(screen.queryAllByTestId("fullscreen-lyric-line-near").length).toBe(1);
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      expect(track.style.transform).toContain("translateY(0px)");
     });
   });
 
@@ -286,10 +326,13 @@ describe("FullscreenLyricsPage", () => {
       const progressOverlay = screen.getByTestId("fullscreen-progress-overlay");
       const track = screen.getByTestId("fullscreen-lyrics-track");
 
-      expect(metadataOverlay.className).toContain("text-sm");
-      expect(metadataOverlay.className).toContain("text-white/70");
-      expect(progressOverlay.className).toContain("text-xs");
-      expect(progressOverlay.className).toContain("text-white/60");
+      expect(metadataOverlay.className).toContain("fixed");
+      expect(metadataOverlay.className).toContain("right-4");
+      expect(metadataOverlay.className).toContain("top-3");
+      expect(metadataOverlay.className).toContain("text-[10px]");
+      expect(metadataOverlay.className).toContain("text-white/32");
+      expect(progressOverlay.className).toContain("text-[9px]");
+      expect(progressOverlay.className).toContain("text-white/25");
 
       expect(metadataOverlay.className).not.toContain("text-4xl");
       expect(metadataOverlay.className).not.toContain("sm:text-5xl");
@@ -340,13 +383,114 @@ describe("FullscreenLyricsPage", () => {
     render(<FullscreenLyricsPage />);
 
     await waitFor(() => {
-      expect(screen.queryAllByRole("button").length).toBe(0);
+      expect(screen.queryAllByRole("button").length).toBe(1);
       expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(1);
 
       const layout = screen.getByTestId("fullscreen-lyrics-layout");
       expect(layout.className).toContain("bg-black");
       expect(layout.className).toContain("text-white");
     });
+  });
+
+  it("toggles diagnostics overlay without affecting synced lyric rendering", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-diagnostics",
+      title: "Diagnostics Track",
+      artist: "Diagnostics Artist",
+      progressMs: 4_500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    const toggle = await screen.findByRole("button", { name: "Show Diagnostics" });
+    expect(screen.queryByTestId("fullscreen-diagnostics-overlay")).toBeNull();
+
+    toggle.click();
+    expect(screen.getByTestId("fullscreen-diagnostics-overlay")).toBeTruthy();
+    expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(1);
+
+    toggle.click();
+    expect(screen.queryByTestId("fullscreen-diagnostics-overlay")).toBeNull();
+  });
+
+  it("renders required diagnostics labels and values from live sync state", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-diagnostics-values",
+      title: "Diagnostics Values",
+      artist: "Diagnostics Artist",
+      progressMs: 4_500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    (await screen.findByRole("button", { name: "Show Diagnostics" })).click();
+    const overlay = screen.getByTestId("fullscreen-diagnostics-overlay");
+    expect(overlay).toBeTruthy();
+    expect(screen.getByText("Estimated ms")).toBeTruthy();
+    expect(screen.getByText("Polled ms")).toBeTruthy();
+    expect(screen.getByText("Drift delta ms")).toBeTruthy();
+    expect(screen.getByText("Correction state")).toBeTruthy();
+    expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("4500");
+    expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("4500");
+    expect(screen.getByTestId("diagnostics-drift-delta-ms").textContent).toContain("0");
+    expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("synced");
+  });
+
+  it("shows safe idle diagnostics values when no playback snapshot exists", async () => {
+    render(<FullscreenLyricsPage />);
+
+    (await screen.findByRole("button", { name: "Show Diagnostics" })).click();
+    expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("0");
+    expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("0");
+    expect(screen.getByTestId("diagnostics-drift-delta-ms").textContent).toContain("0");
+    expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("static");
   });
 
   it("renders simplified chinese lines while preserving mixed non-chinese content", async () => {
