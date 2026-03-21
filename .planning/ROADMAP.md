@@ -46,9 +46,9 @@ Plans:
 **Plans:** 0/3 plans complete
 
 Plans:
-- [ ] 16-01-PLAN.md - Implement easing helper (`easeInOutCubic` or `smoothstep`) in transition interpolation path.
-- [ ] 16-02-PLAN.md - Finalize `getTargetScrollOffset` interpolation and settle semantics across edge cases.
-- [ ] 16-03-PLAN.md - Verify readability-focused transition tuning with automated boundary tests and manual playback checks.
+- [ ] 16-01-PLAN.md - Add core easing helper and deterministic transition-progress tests for calm interpolation.
+- [ ] 16-02-PLAN.md - Implement `getTargetScrollOffset` settle semantics and wire fullscreen short/long-gap edge handling.
+- [ ] 16-03-PLAN.md - Finalize quality gate with regression/build verification plus manual fullscreen playback checkpoint.
 
 ### Phase 17: Visual Continuity and Timing Guardrails
 **Goal**: Neighboring line visual state changes remain smooth while preserving all existing timing correctness guarantees.
