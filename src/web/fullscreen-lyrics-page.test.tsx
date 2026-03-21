@@ -226,6 +226,48 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
+  it("applies conservative early cue lead near synced line boundaries", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-cue-boundary",
+      title: "Cue Boundary Track",
+      artist: "Cue Artist",
+      progressMs: 1_885,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const activeLines = screen.queryAllByTestId("fullscreen-lyric-line-active");
+      expect(activeLines.length).toBe(1);
+      expect(activeLines[0]?.textContent).toBe("Line 2");
+      expect(screen.queryAllByTestId("fullscreen-lyric-line-near").length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
   it("applies center-anchor track transform and motion transition contracts", async () => {
     hookModel = {
       phase: "ready",
