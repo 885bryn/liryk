@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: playback-clock-drift-fix-and-early-karaoke-cueing
+milestone: v1.4
+milestone_name: stable-line-change-motion-model
 current_plan: 0
-status: Defining requirements
-stopped_at: Milestone v1.4 started; requirements definition in progress
-last_updated: "2026-03-21T05:30:00.000Z"
+status: Ready for phase planning
+stopped_at: Milestone v1.4 roadmap created; phase 15 planning not started
+last_updated: "2026-03-21T05:45:00.000Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
@@ -21,15 +21,15 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-21)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** v1.4 kickoff for stable line-change lyric motion (hold-transition-settle).
+**Current focus:** v1.4 roadmap ready; phase 15 planning pending.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Not started (pre-Phase 15 planning)
 Plan: -
 Current Plan: 0
 Total Plans in Phase: 0
-Status: Defining requirements
+Status: Ready for phase planning
 Last Activity: 2026-03-21
 
 ## Accumulated Context
@@ -71,7 +71,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Define v1.4 requirements and roadmap.
+- Start Phase 15 planning.
 
 ### Blockers/Concerns
 

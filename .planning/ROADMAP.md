@@ -2,75 +2,77 @@
 
 ## Overview
 
-This milestone follows completed v1.2 fullscreen delivery and focuses on eliminating playback/lyric timing drift before introducing early karaoke cueing. Timing authority moves from poll cadence to a local playback clock with frame-driven lyric updates.
+This milestone follows completed v1.3 timing stabilization and focuses on visual readability. The lyric stack should hold still while a line is being read, transition only near line changes, then settle cleanly. Playback timing correctness remains unchanged.
 
 ## Milestone
 
-- **Milestone:** v1.3 Playback Clock Drift Fix and Early Karaoke Cueing
-- **Requirements mapped:** 7 of 7
-- **First phase number:** 12
+- **Milestone:** v1.4 Stable Line-Change Motion Model
+- **Requirements mapped:** 8 of 8
+- **First phase number:** 15
 
 ## Phases
 
-- [x] **Phase 12: Playback Clock Backbone and Poll Safety** - Introduce playback anchor model, local progress estimation, and stale-response guards for overlapping polls. (completed 2026-03-21)
-- [x] **Phase 13: Frame-Synced Lyric Engine and Drift Reconciliation** - Drive active-line timing on animation frames with binary-search selection and deterministic drift correction policy. (completed 2026-03-21)
-- [x] **Phase 14: Timing Diagnostics and Early Cueing** - Add instrumentation overlay and then apply conservative early cueing once baseline stability is verified. (completed 2026-03-21)
+- [ ] **Phase 15: Hold-and-Transition Motion Windowing** - Implement adaptive pre-change transition windows with stable hold behavior for active-line readability.
+- [ ] **Phase 16: Smooth Transition Execution and Settling** - Deliver eased line-change motion that lands cleanly without drift, snap, bounce, or overshoot.
+- [ ] **Phase 17: Visual Continuity and Timing Guardrails** - Smooth neighboring line emphasis changes and verify no regressions in playback timing correctness.
 
 ## Phase Details
 
-### Phase 12: Playback Clock Backbone and Poll Safety
-**Goal**: Timing state remains stable between Spotify polls and rejects stale poll completions.
-**Depends on**: Completed Phase 11
-**Requirements**: CLK-01, CLK-02
+### Phase 15: Hold-and-Transition Motion Windowing
+**Goal**: Lyrics stay still while reading and move only inside an adaptive pre-change window near the next line start.
+**Depends on**: Completed Phase 14
+**Requirements**: MOT-04, MOT-05, TRN-01
 **Success Criteria**:
-1. Runtime stores an anchor from latest trusted playback sample and estimates live progress from local elapsed time.
-2. Lyric timing consumers can read estimated progress without waiting for next poll tick.
-3. Overlapping playback fetches cannot regress track/progress due to stale completion order.
+1. User sees active line remain visually anchored through most of the current line interval.
+2. User sees upward lyric motion begin only near the next line boundary, not continuously across the whole gap.
+3. User sees transition timing adapt to per-line gap with readable min/max clamp behavior.
 
-**Plans:** 3/3 plans complete
+**Plans:** 0/3 plans complete
 
 Plans:
-- [ ] 12-01-PLAN.md - Define playback anchor contract and estimation utility with deterministic unit coverage.
-- [ ] 12-02-PLAN.md - Integrate anchor-driven estimation into now-playing runtime state updates.
-- [ ] 12-03-PLAN.md - Add stale poll guards and verification runbook for overlap race scenarios.
+- [ ] 15-01-PLAN.md - Add transition-window helper contracts (`getAdaptiveTransitionMs`, `getTransitionPhase`) with deterministic tests.
+- [ ] 15-02-PLAN.md - Refactor fullscreen track offset calculation to hold before window and animate only within window.
+- [ ] 15-03-PLAN.md - Expose and tune motion constants for readable defaults and clamp behavior verification.
 
-### Phase 13: Frame-Synced Lyric Engine and Drift Reconciliation
-**Goal**: Active lyric selection remains smooth and accurate via frame updates and bounded drift handling.
-**Depends on**: Phase 12
-**Requirements**: LYR-01, LYR-02, CLK-03
+### Phase 16: Smooth Transition Execution and Settling
+**Goal**: Transition movement feels calm and premium, then lands into a stable resting position on each line change.
+**Depends on**: Phase 15
+**Requirements**: MOT-06, TRN-02, VIS-04
 **Success Criteria**:
-1. Active lyric progression updates on requestAnimationFrame instead of poll cadence.
-2. Active line is selected using binary search over monotonic lyric start times.
-3. Drift reconciliation policy applies hard reset above threshold and bounded soft correction below threshold.
+1. User sees compact but smooth motion on short lyric gaps and late-start controlled motion on long gaps.
+2. User sees eased interpolation without bounce, overshoot, or spring-like wobble.
+3. User sees line-change motion complete with clear settle and no residual drift after landing.
 
-**Plans:** 3/3 plans complete
+**Plans:** 0/3 plans complete
 
 Plans:
-- [ ] 13-01-PLAN.md - Replace interval ticker with requestAnimationFrame-driven live lyric frame updates.
-- [ ] 13-02-PLAN.md - Harden binary-search active-line resolver and boundary semantics with tests.
-- [ ] 13-03-PLAN.md - Finalize deterministic hard-reset and bounded soft-correction drift policy.
+- [ ] 16-01-PLAN.md - Implement easing helper (`easeInOutCubic` or `smoothstep`) in transition interpolation path.
+- [ ] 16-02-PLAN.md - Finalize `getTargetScrollOffset` interpolation and settle semantics across edge cases.
+- [ ] 16-03-PLAN.md - Verify readability-focused transition tuning with automated boundary tests and manual playback checks.
 
-### Phase 14: Timing Diagnostics and Early Cueing
-**Goal**: Drift behavior becomes observable, then early cueing is layered in safely.
-**Depends on**: Phase 13
-**Requirements**: DBG-01, CUE-01
+### Phase 17: Visual Continuity and Timing Guardrails
+**Goal**: Neighboring line visual state changes remain smooth while preserving all existing timing correctness guarantees.
+**Depends on**: Phase 16
+**Requirements**: VIS-05, SAFE-01
 **Success Criteria**:
-1. Debug overlay can be toggled to inspect estimated progress, polled progress, delta, and correction state.
-2. Instrumentation makes drift source identification reproducible during manual playback checks.
-3. Early cueing applies a small configurable lead while preserving stable line ordering and readability.
+1. User sees active and nearby line opacity/color/scale transitions change smoothly during handoff without abrupt flips.
+2. User sees stable visual hierarchy before, during, and after transitions with no harsh style jumps.
+3. User retains timing correctness: playback clock, drift policy, and active-line selection tests remain green.
 
-**Plans:** 3/3 plans complete
+**Plans:** 0/3 plans complete
 
 Plans:
-- [ ] 14-01-PLAN.md - Add toggleable fullscreen diagnostics overlay with runtime timing fields.
-- [ ] 14-02-PLAN.md - Lock baseline drift diagnostics behavior and publish reproducible verification gate.
-- [ ] 14-03-PLAN.md - Introduce conservative early cueing utility and wire it into synced activation.
+- [ ] 17-01-PLAN.md - Smooth neighboring line tier transition contracts during line-change motion.
+- [ ] 17-02-PLAN.md - Add regression suite proving motion refactor does not alter timing correctness.
+- [ ] 17-03-PLAN.md - Publish readability verification runbook and finalize motion quality gate.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 12 -> 13 -> 14
+Phases execute in numeric order: 15 -> 16 -> 17
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 12. Playback Clock Backbone and Poll Safety | 3/3 | Complete   | 2026-03-21 | 13. Frame-Synced Lyric Engine and Drift Reconciliation | 3/3 | Complete   | 2026-03-21 | 14. Timing Diagnostics and Early Cueing | DBG-01, CUE-01 | Not started |
+| 15. Hold-and-Transition Motion Windowing | MOT-04, MOT-05, TRN-01 | Not started |
+| 16. Smooth Transition Execution and Settling | MOT-06, TRN-02, VIS-04 | Not started |
+| 17. Visual Continuity and Timing Guardrails | VIS-05, SAFE-01 | Not started |
