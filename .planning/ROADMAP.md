@@ -12,7 +12,7 @@ This milestone follows completed v1.2 fullscreen delivery and focuses on elimina
 
 ## Phases
 
-- [ ] **Phase 12: Playback Clock Backbone and Poll Safety** - Introduce playback anchor model, local progress estimation, and stale-response guards for overlapping polls.
+- [x] **Phase 12: Playback Clock Backbone and Poll Safety** - Introduce playback anchor model, local progress estimation, and stale-response guards for overlapping polls. (completed 2026-03-21)
 - [ ] **Phase 13: Frame-Synced Lyric Engine and Drift Reconciliation** - Drive active-line timing on animation frames with binary-search selection and deterministic drift correction policy.
 - [ ] **Phase 14: Timing Diagnostics and Early Cueing** - Add instrumentation overlay and then apply conservative early cueing once baseline stability is verified.
 
@@ -27,7 +27,7 @@ This milestone follows completed v1.2 fullscreen delivery and focuses on elimina
 2. Lyric timing consumers can read estimated progress without waiting for next poll tick.
 3. Overlapping playback fetches cannot regress track/progress due to stale completion order.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 12-01-PLAN.md - Define playback anchor contract and estimation utility with deterministic unit coverage.
@@ -73,5 +73,5 @@ Phases execute in numeric order: 12 -> 13 -> 14
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 12. Playback Clock Backbone and Poll Safety | 2/3 | In Progress|  | 13. Frame-Synced Lyric Engine and Drift Reconciliation | LYR-01, LYR-02, CLK-03 | Not started |
+| 12. Playback Clock Backbone and Poll Safety | 3/3 | Complete   | 2026-03-21 | 13. Frame-Synced Lyric Engine and Drift Reconciliation | LYR-01, LYR-02, CLK-03 | Not started |
 | 14. Timing Diagnostics and Early Cueing | DBG-01, CUE-01 | Not started |

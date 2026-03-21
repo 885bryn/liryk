@@ -11,7 +11,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 ### Playback Clock Stability
 
 - [x] **CLK-01**: User sees lyric timing stay aligned to real playback through a local playback anchor plus estimated progress between Spotify polls.
-- [ ] **CLK-02**: User does not experience stale playback responses overwriting newer track/progress state when polling overlaps.
+- [x] **CLK-02**: User does not experience stale playback responses overwriting newer track/progress state when polling overlaps.
 - [ ] **CLK-03**: User sees deterministic drift handling where large drift hard-resets and small drift applies bounded soft correction.
 
 ### Lyric Timing Engine

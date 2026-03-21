@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-21T04:10:51.655Z"
+stopped_at: Completed 12-03-PLAN.md
+last_updated: "2026-03-21T04:13:50.242Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -47,6 +47,8 @@ Recent decisions affecting current work:
 - [Phase 12]: Keep playback progress estimation pure and monotonic-time-driven for deterministic behavior.
 - [Phase 12]: Publish estimatedProgressMs on runtime frame updates so lyric consumers read between-poll progress.
 - [Phase 12]: Add optional nowPerfMs runtime dependency for deterministic playback-clock test control.
+- [Phase 12]: Enforce explicit stale-by-request and stale-by-freshness checks before playback runtime emits or updates latest snapshot.
+- [Phase 12]: Use deferred overlap race fixtures plus build gate as repeatable CLK-02 verification proof.
 
 ### Roadmap Evolution
 
@@ -65,6 +67,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:10:51.653Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-03-21T04:13:50.240Z
+Stopped at: Completed 12-03-PLAN.md
 Resume file: None
