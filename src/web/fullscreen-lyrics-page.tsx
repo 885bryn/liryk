@@ -32,6 +32,10 @@ export function FullscreenLyricsPage() {
 
   const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
   const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
+  const syncedDisplayLines = syncedLines.map((line) => ({
+    text: line.displayText ?? normalizeChineseForDisplay(line.text),
+    startMs: line.startMs ?? 0,
+  }));
   const activeSyncedIndex =
     nowPlaying && syncedLines.length > 0
       ? Math.max(
@@ -46,6 +50,18 @@ export function FullscreenLyricsPage() {
       : null;
   const nextSyncedIndex =
     typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length ? activeSyncedIndex + 1 : null;
+  const activeSyncedWindowIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
+  const syncedWindow =
+    resolvedLyrics?.renderMode === "synced" && typeof activeSyncedIndex === "number" && syncedDisplayLines.length > 0
+      ? (() => {
+          const windowStart = Math.max(0, activeSyncedIndex - 2);
+          const windowEnd = Math.min(syncedDisplayLines.length, windowStart + 5);
+          return syncedDisplayLines.slice(windowStart, windowEnd).map((line, index) => ({
+            text: line.text,
+            absoluteIndex: windowStart + index,
+          }));
+        })()
+      : [];
 
   const lyricsPanel = createLiveLyricsPanelBuilder().build({
     syncState: {
@@ -158,9 +174,31 @@ export function FullscreenLyricsPage() {
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
           <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
         ) : (
-          <div className="space-y-3 text-2xl leading-relaxed sm:text-3xl">
-            {lyricsPanel.activeLineText ? <p className="font-semibold text-white">{lyricsPanel.activeLineText}</p> : null}
-            {lyricsPanel.nextLineText ? <p className="text-white/70">{lyricsPanel.nextLineText}</p> : null}
+          <div className="space-y-3 leading-relaxed">
+            {syncedWindow.length > 0
+              ? syncedWindow.map((line) => {
+                  const distance = Math.abs(line.absoluteIndex - activeSyncedWindowIndex);
+                  const tier = distance === 0 ? "active" : distance === 1 ? "near" : "distant";
+                  const tierClassName =
+                    tier === "active"
+                      ? "text-white font-semibold text-4xl sm:text-5xl"
+                      : tier === "near"
+                        ? "text-zinc-300 font-medium text-3xl sm:text-4xl"
+                        : "text-zinc-500 font-normal text-2xl sm:text-3xl";
+
+                  return (
+                    <p key={`${line.absoluteIndex}-${line.text}`} data-testid={`fullscreen-lyric-line-${tier}`} className={tierClassName}>
+                      {line.text}
+                    </p>
+                  );
+                })
+              : null}
+            {syncedWindow.length === 0 && lyricsPanel.activeLineText ? (
+              <p className="text-white font-semibold text-4xl sm:text-5xl">{lyricsPanel.activeLineText}</p>
+            ) : null}
+            {syncedWindow.length === 0 && lyricsPanel.nextLineText ? (
+              <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
+            ) : null}
           </div>
         )}
       </main>
