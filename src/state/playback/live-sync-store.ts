@@ -2,7 +2,7 @@ import type { SyncConfidence } from "../../core/sync/lyric-sync-engine";
 import type { LyricRenderMode, LyricsSourceState, ResolvedLyricLine, ResolvedLyrics } from "../../core/lyrics/types";
 
 export type PlaybackUiState = "idle" | "playing" | "paused" | "unavailable";
-export type DiagnosticsCorrectionState = SyncConfidence | "static";
+export type DiagnosticsCorrectionState = SyncConfidence | "static" | "hard-reset";
 
 export type LiveSyncUiState = {
   playbackState: PlaybackUiState;

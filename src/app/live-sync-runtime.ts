@@ -2,6 +2,7 @@ import type { PlaybackRuntimeEvent } from "./playback-runtime";
 import { createPlaybackClockAnchor, estimatePlaybackProgressMs } from "../core/playback/playback-clock";
 import type { PlaybackClockAnchor } from "../core/playback/types";
 import type { LyricLine } from "../core/sync/lyric-timeline";
+import { HARD_DRIFT_SNAP_MS } from "../core/sync/lyric-sync-engine";
 import type { LyricSyncEngine, SyncFrame } from "../core/sync/lyric-sync-engine";
 import type { ResolvedLyrics } from "../core/lyrics/types";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
@@ -66,7 +67,11 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
     return frame;
   }
 
-  function applySampleDiagnostics(input: { estimatedProgressMs: number; polledProgressMs: number; correctionState: "synced" | "estimated" | "static" }): void {
+  function applySampleDiagnostics(input: {
+    estimatedProgressMs: number;
+    polledProgressMs: number;
+    correctionState: "synced" | "estimated" | "static" | "hard-reset";
+  }): void {
     dependencies.liveSyncStore.setPolledProgressMs(input.polledProgressMs);
     dependencies.liveSyncStore.setDriftDeltaMs(input.estimatedProgressMs - input.polledProgressMs);
     dependencies.liveSyncStore.setCorrectionState(input.correctionState);
@@ -159,6 +164,7 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
       return;
     }
 
+    const previousState = dependencies.liveSyncStore.selectLiveSync();
     dependencies.syncEngine.setTimeline(timeline);
     dependencies.syncEngine.reanchor({ snapshot: event.snapshot, transition: event.transition });
 
@@ -167,10 +173,16 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
     dependencies.liveSyncStore.setTrack(event.snapshot.trackId);
     dependencies.liveSyncStore.setStatusLine(statusForState(playbackState));
     const frame = applyFrame();
+    const shouldMarkHardReset =
+      event.transition === "no_change" &&
+      previousState.trackId === event.snapshot.trackId &&
+      previousState.playbackState !== "idle" &&
+      Math.abs(event.snapshot.progressMs - previousState.estimatedProgressMs) > HARD_DRIFT_SNAP_MS &&
+      frame.confidence === "synced";
     applySampleDiagnostics({
       estimatedProgressMs: frame.progressMs,
       polledProgressMs: event.snapshot.progressMs,
-      correctionState: frame.confidence,
+      correctionState: shouldMarkHardReset ? "hard-reset" : frame.confidence,
     });
 
     if (event.snapshot.isPlaying) {

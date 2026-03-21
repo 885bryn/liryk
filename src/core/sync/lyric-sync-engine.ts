@@ -32,7 +32,7 @@ export type LyricSyncEngineDependencies = {
   nowPerfMs?: () => number;
 };
 
-const HARD_DRIFT_SNAP_MS = 1_200;
+export const HARD_DRIFT_SNAP_MS = 1_200;
 const MAX_SOFT_CORRECTION_MS = 100;
 
 export function createLyricSyncEngine(
