@@ -8,8 +8,10 @@ import { LiveSyncStore } from "../state/playback/live-sync-store";
 describe("createLiveSyncRuntime", () => {
   it("updates store for playing, paused, and idle playback states", () => {
     let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    let tickerCallback: (() => void) | null = null;
+    let nowPerfMs = 1_000;
     const store = new LiveSyncStore();
-    const engine = createLyricSyncEngine({ nowPerfMs: () => 1_000 });
+    const engine = createLyricSyncEngine({ nowPerfMs: () => nowPerfMs });
 
     const runtime = createLiveSyncRuntime({
       subscribePlayback: (listener) => {
@@ -24,7 +26,10 @@ describe("createLiveSyncRuntime", () => {
         { startMs: 0, text: "a" },
         { startMs: 1_000, text: "b" },
       ],
-      setIntervalFn: vi.fn(() => 0 as unknown as ReturnType<typeof setInterval>),
+      setIntervalFn: vi.fn((callback) => {
+        tickerCallback = callback;
+        return 0 as unknown as ReturnType<typeof setInterval>;
+      }),
       clearIntervalFn: vi.fn(),
     });
 
@@ -42,6 +47,11 @@ describe("createLiveSyncRuntime", () => {
 
     expect(store.selectPlaybackState()).toBe("playing");
     expect(store.selectLiveSync().activeLineIndex).toBe(0);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(400);
+
+    nowPerfMs = 1_750;
+    tickerCallback?.();
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(1_150);
 
     playbackListener?.({
       snapshot: {
@@ -55,10 +65,12 @@ describe("createLiveSyncRuntime", () => {
     });
 
     expect(store.selectPlaybackState()).toBe("paused");
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(500);
 
     playbackListener?.({ snapshot: null, transition: "no_change" });
     expect(store.selectPlaybackState()).toBe("idle");
     expect(store.selectLiveSync().activeLineIndex).toBeNull();
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
   });
 
   it("marks unsupported tracks unavailable and keeps latest snapshot state", () => {
