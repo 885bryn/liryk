@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-21T05:32:57.820Z"
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-03-21T05:36:53.762Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -69,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 15]: Prove fullscreen constant wiring with explicit regression checks plus combined test/build verification.
 - [Phase 16]: Use a pure cubic ease-in-out helper in core to keep motion calm, bounded, and renderer-agnostic.
 - [Phase 16]: Validate eased transition output with explicit non-linear midpoint coverage so linear regressions are caught early.
+- [Phase 16]: Represent scroll targets as pixel offsets in core so renderer output can settle exactly at line boundaries.
+- [Phase 16]: Keep active-tier selection integer-based while only translateY uses phase-aware helper interpolation.
 
 ### Roadmap Evolution
 
@@ -87,6 +89,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T05:32:57.818Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-21T05:36:53.760Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None

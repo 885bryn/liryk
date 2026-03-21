@@ -43,7 +43,7 @@ Plans:
 2. User sees eased interpolation without bounce, overshoot, or spring-like wobble.
 3. User sees line-change motion complete with clear settle and no residual drift after landing.
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 16-01-PLAN.md - Add core easing helper and deterministic transition-progress tests for calm interpolation.
@@ -73,4 +73,4 @@ Phases execute in numeric order: 15 -> 16 -> 17
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 15. Hold-and-Transition Motion Windowing | 3/3 | Complete   | 2026-03-21 | 16. Smooth Transition Execution and Settling | 1/3 | In Progress|  | 17. Visual Continuity and Timing Guardrails | VIS-05, SAFE-01 | Not started |
+| 15. Hold-and-Transition Motion Windowing | 3/3 | Complete   | 2026-03-21 | 16. Smooth Transition Execution and Settling | 2/3 | In Progress|  | 17. Visual Continuity and Timing Guardrails | VIS-05, SAFE-01 | Not started |
