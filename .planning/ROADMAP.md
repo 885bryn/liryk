@@ -59,12 +59,12 @@ Plans:
 2. Instrumentation makes drift source identification reproducible during manual playback checks.
 3. Early cueing applies a small configurable lead while preserving stable line ordering and readability.
 
-**Plans:** 0/3 plans complete
+**Plans:** 3 plans
 
 Plans:
-- [ ] 14-01-PLAN.md - Add toggleable timing diagnostics overlay and structured debug fields.
-- [ ] 14-02-PLAN.md - Validate baseline drift stability against instrumentation acceptance criteria.
-- [ ] 14-03-PLAN.md - Introduce conservative early cueing offset and publish final tuning checklist.
+- [ ] 14-01-PLAN.md - Add toggleable fullscreen diagnostics overlay with runtime timing fields.
+- [ ] 14-02-PLAN.md - Lock baseline drift diagnostics behavior and publish reproducible verification gate.
+- [ ] 14-03-PLAN.md - Introduce conservative early cueing utility and wire it into synced activation.
 
 ## Progress
 
