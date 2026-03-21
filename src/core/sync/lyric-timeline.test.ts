@@ -26,13 +26,34 @@ describe("lyric timeline", () => {
     expect(getLineIndicesAt(timeline, 650)).toEqual({ activeIndex: 2, nextIndex: null });
   });
 
-  it("uses bounds-safe fallback before first and after last timestamps", () => {
+  it("returns no active line before first timestamp and keeps next deterministic", () => {
     const timeline = createLyricTimeline([
       { startMs: 1_000, text: "intro" },
       { startMs: 4_000, text: "verse" },
     ]);
 
-    expect(getLineIndicesAt(timeline, 10)).toEqual({ activeIndex: 0, nextIndex: 1 });
+    expect(getLineIndicesAt(timeline, 10)).toEqual({ activeIndex: null, nextIndex: 0 });
+    expect(getLineIndicesAt(timeline, 999)).toEqual({ activeIndex: null, nextIndex: 0 });
+  });
+
+  it("selects exact line boundaries as active matches", () => {
+    const timeline = createLyricTimeline([
+      { startMs: 1_000, text: "intro" },
+      { startMs: 1_250, text: "pickup" },
+      { startMs: 4_000, text: "verse" },
+    ]);
+
+    expect(getLineIndicesAt(timeline, 1_000)).toEqual({ activeIndex: 0, nextIndex: 1 });
+    expect(getLineIndicesAt(timeline, 1_250)).toEqual({ activeIndex: 1, nextIndex: 2 });
+    expect(getLineIndicesAt(timeline, 4_000)).toEqual({ activeIndex: 2, nextIndex: null });
+  });
+
+  it("keeps last line active after final timestamp", () => {
+    const timeline = createLyricTimeline([
+      { startMs: 1_000, text: "intro" },
+      { startMs: 4_000, text: "verse" },
+    ]);
+
     expect(getLineIndicesAt(timeline, 20_000)).toEqual({ activeIndex: 1, nextIndex: null });
   });
 

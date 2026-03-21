@@ -68,6 +68,35 @@ describe("lyric sync engine", () => {
     expect(engine.estimateFrame().confidence).toBe("estimated");
   });
 
+  it("propagates resolver indices for pre-first progress and dense boundaries", () => {
+    let now = 1_000;
+    const engine = createLyricSyncEngine({ nowPerfMs: () => now });
+    engine.setTimeline([
+      { startMs: 1_000, text: "intro" },
+      { startMs: 1_250, text: "pickup" },
+      { startMs: 1_500, text: "line" },
+    ]);
+
+    engine.reanchor({ snapshot: snapshot({ progressMs: 900 }), transition: "no_change" });
+    expect(engine.estimateFrame()).toMatchObject({
+      activeLineIndex: null,
+      nextLineIndex: 0,
+    });
+
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_250, capturedAtMs: 1_100 }), transition: "no_change" });
+    expect(engine.estimateFrame()).toMatchObject({
+      activeLineIndex: 1,
+      nextLineIndex: 2,
+    });
+
+    now = 1_300;
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_500, capturedAtMs: 1_200 }), transition: "no_change" });
+    expect(engine.estimateFrame()).toMatchObject({
+      activeLineIndex: 2,
+      nextLineIndex: null,
+    });
+  });
+
   it("ignores stale snapshots during rapid races", () => {
     const engine = createLyricSyncEngine({ nowPerfMs: () => 1_000 });
     engine.setTimeline([
