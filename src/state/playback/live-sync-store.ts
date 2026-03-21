@@ -2,6 +2,7 @@ import type { SyncConfidence } from "../../core/sync/lyric-sync-engine";
 import type { LyricRenderMode, LyricsSourceState, ResolvedLyricLine, ResolvedLyrics } from "../../core/lyrics/types";
 
 export type PlaybackUiState = "idle" | "playing" | "paused" | "unavailable";
+export type DiagnosticsCorrectionState = SyncConfidence | "static";
 
 export type LiveSyncUiState = {
   playbackState: PlaybackUiState;
@@ -17,6 +18,9 @@ export type LiveSyncUiState = {
   retryAvailable: boolean;
   retryInFlight: boolean;
   estimatedProgressMs: number;
+  polledProgressMs: number;
+  driftDeltaMs: number;
+  correctionState: DiagnosticsCorrectionState;
 };
 
 const initialState: LiveSyncUiState = {
@@ -33,6 +37,9 @@ const initialState: LiveSyncUiState = {
   retryAvailable: false,
   retryInFlight: false,
   estimatedProgressMs: 0,
+  polledProgressMs: 0,
+  driftDeltaMs: 0,
+  correctionState: "static",
 };
 
 export class LiveSyncStore {
@@ -79,12 +86,22 @@ export class LiveSyncStore {
         retryAvailable: false,
         retryInFlight: false,
         estimatedProgressMs: 0,
+        polledProgressMs: 0,
+        driftDeltaMs: 0,
+        correctionState: "static",
       };
       return this.state;
     }
 
     if (trackId === null) {
-      this.state = { ...this.state, trackId, estimatedProgressMs: 0 };
+      this.state = {
+        ...this.state,
+        trackId,
+        estimatedProgressMs: 0,
+        polledProgressMs: 0,
+        driftDeltaMs: 0,
+        correctionState: "static",
+      };
       return this.state;
     }
 
@@ -94,6 +111,21 @@ export class LiveSyncStore {
 
   setEstimatedProgressMs(progressMs: number): LiveSyncUiState {
     this.state = { ...this.state, estimatedProgressMs: progressMs };
+    return this.state;
+  }
+
+  setPolledProgressMs(progressMs: number): LiveSyncUiState {
+    this.state = { ...this.state, polledProgressMs: progressMs };
+    return this.state;
+  }
+
+  setDriftDeltaMs(driftDeltaMs: number): LiveSyncUiState {
+    this.state = { ...this.state, driftDeltaMs };
+    return this.state;
+  }
+
+  setCorrectionState(correctionState: DiagnosticsCorrectionState): LiveSyncUiState {
+    this.state = { ...this.state, correctionState };
     return this.state;
   }
 

@@ -2,7 +2,7 @@ import type { PlaybackRuntimeEvent } from "./playback-runtime";
 import { createPlaybackClockAnchor, estimatePlaybackProgressMs } from "../core/playback/playback-clock";
 import type { PlaybackClockAnchor } from "../core/playback/types";
 import type { LyricLine } from "../core/sync/lyric-timeline";
-import type { LyricSyncEngine } from "../core/sync/lyric-sync-engine";
+import type { LyricSyncEngine, SyncFrame } from "../core/sync/lyric-sync-engine";
 import type { ResolvedLyrics } from "../core/lyrics/types";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 
@@ -57,12 +57,19 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
     );
   }
 
-  function applyFrame(): void {
-    applyEstimatedProgress();
+  function applyFrame(): SyncFrame {
     const frame = dependencies.syncEngine.estimateFrame();
+    dependencies.liveSyncStore.setEstimatedProgressMs(frame.progressMs);
     dependencies.liveSyncStore.setActiveLine(frame.activeLineIndex);
     dependencies.liveSyncStore.setNextLine(frame.nextLineIndex);
     dependencies.liveSyncStore.setConfidence(frame.confidence);
+    return frame;
+  }
+
+  function applySampleDiagnostics(input: { estimatedProgressMs: number; polledProgressMs: number; correctionState: "synced" | "estimated" | "static" }): void {
+    dependencies.liveSyncStore.setPolledProgressMs(input.polledProgressMs);
+    dependencies.liveSyncStore.setDriftDeltaMs(input.estimatedProgressMs - input.polledProgressMs);
+    dependencies.liveSyncStore.setCorrectionState(input.correctionState);
   }
 
   function stopTicker(): void {
@@ -107,6 +114,9 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
       dependencies.liveSyncStore.setPlaybackState("idle");
       dependencies.liveSyncStore.setTrack(null);
       dependencies.liveSyncStore.setEstimatedProgressMs(0);
+      dependencies.liveSyncStore.setPolledProgressMs(0);
+      dependencies.liveSyncStore.setDriftDeltaMs(0);
+      dependencies.liveSyncStore.setCorrectionState("static");
       dependencies.liveSyncStore.setActiveLine(null);
       dependencies.liveSyncStore.setNextLine(null);
       dependencies.liveSyncStore.setConfidence("static");
@@ -124,6 +134,11 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
       const resolved = dependencies.getResolvedLyricsForTrack?.(event.snapshot.trackId) ?? null;
       stopTicker();
       applyEstimatedProgress();
+      applySampleDiagnostics({
+        estimatedProgressMs: dependencies.liveSyncStore.selectLiveSync().estimatedProgressMs,
+        polledProgressMs: event.snapshot.progressMs,
+        correctionState: "static",
+      });
 
       if (resolved) {
         const playbackState = event.snapshot.isPlaying ? "playing" : "paused";
@@ -151,7 +166,12 @@ export function createLiveSyncRuntime(dependencies: LiveSyncRuntimeDependencies)
     dependencies.liveSyncStore.setPlaybackState(playbackState);
     dependencies.liveSyncStore.setTrack(event.snapshot.trackId);
     dependencies.liveSyncStore.setStatusLine(statusForState(playbackState));
-    applyFrame();
+    const frame = applyFrame();
+    applySampleDiagnostics({
+      estimatedProgressMs: frame.progressMs,
+      polledProgressMs: event.snapshot.progressMs,
+      correctionState: frame.confidence,
+    });
 
     if (event.snapshot.isPlaying) {
       ensureTicker();
