@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
@@ -23,7 +23,13 @@ const baseSyncState: LiveSyncUiState = {
   lyricsWarning: null,
   retryAvailable: false,
   retryInFlight: false,
+  estimatedProgressMs: 0,
+  polledProgressMs: 0,
+  driftDeltaMs: 0,
+  correctionState: "static",
 };
+
+const SYNC_LINE_STEP_PX = 88;
 
 function formatElapsedProgress(progressMs: number): string {
   const totalSeconds = Math.max(0, Math.floor(progressMs / 1000));
@@ -38,6 +44,9 @@ export function FullscreenLyricsPage() {
   const webAuth = useWebAuthRuntime();
   const [nowPlaying, setNowPlaying] = useState<WebNowPlaying | null>(null);
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
+  const [isLiveLocked, setIsLiveLocked] = useState(true);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const programmaticScrollRef = useRef(false);
 
   const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
   const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
@@ -45,8 +54,10 @@ export function FullscreenLyricsPage() {
     text: line.displayText ?? normalizeChineseForDisplay(line.text),
     startMs: line.startMs ?? 0,
   }));
+  const firstSyncedStartMs = syncedDisplayLines[0]?.startMs ?? 0;
+  const hasStartedSyncedLyrics = Boolean(nowPlaying && syncedDisplayLines.length > 0 && nowPlaying.progressMs >= firstSyncedStartMs);
   const activeSyncedIndex =
-    nowPlaying && syncedLines.length > 0
+    hasStartedSyncedLyrics && nowPlaying && syncedLines.length > 0
       ? Math.max(
           0,
           syncedLines.reduce((best, line, index) => {
@@ -58,31 +69,79 @@ export function FullscreenLyricsPage() {
         )
       : null;
   const nextSyncedIndex =
-    typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length ? activeSyncedIndex + 1 : null;
+    hasStartedSyncedLyrics && typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length
+      ? activeSyncedIndex + 1
+      : null;
   const activeSyncedRenderIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
+  const syncedVerticalPadding = `calc(50vh - ${Math.floor(SYNC_LINE_STEP_PX / 2)}px)`;
   const syncedTrackTranslateY =
-    resolvedLyrics?.renderMode === "synced" && syncedDisplayLines.length > 0
-      ? `${160 - activeSyncedRenderIndex * 72}px`
+    resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
+      ? `${-activeSyncedRenderIndex * SYNC_LINE_STEP_PX}px`
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(nowPlaying?.progressMs ?? 0);
 
+  const findLiveAnchorElement = (): HTMLElement | null => {
+    if (typeof document === "undefined") {
+      return null;
+    }
+
+    return (
+      (document.querySelector('[data-testid="fullscreen-lyric-line-active"]') as HTMLElement | null) ??
+      (document.querySelector('[data-testid="fullscreen-lyric-line-near"]') as HTMLElement | null)
+    );
+  };
+
+  const scrollToLiveAnchor = (behavior: ScrollBehavior) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent)) {
+      return;
+    }
+
+    const liveAnchor = findLiveAnchorElement();
+    const targetScrollTop = liveAnchor
+      ? Math.max(
+          0,
+          window.scrollY + liveAnchor.getBoundingClientRect().top - (window.innerHeight / 2 - liveAnchor.offsetHeight / 2),
+        )
+      : 0;
+
+    programmaticScrollRef.current = true;
+    try {
+      window.scrollTo({ top: targetScrollTop, behavior });
+    } catch {
+      // jsdom and some embedded webviews may not implement scroll APIs.
+    }
+    window.setTimeout(() => {
+      programmaticScrollRef.current = false;
+    }, behavior === "smooth" ? 350 : 80);
+  };
+
+  const syncState: LiveSyncUiState = {
+    ...baseSyncState,
+    playbackState: nowPlaying ? (nowPlaying.isPlaying ? "playing" : "paused") : "idle",
+    trackId: nowPlaying?.trackId ?? null,
+    activeLineIndex: resolvedLyrics?.renderMode === "synced" ? activeSyncedIndex : null,
+    nextLineIndex: resolvedLyrics?.renderMode === "synced" ? nextSyncedIndex : null,
+    lyricsSourceState: resolvedLyrics?.sourceState ?? "loading",
+    lyricsRenderMode: resolvedLyrics?.renderMode ?? null,
+    resolvedLyrics: resolvedLyrics?.lines ?? [],
+    estimatedProgressMs: nowPlaying?.progressMs ?? 0,
+    polledProgressMs: nowPlaying?.progressMs ?? 0,
+    driftDeltaMs: 0,
+    correctionState: nowPlaying ? "synced" : "static",
+    statusLine:
+      resolvedLyrics?.sourceState === "not-found"
+        ? "Lyrics not found"
+        : resolvedLyrics
+          ? "Lyrics ready"
+          : "Resolving lyrics...",
+  };
+
   const lyricsPanel = createLiveLyricsPanelBuilder().build({
-    syncState: {
-      ...baseSyncState,
-      playbackState: nowPlaying ? (nowPlaying.isPlaying ? "playing" : "paused") : "idle",
-      trackId: nowPlaying?.trackId ?? null,
-      activeLineIndex: resolvedLyrics?.renderMode === "synced" ? activeSyncedIndex : null,
-      nextLineIndex: resolvedLyrics?.renderMode === "synced" ? nextSyncedIndex : null,
-      lyricsSourceState: resolvedLyrics?.sourceState ?? "loading",
-      lyricsRenderMode: resolvedLyrics?.renderMode ?? null,
-      resolvedLyrics: resolvedLyrics?.lines ?? [],
-      statusLine:
-        resolvedLyrics?.sourceState === "not-found"
-          ? "Lyrics not found"
-          : resolvedLyrics
-            ? "Lyrics ready"
-            : "Resolving lyrics...",
-    },
+    syncState,
     lines: lyricTexts,
     trackTitle: nowPlaying?.title,
     trackArtist: nowPlaying?.artist,
@@ -163,51 +222,148 @@ export function FullscreenLyricsPage() {
     };
   }, [webAuth.sessionAccessToken, nowPlaying?.trackId, nowPlaying?.title, nowPlaying?.artist]);
 
+  useEffect(() => {
+    setIsLiveLocked(true);
+    scrollToLiveAnchor("auto");
+  }, [nowPlaying?.trackId]);
+
+  useEffect(() => {
+    if (!isLiveLocked) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      scrollToLiveAnchor("auto");
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [isLiveLocked, activeSyncedRenderIndex, hasStartedSyncedLyrics]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (programmaticScrollRef.current || typeof window === "undefined") {
+        return;
+      }
+
+      if (window.scrollY > 20 && isLiveLocked) {
+        setIsLiveLocked(false);
+      }
+
+      if (window.scrollY <= 4 && !isLiveLocked) {
+        setIsLiveLocked(true);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [isLiveLocked]);
+
   return (
     <div data-testid="fullscreen-lyrics-layout" className="min-h-screen w-full bg-black text-white">
-      <main
-        data-testid="fullscreen-lyrics-column"
-        className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-center gap-8 px-6 py-20 text-left sm:px-8 sm:py-24 lg:py-28"
+      <a
+        href="/"
+        className="fixed left-4 top-3 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/40 transition-colors duration-200 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-4"
       >
-        <a
-          href="/"
-          className="self-start text-sm text-white/60 transition-colors duration-200 hover:text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        Exit Fullscreen Lyrics
+      </a>
+
+      {!isLiveLocked ? (
+        <button
+          type="button"
+          data-testid="fullscreen-return-live"
+          className="fixed bottom-4 right-4 z-20 bg-transparent text-[10px] tracking-[0.16em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:bottom-6 sm:right-6"
+          onClick={() => {
+            setIsLiveLocked(true);
+            scrollToLiveAnchor("smooth");
+          }}
         >
-          Exit Fullscreen Lyrics
-        </a>
+          Back to Live
+        </button>
+      ) : null}
 
-        <div data-testid="fullscreen-meta-overlay" className="space-y-1 text-sm text-white/70">
-          <p>{lyricsPanel.nowPlayingTitle}</p>
-          <p>{lyricsPanel.nowPlayingArtist}</p>
-        </div>
+      <button
+        type="button"
+        data-testid="fullscreen-diagnostics-toggle"
+        aria-expanded={showDiagnostics}
+        className="fixed left-4 top-10 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-12"
+        onClick={() => {
+          setShowDiagnostics((current) => !current);
+        }}
+      >
+        {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
+      </button>
 
-        <p data-testid="fullscreen-progress-overlay" className="text-xs text-white/60 tracking-wide">
+      {showDiagnostics ? (
+        <section
+          data-testid="fullscreen-diagnostics-overlay"
+          className="fixed left-4 top-16 z-20 min-w-[220px] rounded-sm border border-white/15 bg-black/60 px-3 py-2 text-[10px] leading-tight text-white/72 backdrop-blur-sm sm:left-6 sm:top-20"
+        >
+          <p className="pb-1 text-[9px] tracking-[0.16em] text-white/50">Timing Diagnostics</p>
+          <p>
+            Estimated ms: <span data-testid="diagnostics-estimated-ms">{syncState.estimatedProgressMs}</span>
+          </p>
+          <p>
+            Polled ms: <span data-testid="diagnostics-polled-ms">{syncState.polledProgressMs}</span>
+          </p>
+          <p>
+            Drift delta ms: <span data-testid="diagnostics-drift-delta-ms">{syncState.driftDeltaMs}</span>
+          </p>
+          <p>
+            Correction state: <span data-testid="diagnostics-correction-state">{syncState.correctionState}</span>
+          </p>
+        </section>
+      ) : null}
+
+      <div
+        data-testid="fullscreen-meta-overlay"
+        className="pointer-events-none fixed right-4 top-3 z-10 flex max-w-[45vw] flex-col items-end gap-0.5 bg-transparent text-right text-[10px] leading-tight text-white/32 sm:right-6 sm:top-4"
+      >
+        <p className="truncate">{lyricsPanel.nowPlayingTitle}</p>
+        <p className="truncate">{lyricsPanel.nowPlayingArtist}</p>
+        <p data-testid="fullscreen-progress-overlay" className="pt-0.5 text-[9px] tracking-[0.18em] text-white/25">
           {`Elapsed ${elapsedProgressLabel}`}
         </p>
+      </div>
 
+      <main
+        data-testid="fullscreen-lyrics-column"
+        className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-start px-6 text-left sm:px-8"
+      >
         {lyricsPanel.sourceState === "not-found" ? (
           <p className="text-lg text-white/70">Lyrics not found</p>
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
           <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
         ) : (
-          <div className="relative overflow-hidden">
-            <div
-              data-testid="fullscreen-lyrics-track"
-              className="space-y-3 leading-relaxed transition-transform duration-500 ease-out motion-reduce:transition-none"
-              style={{ transform: `translateY(${syncedTrackTranslateY})` }}
-            >
+          <div className="relative" style={{ paddingTop: syncedVerticalPadding, paddingBottom: syncedVerticalPadding }}>
+              <div
+                data-testid="fullscreen-lyrics-track"
+                className="space-y-3 leading-relaxed transition-transform duration-500 ease-out motion-reduce:transition-none"
+                style={{ transform: `translateY(${syncedTrackTranslateY})` }}
+              >
               {resolvedLyrics?.renderMode === "synced"
                 ? syncedDisplayLines.map((line, index) => {
                     const distance = Math.abs(index - activeSyncedRenderIndex);
                     const transitionClassName =
                       "transition-[transform,opacity,color] duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none";
-                  const tier = distance === 0 ? "active" : distance === 1 ? "near" : "distant";
-                  const tierClassName =
-                    tier === "active"
-                      ? `text-white font-semibold text-4xl sm:text-5xl scale-100 translate-y-0 ${transitionClassName}`
-                      : tier === "near"
-                        ? `text-zinc-300 font-medium text-3xl sm:text-4xl scale-[0.98] translate-y-1 ${transitionClassName}`
-                        : `text-zinc-500 font-normal text-2xl sm:text-3xl scale-95 translate-y-2 ${transitionClassName}`;
+                    const tier = !hasStartedSyncedLyrics
+                      ? index === 0
+                        ? "near"
+                        : "distant"
+                      : distance === 0
+                        ? "active"
+                        : distance === 1
+                          ? "near"
+                          : "distant";
+                    const tierClassName =
+                      tier === "active"
+                        ? `h-[88px] text-white font-semibold text-4xl sm:text-5xl scale-100 translate-y-0 ${transitionClassName}`
+                        : tier === "near"
+                          ? `h-[88px] text-zinc-300 font-medium text-3xl sm:text-4xl scale-[0.98] translate-y-1 ${transitionClassName}`
+                        : `h-[88px] text-zinc-500 font-normal text-2xl sm:text-3xl scale-95 translate-y-2 ${transitionClassName}`;
 
                   return (
                     <p key={`${index}-${line.text}`} data-testid={`fullscreen-lyric-line-${tier}`} className={tierClassName}>
@@ -216,13 +372,13 @@ export function FullscreenLyricsPage() {
                   );
                 })
                 : null}
-              {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.activeLineText ? (
-                <p className="text-white font-semibold text-4xl sm:text-5xl">{lyricsPanel.activeLineText}</p>
-              ) : null}
-              {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.nextLineText ? (
-                <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
-              ) : null}
-            </div>
+                {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.activeLineText ? (
+                  <p className="text-white font-semibold text-4xl sm:text-5xl">{lyricsPanel.activeLineText}</p>
+                ) : null}
+                {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.nextLineText ? (
+                  <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
+                ) : null}
+              </div>
           </div>
         )}
       </main>

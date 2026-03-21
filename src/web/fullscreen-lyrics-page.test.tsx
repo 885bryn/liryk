@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ResolvedLyrics } from "@/core/lyrics/types";
@@ -429,11 +429,11 @@ describe("FullscreenLyricsPage", () => {
     const toggle = await screen.findByRole("button", { name: "Show Diagnostics" });
     expect(screen.queryByTestId("fullscreen-diagnostics-overlay")).toBeNull();
 
-    toggle.click();
+    fireEvent.click(toggle);
     expect(screen.getByTestId("fullscreen-diagnostics-overlay")).toBeTruthy();
     expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(1);
 
-    toggle.click();
+    fireEvent.click(toggle);
     expect(screen.queryByTestId("fullscreen-diagnostics-overlay")).toBeNull();
   });
 
@@ -470,13 +470,13 @@ describe("FullscreenLyricsPage", () => {
 
     render(<FullscreenLyricsPage />);
 
-    (await screen.findByRole("button", { name: "Show Diagnostics" })).click();
+    fireEvent.click(await screen.findByRole("button", { name: "Show Diagnostics" }));
     const overlay = screen.getByTestId("fullscreen-diagnostics-overlay");
     expect(overlay).toBeTruthy();
-    expect(screen.getByText("Estimated ms")).toBeTruthy();
-    expect(screen.getByText("Polled ms")).toBeTruthy();
-    expect(screen.getByText("Drift delta ms")).toBeTruthy();
-    expect(screen.getByText("Correction state")).toBeTruthy();
+    expect(screen.getByText(/Estimated ms:/)).toBeTruthy();
+    expect(screen.getByText(/Polled ms:/)).toBeTruthy();
+    expect(screen.getByText(/Drift delta ms:/)).toBeTruthy();
+    expect(screen.getByText(/Correction state:/)).toBeTruthy();
     expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("4500");
     expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("4500");
     expect(screen.getByTestId("diagnostics-drift-delta-ms").textContent).toContain("0");
@@ -486,7 +486,7 @@ describe("FullscreenLyricsPage", () => {
   it("shows safe idle diagnostics values when no playback snapshot exists", async () => {
     render(<FullscreenLyricsPage />);
 
-    (await screen.findByRole("button", { name: "Show Diagnostics" })).click();
+    fireEvent.click(await screen.findByRole("button", { name: "Show Diagnostics" }));
     expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("0");
     expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("0");
     expect(screen.getByTestId("diagnostics-drift-delta-ms").textContent).toContain("0");
