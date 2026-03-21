@@ -7,6 +7,13 @@ describe("LiveSyncStore", () => {
     const store = new LiveSyncStore();
     expect(store.selectPlaybackState()).toBe("idle");
     expect(store.selectLiveSync().statusLine).toContain("Play a track");
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
+  });
+
+  it("updates estimated progress from runtime timing samples", () => {
+    const store = new LiveSyncStore();
+    store.setEstimatedProgressMs(1_450);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(1_450);
   });
 
   it("updates active line, next line, confidence, and playback state", () => {
@@ -43,6 +50,7 @@ describe("LiveSyncStore", () => {
 
   it("resets resolved lyric state on track change", () => {
     const store = new LiveSyncStore();
+    store.setEstimatedProgressMs(900);
     store.setResolvedLyrics({
       sourceState: "synced",
       renderMode: "synced",
@@ -59,6 +67,15 @@ describe("LiveSyncStore", () => {
     expect(store.selectLiveSync().retryAvailable).toBe(false);
     expect(store.selectLiveSync().retryInFlight).toBe(false);
     expect(store.selectLiveSync().lyricsWarning).toBeNull();
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
+  });
+
+  it("resets estimated progress when track is cleared", () => {
+    const store = new LiveSyncStore();
+    store.setTrack("track-1");
+    store.setEstimatedProgressMs(2_000);
+    store.setTrack(null);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
   });
 
   it("allows retry-in-flight status updates without mutating playback state", () => {
