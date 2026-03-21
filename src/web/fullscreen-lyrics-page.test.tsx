@@ -407,7 +407,7 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeCloseTo(-145.53846153846155, 10);
+      expect(value).toBeCloseTo(-161.40009103322714, 10);
       expect(value).toBeLessThan(-88);
       expect(value).toBeGreaterThan(-176);
     });

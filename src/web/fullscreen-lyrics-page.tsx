@@ -7,6 +7,7 @@ import {
   DEFAULT_MAX_TRANSITION_MS,
   DEFAULT_MIN_TRANSITION_MS,
   DEFAULT_TRANSITION_WINDOW_FRACTION,
+  getTargetScrollOffset,
   getTransitionPhase,
 } from "@/core/sync/lyric-motion-window";
 import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
@@ -81,17 +82,29 @@ export function FullscreenLyricsPage() {
       ? activeSyncedIndex + 1
       : null;
   const activeSyncedRenderIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
-  const syncedTrackRenderIndex =
+  const syncedTrackOffsetPx =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && typeof activeSyncedIndex === "number"
       ? (() => {
           if (typeof nextSyncedIndex !== "number") {
-            return activeSyncedIndex;
+            return getTargetScrollOffset({
+              currentIndex: activeSyncedIndex,
+              nextIndex: null,
+              phaseProgress: 0,
+              phase: "hold",
+              stepPx: SYNC_LINE_STEP_PX,
+            });
           }
 
           const currentLine = syncedDisplayLines[activeSyncedIndex];
           const nextLine = syncedDisplayLines[nextSyncedIndex];
           if (!currentLine || !nextLine) {
-            return activeSyncedIndex;
+            return getTargetScrollOffset({
+              currentIndex: activeSyncedIndex,
+              nextIndex: null,
+              phaseProgress: 0,
+              phase: "hold",
+              stepPx: SYNC_LINE_STEP_PX,
+            });
           }
 
           const transition = getTransitionPhase({
@@ -103,21 +116,19 @@ export function FullscreenLyricsPage() {
             transitionFraction: DEFAULT_TRANSITION_WINDOW_FRACTION,
           });
 
-          if (transition.phase === "transition") {
-            return activeSyncedIndex + transition.phaseProgress;
-          }
-
-          if (transition.phase === "complete") {
-            return nextSyncedIndex;
-          }
-
-          return activeSyncedIndex;
+          return getTargetScrollOffset({
+            currentIndex: activeSyncedIndex,
+            nextIndex: nextSyncedIndex,
+            phaseProgress: transition.phaseProgress,
+            phase: transition.phase,
+            stepPx: SYNC_LINE_STEP_PX,
+          });
         })()
       : 0;
   const syncedVerticalPadding = `calc(50vh - ${Math.floor(SYNC_LINE_STEP_PX / 2)}px)`;
   const syncedTrackTranslateY =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
-      ? `${-syncedTrackRenderIndex * SYNC_LINE_STEP_PX}px`
+      ? `${syncedTrackOffsetPx}px`
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(nowPlaying?.progressMs ?? 0);
 
