@@ -134,7 +134,7 @@ export function getTargetScrollOffset(input: {
     return currentOffsetPx;
   }
 
-  const nextIndex = Math.max(currentIndex, normalizeNonNegativeInt(input.nextIndex, currentIndex));
+  const nextIndex = normalizeNonNegativeInt(input.nextIndex, currentIndex);
   const nextOffsetPx = -nextIndex * input.stepPx;
 
   if (input.phase === "complete") {
