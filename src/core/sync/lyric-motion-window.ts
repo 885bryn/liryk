@@ -27,6 +27,22 @@ export function easeInOutCubic(progress: number): number {
   return 1 - (shifted * shifted * shifted) / 2;
 }
 
+export function easeInOutExpo(progress: number): number {
+  const normalized = clamp(progress, 0, 1);
+  if (normalized === 0) {
+    return 0;
+  }
+  if (normalized === 1) {
+    return 1;
+  }
+
+  if (normalized < 0.5) {
+    return Math.pow(2, 20 * normalized - 10) / 2;
+  }
+
+  return (2 - Math.pow(2, -20 * normalized + 10)) / 2;
+}
+
 function getTransitionBounds(
   minTransitionMs: number | undefined,
   maxTransitionMs: number | undefined,

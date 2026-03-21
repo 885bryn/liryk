@@ -471,6 +471,12 @@ describe("FullscreenLyricsPage", () => {
     expect(source.includes("Math.round(Math.abs(displayTrackOffsetPx) / SYNC_LINE_STEP_PX)")).toBe(true);
   });
 
+  it("gates offset animation to valid transition phase only", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source.includes("if (!shouldAnimateTrackOffset)")).toBe(true);
+    expect(source.includes("transition.phase === \"transition\" && nextSyncedIndex > activeSyncedIndex")).toBe(true);
+  });
+
   it("keeps short-gap transitions readable with hold-first then clamped transition", async () => {
     hookModel = {
       phase: "ready",

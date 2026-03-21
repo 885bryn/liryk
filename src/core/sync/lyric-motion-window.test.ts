@@ -5,6 +5,7 @@ import {
   DEFAULT_MIN_TRANSITION_MS,
   DEFAULT_TRANSITION_WINDOW_FRACTION,
   easeInOutCubic,
+  easeInOutExpo,
   getAdaptiveTransitionMs,
   getTargetScrollOffset,
   getTransitionPhase,
@@ -31,6 +32,32 @@ describe("easeInOutCubic", () => {
     }
     expect(Math.min(...samples)).toBeGreaterThanOrEqual(0);
     expect(Math.max(...samples)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("easeInOutExpo", () => {
+  it("returns exact boundary values for 0 and 1", () => {
+    expect(easeInOutExpo(0)).toBe(0);
+    expect(easeInOutExpo(1)).toBe(1);
+  });
+
+  it("stays within 0..1 and monotonic", () => {
+    const samples = [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1].map((value) => easeInOutExpo(value));
+    for (let i = 1; i < samples.length; i += 1) {
+      expect(samples[i]).toBeGreaterThanOrEqual(samples[i - 1]);
+    }
+    expect(Math.min(...samples)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...samples)).toBeLessThanOrEqual(1);
+  });
+
+  it("follows strong slow-fast-slow profile", () => {
+    const quarter = easeInOutExpo(0.25);
+    const middle = easeInOutExpo(0.5);
+    const threeQuarter = easeInOutExpo(0.75);
+
+    expect(quarter).toBeLessThan(0.1);
+    expect(middle).toBeCloseTo(0.5, 6);
+    expect(threeQuarter).toBeGreaterThan(0.9);
   });
 });
 
