@@ -176,4 +176,28 @@ describe("getTargetScrollOffset", () => {
     expect(transition).toBe(-352);
     expect(complete).toBe(-352);
   });
+
+  it("settles exactly to next offset and stays bounded even when next index is lower", () => {
+    const transition = getTargetScrollOffset({
+      currentIndex: 4,
+      nextIndex: 2,
+      phase: "transition",
+      phaseProgress: 0.5,
+      stepPx: 88,
+    });
+
+    expect(transition).toBeCloseTo(-264, 6);
+    expect(transition).toBeLessThanOrEqual(-176);
+    expect(transition).toBeGreaterThanOrEqual(-352);
+
+    const complete = getTargetScrollOffset({
+      currentIndex: 4,
+      nextIndex: 2,
+      phase: "complete",
+      phaseProgress: 1,
+      stepPx: 88,
+    });
+
+    expect(complete).toBe(-176);
+  });
 });

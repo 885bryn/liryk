@@ -545,6 +545,86 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
+  it("keeps representative short and medium-gap interpolation within adjacent line bounds", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-short-gap-bounds",
+      title: "Short Gap Bounds Track",
+      artist: "Bounds Artist",
+      progressMs: 0,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 300, text: "Line 2", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
+      expect(value).toBeLessThan(0);
+      expect(value).toBeGreaterThan(-88);
+    });
+
+    cleanup();
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-medium-gap-bounds",
+      title: "Medium Gap Bounds Track",
+      artist: "Bounds Artist",
+      progressMs: 8_700,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 9_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
+      expect(value).toBeLessThan(-88);
+      expect(value).toBeGreaterThan(-176);
+    });
+  });
+
   it("renders subdued metadata overlays and stable track transition cadence", async () => {
     hookModel = {
       phase: "ready",
