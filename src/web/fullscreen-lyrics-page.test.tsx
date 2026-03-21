@@ -365,7 +365,8 @@ describe("FullscreenLyricsPage", () => {
 
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toBe("translateY(-88px)");
+      const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
+      expect(value).toBeCloseTo(-88, 1);
     });
 
   });
@@ -407,7 +408,6 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeCloseTo(-171.32351654760168, 10);
       expect(value).toBeLessThan(-88);
       expect(value).toBeGreaterThan(-176);
     });
@@ -449,7 +449,8 @@ describe("FullscreenLyricsPage", () => {
 
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toBe("translateY(-176px)");
+      const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
+      expect(value).toBeCloseTo(-176, 2);
     });
   });
 
@@ -463,6 +464,11 @@ describe("FullscreenLyricsPage", () => {
   it("routes synced track translateY through getTargetScrollOffset helper", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
     expect(source.includes("getTargetScrollOffset")).toBe(true);
+  });
+
+  it("anchors active-tier handoff to animated offset continuity", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source.includes("Math.round(Math.abs(displayTrackOffsetPx) / SYNC_LINE_STEP_PX)")).toBe(true);
   });
 
   it("keeps short-gap transitions readable with hold-first then clamped transition", async () => {
@@ -681,8 +687,8 @@ describe("FullscreenLyricsPage", () => {
       expect(progressOverlay.className).not.toContain("sm:text-5xl");
       expect(progressOverlay.className).not.toContain("font-semibold");
 
-      expect(track.className).toContain("transition-transform");
-      expect(track.className).toContain("duration-700");
+      expect(track.className).not.toContain("transition-transform");
+      expect(track.className).not.toContain("duration-700");
     });
   });
 

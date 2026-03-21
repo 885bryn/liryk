@@ -108,6 +108,25 @@ describe("getTransitionPhase", () => {
     expect(transitionMid.phaseProgress).toBeCloseTo(0.032, 6);
     expect(transitionMid.phaseProgress).not.toBeCloseTo(0.2, 6);
   });
+
+  it("keeps phaseProgress continuous at transition completion boundary", () => {
+    const nearEnd = getTransitionPhase({
+      progressMs: 1_999,
+      currentStartMs: 1_000,
+      nextStartMs: 2_000,
+    });
+    const complete = getTransitionPhase({
+      progressMs: 2_000,
+      currentStartMs: 1_000,
+      nextStartMs: 2_000,
+    });
+
+    expect(nearEnd.phase).toBe("transition");
+    expect(complete.phase).toBe("complete");
+    expect(nearEnd.phaseProgress).toBeLessThanOrEqual(1);
+    expect(complete.phaseProgress).toBe(1);
+    expect(Math.abs(complete.phaseProgress - nearEnd.phaseProgress)).toBeLessThan(0.002);
+  });
 });
 
 describe("getTargetScrollOffset", () => {
@@ -199,5 +218,26 @@ describe("getTargetScrollOffset", () => {
     });
 
     expect(complete).toBe(-352);
+  });
+
+  it("keeps exact offset continuity across line handoff", () => {
+    const completeFromCurrent = getTargetScrollOffset({
+      currentIndex: 1,
+      nextIndex: 2,
+      phase: "complete",
+      phaseProgress: 1,
+      stepPx: 88,
+    });
+    const holdAtNext = getTargetScrollOffset({
+      currentIndex: 2,
+      nextIndex: 3,
+      phase: "hold",
+      phaseProgress: 0,
+      stepPx: 88,
+    });
+
+    expect(completeFromCurrent).toBe(-176);
+    expect(holdAtNext).toBe(-176);
+    expect(completeFromCurrent).toBe(holdAtNext);
   });
 });

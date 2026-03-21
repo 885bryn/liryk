@@ -7,6 +7,7 @@ import {
   DEFAULT_MAX_TRANSITION_MS,
   DEFAULT_MIN_TRANSITION_MS,
   DEFAULT_TRANSITION_WINDOW_FRACTION,
+  easeInOutCubic,
   getTargetScrollOffset,
   getTransitionPhase,
 } from "@/core/sync/lyric-motion-window";
@@ -38,6 +39,8 @@ const baseSyncState: LiveSyncUiState = {
 };
 
 const SYNC_LINE_STEP_PX = 88;
+const MIN_OFFSET_ANIMATION_MS = 360;
+const MAX_OFFSET_ANIMATION_MS = 980;
 
 function formatElapsedProgress(progressMs: number): string {
   const totalSeconds = Math.max(0, Math.floor(progressMs / 1000));
@@ -54,7 +57,10 @@ export function FullscreenLyricsPage() {
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
   const [isLiveLocked, setIsLiveLocked] = useState(true);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [displayTrackOffsetPx, setDisplayTrackOffsetPx] = useState(0);
   const programmaticScrollRef = useRef(false);
+  const displayTrackOffsetRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
 
   const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
   const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
@@ -81,7 +87,6 @@ export function FullscreenLyricsPage() {
     hasStartedSyncedLyrics && typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length
       ? activeSyncedIndex + 1
       : null;
-  const activeSyncedRenderIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
   const syncedTrackOffsetPx =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && typeof activeSyncedIndex === "number"
       ? (() => {
@@ -125,10 +130,74 @@ export function FullscreenLyricsPage() {
           });
         })()
       : 0;
+  useEffect(() => {
+    displayTrackOffsetRef.current = displayTrackOffsetPx;
+  }, [displayTrackOffsetPx]);
+
+  useEffect(() => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    const canAnimate = resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0;
+    if (!canAnimate) {
+      setDisplayTrackOffsetPx(0);
+      return;
+    }
+
+    const from = displayTrackOffsetRef.current;
+    const to = syncedTrackOffsetPx;
+    const deltaPx = Math.abs(to - from);
+
+    if (deltaPx < 0.01) {
+      setDisplayTrackOffsetPx(to);
+      return;
+    }
+
+    const durationMs = Math.min(MAX_OFFSET_ANIMATION_MS, Math.max(MIN_OFFSET_ANIMATION_MS, deltaPx * 5.5));
+    let startTs: number | null = null;
+
+    const tick = (timestamp: number) => {
+      if (startTs === null) {
+        startTs = timestamp;
+      }
+
+      const elapsed = timestamp - startTs;
+      const progress = Math.min(1, elapsed / durationMs);
+      const eased = easeInOutCubic(progress);
+      const nextOffset = from + (to - from) * eased;
+      setDisplayTrackOffsetPx(nextOffset);
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      animationFrameRef.current = null;
+    };
+
+    animationFrameRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [hasStartedSyncedLyrics, resolvedLyrics?.renderMode, syncedDisplayLines.length, syncedTrackOffsetPx]);
+
+  const activeSyncedRenderIndex =
+    resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
+      ? Math.max(
+          0,
+          Math.min(syncedDisplayLines.length - 1, Math.round(Math.abs(displayTrackOffsetPx) / SYNC_LINE_STEP_PX)),
+        )
+      : 0;
   const syncedVerticalPadding = `calc(50vh - ${Math.floor(SYNC_LINE_STEP_PX / 2)}px)`;
   const syncedTrackTranslateY =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
-      ? `${syncedTrackOffsetPx}px`
+      ? `${displayTrackOffsetPx}px`
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(nowPlaying?.progressMs ?? 0);
 
@@ -393,7 +462,7 @@ export function FullscreenLyricsPage() {
           <div className="relative" style={{ paddingTop: syncedVerticalPadding, paddingBottom: syncedVerticalPadding }}>
               <div
                 data-testid="fullscreen-lyrics-track"
-                className="space-y-3 leading-relaxed transition-transform duration-700 ease-out motion-reduce:transition-none"
+                className="space-y-3 leading-relaxed motion-reduce:transition-none"
                 style={{ transform: `translateY(${syncedTrackTranslateY})` }}
               >
               {resolvedLyrics?.renderMode === "synced"
