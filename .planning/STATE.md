@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-03-21T04:06:40.604Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-03-21T04:10:51.655Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -45,6 +45,8 @@ Recent decisions affecting current work:
 - [v1.3] Add timing diagnostics before introducing early cueing behavior.
 - [Phase 12]: Export playback clock contracts from core playback types for stable downstream timing imports.
 - [Phase 12]: Keep playback progress estimation pure and monotonic-time-driven for deterministic behavior.
+- [Phase 12]: Publish estimatedProgressMs on runtime frame updates so lyric consumers read between-poll progress.
+- [Phase 12]: Add optional nowPerfMs runtime dependency for deterministic playback-clock test control.
 
 ### Roadmap Evolution
 
@@ -63,6 +65,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:06:40.602Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-03-21T04:10:51.653Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
