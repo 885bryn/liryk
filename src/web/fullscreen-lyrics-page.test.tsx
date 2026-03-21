@@ -460,6 +460,11 @@ describe("FullscreenLyricsPage", () => {
     expect(source.includes("DEFAULT_TRANSITION_WINDOW_FRACTION")).toBe(true);
   });
 
+  it("routes synced track translateY through getTargetScrollOffset helper", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source.includes("getTargetScrollOffset")).toBe(true);
+  });
+
   it("keeps short-gap transitions readable with hold-first then clamped transition", async () => {
     hookModel = {
       phase: "ready",
@@ -495,8 +500,9 @@ describe("FullscreenLyricsPage", () => {
 
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toContain("translateY(-");
-      expect(track.style.transform).not.toBe("translateY(-88px)");
+      const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
+      expect(value).toBeLessThan(0);
+      expect(value).toBeGreaterThan(-88);
     });
   });
 
