@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
 import { applyEarlyCue, DEFAULT_CUE_LEAD_MS } from "@/core/sync/early-cue";
+import { getTransitionPhase } from "@/core/sync/lyric-motion-window";
 import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
 import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
@@ -75,10 +76,40 @@ export function FullscreenLyricsPage() {
       ? activeSyncedIndex + 1
       : null;
   const activeSyncedRenderIndex = typeof activeSyncedIndex === "number" ? activeSyncedIndex : 0;
+  const syncedTrackRenderIndex =
+    resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && typeof activeSyncedIndex === "number"
+      ? (() => {
+          if (typeof nextSyncedIndex !== "number") {
+            return activeSyncedIndex;
+          }
+
+          const currentLine = syncedDisplayLines[activeSyncedIndex];
+          const nextLine = syncedDisplayLines[nextSyncedIndex];
+          if (!currentLine || !nextLine) {
+            return activeSyncedIndex;
+          }
+
+          const transition = getTransitionPhase({
+            progressMs: cueAdjustedProgressMs,
+            currentStartMs: currentLine.startMs,
+            nextStartMs: nextLine.startMs,
+          });
+
+          if (transition.phase === "transition") {
+            return activeSyncedIndex + transition.phaseProgress;
+          }
+
+          if (transition.phase === "complete") {
+            return nextSyncedIndex;
+          }
+
+          return activeSyncedIndex;
+        })()
+      : 0;
   const syncedVerticalPadding = `calc(50vh - ${Math.floor(SYNC_LINE_STEP_PX / 2)}px)`;
   const syncedTrackTranslateY =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
-      ? `${-activeSyncedRenderIndex * SYNC_LINE_STEP_PX}px`
+      ? `${-syncedTrackRenderIndex * SYNC_LINE_STEP_PX}px`
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(nowPlaying?.progressMs ?? 0);
 

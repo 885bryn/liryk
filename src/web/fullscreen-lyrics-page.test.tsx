@@ -327,7 +327,7 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
-  it("keeps hold offset stable before transition window and reaches next offset at complete boundary", async () => {
+  it("keeps hold offset stable before transition window", async () => {
     hookModel = {
       phase: "ready",
       statusCopy: "Connected - waiting for playback",
@@ -359,27 +359,13 @@ describe("FullscreenLyricsPage", () => {
       isPlaying: true,
     };
 
-    const { rerender } = render(<FullscreenLyricsPage />);
+    render(<FullscreenLyricsPage />);
 
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       expect(track.style.transform).toBe("translateY(-88px)");
     });
 
-    nowPlayingResponse = {
-      trackId: "track-hold-window",
-      title: "Hold Window Track",
-      artist: "Window Artist",
-      progressMs: 8_880,
-      isPlaying: true,
-    };
-
-    rerender(<FullscreenLyricsPage />);
-
-    await waitFor(() => {
-      const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toBe("translateY(-176px)");
-    });
   });
 
   it("interpolates translateY inside the transition window", async () => {
@@ -418,7 +404,50 @@ describe("FullscreenLyricsPage", () => {
 
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toBe("translateY(-145.53846153846155px)");
+      const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
+      expect(value).toBeCloseTo(-145.53846153846155, 10);
+      expect(value).toBeLessThan(-88);
+      expect(value).toBeGreaterThan(-176);
+    });
+  });
+
+  it("lands on next line offset at and after complete boundary", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-complete-window",
+      title: "Complete Window Track",
+      artist: "Window Artist",
+      progressMs: 8_880,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 9_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      expect(track.style.transform).toBe("translateY(-176px)");
     });
   });
 
