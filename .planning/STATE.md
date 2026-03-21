@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: milestone
 current_plan: 0
 status: planning
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-21T04:26:45.168Z"
+stopped_at: Completed 13-03-PLAN.md
+last_updated: "2026-03-21T04:30:02.749Z"
 last_activity: 2026-03-21
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -53,6 +53,8 @@ Recent decisions affecting current work:
 - [Phase 13]: Invalidate frame callbacks with loop tokens so stale scheduled callbacks cannot update state after cancellation.
 - [Phase 13]: Resolve active line as latest startMs less than or equal to progress, not by inferred end bounds.
 - [Phase 13]: Define pre-first progress as active null with next pointing to index zero for deterministic UI behavior.
+- [Phase 13]: Use a hard snap threshold of 1200ms to avoid prolonged desync when drift is large.
+- [Phase 13]: Clamp soft correction to 100ms per sample so in-band drift converges without abrupt jumps.
 
 ### Roadmap Evolution
 
@@ -71,6 +73,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T04:26:45.166Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-03-21T04:30:02.747Z
+Stopped at: Completed 13-03-PLAN.md
 Resume file: None

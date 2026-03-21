@@ -13,7 +13,7 @@ This milestone follows completed v1.2 fullscreen delivery and focuses on elimina
 ## Phases
 
 - [x] **Phase 12: Playback Clock Backbone and Poll Safety** - Introduce playback anchor model, local progress estimation, and stale-response guards for overlapping polls. (completed 2026-03-21)
-- [ ] **Phase 13: Frame-Synced Lyric Engine and Drift Reconciliation** - Drive active-line timing on animation frames with binary-search selection and deterministic drift correction policy.
+- [x] **Phase 13: Frame-Synced Lyric Engine and Drift Reconciliation** - Drive active-line timing on animation frames with binary-search selection and deterministic drift correction policy. (completed 2026-03-21)
 - [ ] **Phase 14: Timing Diagnostics and Early Cueing** - Add instrumentation overlay and then apply conservative early cueing once baseline stability is verified.
 
 ## Phase Details
@@ -43,7 +43,7 @@ Plans:
 2. Active line is selected using binary search over monotonic lyric start times.
 3. Drift reconciliation policy applies hard reset above threshold and bounded soft correction below threshold.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 13-01-PLAN.md - Replace interval ticker with requestAnimationFrame-driven live lyric frame updates.
@@ -73,4 +73,4 @@ Phases execute in numeric order: 12 -> 13 -> 14
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 12. Playback Clock Backbone and Poll Safety | 3/3 | Complete   | 2026-03-21 | 13. Frame-Synced Lyric Engine and Drift Reconciliation | 2/3 | In Progress|  | 14. Timing Diagnostics and Early Cueing | DBG-01, CUE-01 | Not started |
+| 12. Playback Clock Backbone and Poll Safety | 3/3 | Complete   | 2026-03-21 | 13. Frame-Synced Lyric Engine and Drift Reconciliation | 3/3 | Complete   | 2026-03-21 | 14. Timing Diagnostics and Early Cueing | DBG-01, CUE-01 | Not started |
