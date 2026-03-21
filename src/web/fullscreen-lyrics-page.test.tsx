@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -448,6 +450,92 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       expect(track.style.transform).toBe("translateY(-176px)");
+    });
+  });
+
+  it("uses exported motion-window defaults instead of inline transition literals", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source.includes("DEFAULT_MIN_TRANSITION_MS")).toBe(true);
+    expect(source.includes("DEFAULT_MAX_TRANSITION_MS")).toBe(true);
+    expect(source.includes("DEFAULT_TRANSITION_WINDOW_FRACTION")).toBe(true);
+  });
+
+  it("keeps short-gap transitions readable with hold-first then clamped transition", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-short-gap",
+      title: "Short Gap Track",
+      artist: "Clamp Artist",
+      progressMs: 0,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 300, text: "Line 2", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      expect(track.style.transform).toContain("translateY(-");
+      expect(track.style.transform).not.toBe("translateY(-88px)");
+    });
+  });
+
+  it("keeps long-gap transitions on hold until clamped transition window", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-long-gap",
+      title: "Long Gap Track",
+      artist: "Clamp Artist",
+      progressMs: 1_000,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 10_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      expect(track.style.transform).toBe("translateY(0px)");
     });
   });
 
