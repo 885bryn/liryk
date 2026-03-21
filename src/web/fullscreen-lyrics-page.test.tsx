@@ -177,6 +177,52 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
+  it("keeps fullscreen lyric-first invariants without utility controls", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-regression",
+      title: "Regression Track",
+      artist: "Regression Artist",
+      progressMs: 4_500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 5", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.queryAllByRole("button").length).toBe(0);
+      expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(1);
+
+      const layout = screen.getByTestId("fullscreen-lyrics-layout");
+      expect(layout.className).toContain("bg-black");
+      expect(layout.className).toContain("text-white");
+    });
+  });
+
   it("renders simplified chinese lines while preserving mixed non-chinese content", async () => {
     hookModel = {
       phase: "ready",
