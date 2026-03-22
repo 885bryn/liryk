@@ -51,8 +51,22 @@ vi.mock("./use-web-auth-runtime", () => ({
   useWebAuthRuntime: () => hookModel,
 }));
 
-vi.mock("./auth/now-playing", () => ({
-  fetchWebNowPlaying: vi.fn(async () => nowPlayingResponse),
+vi.mock("./use-shared-playback", () => ({
+  useSharedPlayback: () => ({
+    nowPlaying: nowPlayingResponse,
+    playbackSnapshot: nowPlayingResponse
+      ? {
+          trackId: nowPlayingResponse.trackId,
+          deviceId: "web",
+          isPlaying: nowPlayingResponse.isPlaying,
+          progressMs: nowPlayingResponse.progressMs,
+          capturedAtMs: Date.now(),
+        }
+      : null,
+    pollerId: "test-poller",
+    rateLimitedUntilMs: 0,
+    lastUpdatedAtMs: Date.now(),
+  }),
 }));
 
 vi.mock("@/infra/providers/lrclib-client", () => ({

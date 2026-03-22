@@ -16,8 +16,8 @@ import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 import { createThemeStore, hydrateTheme } from "./theme/theme-store";
 import { ThemeToggle } from "./theme/theme-toggle";
 import { getEnvAlignmentDiagnostics } from "./auth/env-alignment";
-import { fetchWebNowPlaying, type WebNowPlaying } from "./auth/now-playing";
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
+import { useSharedPlayback } from "./use-shared-playback";
 import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
@@ -43,13 +43,21 @@ const baseSyncState: LiveSyncUiState = {
   lyricsWarning: null,
   retryAvailable: false,
   retryInFlight: false,
+  estimatedProgressMs: 0,
+  polledProgressMs: 0,
+  driftDeltaMs: 0,
+  correctionState: "static",
 };
 
 export function AppShell(input?: AppShellProps) {
   const themeStore = useRef(createThemeStore({ mode: hydrateTheme() }));
   const [themeMode, setThemeMode] = useState(themeStore.current.getMode());
   const webAuth = useWebAuthRuntime();
-  const [nowPlaying, setNowPlaying] = useState<WebNowPlaying | null>(null);
+  const sharedPlayback = useSharedPlayback({
+    source: "AppShell",
+    accessToken: webAuth.sessionAccessToken ?? null,
+  });
+  const nowPlaying = sharedPlayback.nowPlaying;
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
 
   const onToggleTheme = () => {
@@ -67,13 +75,13 @@ export function AppShell(input?: AppShellProps) {
         onboardingExplainer: webAuth.uiState.onboardingExplainer,
         permissionSummary: webAuth.uiState.permissionSummary,
         accountDisplay: {
-          displayName: input.accountName ?? "Connected account",
+          displayName: input?.accountName ?? "Connected account",
           spotifyUserId: "spotify-user",
         },
       }
     : runtimeConnectedState;
   const accountMenu = accountMenuState
-    ? buildAccountMenu(accountMenuState, input.onDisconnect ?? (async () => undefined))
+    ? buildAccountMenu(accountMenuState, input?.onDisconnect ?? (async () => undefined))
     : null;
   const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
   const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
@@ -132,44 +140,6 @@ export function AppShell(input?: AppShellProps) {
       : lyricsPanel.stateRailVariant === "idle"
         ? "text-muted-foreground"
         : "text-foreground";
-
-  useEffect(() => {
-    if (!webAuth.sessionAccessToken) {
-      setNowPlaying(null);
-      return;
-    }
-
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const poll = async () => {
-      try {
-        const current = await fetchWebNowPlaying(webAuth.sessionAccessToken);
-        if (active) {
-          setNowPlaying(current);
-        }
-      } catch {
-        if (active) {
-          setNowPlaying(null);
-        }
-      } finally {
-        if (active) {
-          timer = setTimeout(() => {
-            void poll();
-          }, 1000);
-        }
-      }
-    };
-
-    void poll();
-
-    return () => {
-      active = false;
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [webAuth.sessionAccessToken]);
 
   useEffect(() => {
     if (!webAuth.sessionAccessToken || !nowPlaying?.trackId) {

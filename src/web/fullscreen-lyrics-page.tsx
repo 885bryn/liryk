@@ -1,23 +1,29 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
 import { applyEarlyCue, DEFAULT_CUE_LEAD_MS } from "@/core/sync/early-cue";
 import {
+  BASE_ROW_GAP_PX,
   DEFAULT_MAX_TRANSITION_MS,
   DEFAULT_MIN_TRANSITION_MS,
   DEFAULT_TRANSITION_WINDOW_FRACTION,
-  easeInOutExpo,
-  getTargetScrollOffset,
-  getTransitionPhase,
+  buildRowLayout,
+  getFloatingIndex,
+  getFloatingRowAnchorPx,
+  getLineFocusMetrics,
+  getRenderedFloatingIndex,
+  getTransitionProgress,
 } from "@/core/sync/lyric-motion-window";
+import { createPlaybackClockAnchor, estimatePlaybackProgressMs } from "@/core/playback/playback-clock";
+import { createLyricTimeline, getLineIndicesAt } from "@/core/sync/lyric-timeline";
 import { normalizeChineseForDisplay } from "@/core/lyrics/unicode-normalization";
 import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 import { createLiveLyricsPanelBuilder } from "@/ui/lyrics/live-lyrics-panel";
 
-import { fetchWebNowPlaying, type WebNowPlaying } from "./auth/now-playing";
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
+import { useSharedPlayback } from "./use-shared-playback";
 
 const baseSyncState: LiveSyncUiState = {
   playbackState: "idle",
@@ -38,9 +44,16 @@ const baseSyncState: LiveSyncUiState = {
   correctionState: "static",
 };
 
-const SYNC_LINE_STEP_PX = 88;
-const MIN_OFFSET_ANIMATION_MS = 360;
-const MAX_OFFSET_ANIMATION_MS = 980;
+const JITTER_BACKWARD_TOLERANCE_MS = 500;
+const FALLBACK_ROW_TEXT_HEIGHT_PX = 72;
+
+type MotionAnchor = {
+  trackId: string | null;
+  activeIndex: number | null;
+  nextIndex: number | null;
+  easedProgress: number;
+  offsetPx: number;
+};
 
 function formatElapsedProgress(progressMs: number): string {
   const totalSeconds = Math.max(0, Math.floor(progressMs / 1000));
@@ -53,49 +66,90 @@ function formatElapsedProgress(progressMs: number): string {
 
 export function FullscreenLyricsPage() {
   const webAuth = useWebAuthRuntime();
-  const [nowPlaying, setNowPlaying] = useState<WebNowPlaying | null>(null);
+  const sharedPlayback = useSharedPlayback({
+    source: "FullscreenLyricsPage",
+    accessToken: webAuth.sessionAccessToken ?? null,
+  });
+  const nowPlaying = sharedPlayback.nowPlaying;
+  const playbackSnapshot = sharedPlayback.playbackSnapshot;
+  const [estimatedProgressMs, setEstimatedProgressMs] = useState(0);
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
   const [isLiveLocked, setIsLiveLocked] = useState(true);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [displayTrackOffsetPx, setDisplayTrackOffsetPx] = useState(0);
   const programmaticScrollRef = useRef(false);
-  const displayTrackOffsetRef = useRef(0);
-  const animationFrameRef = useRef<number | null>(null);
+  const playbackAnchorRef = useRef<ReturnType<typeof createPlaybackClockAnchor> | null>(null);
+  const progressFrameRef = useRef<number | null>(null);
+  const focusFrameRef = useRef<number | null>(null);
+  const focusLastTsRef = useRef<number | null>(null);
+  const renderedFloatingIndexRef = useRef(0);
+  const targetFloatingIndexRef = useRef(0);
+  const lyricRowRefs = useRef<Array<HTMLParagraphElement | null>>([]);
+  const rowResizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [rowHeights, setRowHeights] = useState<number[]>([]);
+  const [renderedFloatingIndex, setRenderedFloatingIndex] = useState(0);
+  const lastMotionAnchorRef = useRef<MotionAnchor>({
+    trackId: null,
+    activeIndex: null,
+    nextIndex: null,
+    easedProgress: 0,
+    offsetPx: 0,
+  });
 
-  const syncedLines = (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number");
-  const lyricTexts = (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text));
-  const syncedDisplayLines = syncedLines.map((line) => ({
-    text: line.displayText ?? normalizeChineseForDisplay(line.text),
-    startMs: line.startMs ?? 0,
-  }));
-  const cueAdjustedProgressMs = applyEarlyCue(nowPlaying?.progressMs ?? 0, DEFAULT_CUE_LEAD_MS);
-  const firstSyncedStartMs = syncedDisplayLines[0]?.startMs ?? 0;
-  const hasStartedSyncedLyrics = Boolean(nowPlaying && syncedDisplayLines.length > 0 && cueAdjustedProgressMs >= firstSyncedStartMs);
-  const activeSyncedIndex =
-    hasStartedSyncedLyrics && nowPlaying && syncedLines.length > 0
-      ? Math.max(
-          0,
-          syncedLines.reduce((best, line, index) => {
-            if ((line.startMs ?? 0) <= cueAdjustedProgressMs) {
-              return index;
-            }
-            return best;
-          }, 0),
-        )
-      : null;
-  const nextSyncedIndex =
-    hasStartedSyncedLyrics && typeof activeSyncedIndex === "number" && activeSyncedIndex + 1 < syncedLines.length
-      ? activeSyncedIndex + 1
-      : null;
+  const syncedLines = useMemo(
+    () => (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number"),
+    [resolvedLyrics?.lines],
+  );
+  const lyricTexts = useMemo(
+    () => (resolvedLyrics?.lines ?? []).map((line) => line.displayText ?? normalizeChineseForDisplay(line.text)),
+    [resolvedLyrics?.lines],
+  );
+  const syncedDisplayLines = useMemo(
+    () =>
+      syncedLines.map((line) => ({
+        text: line.displayText ?? normalizeChineseForDisplay(line.text),
+        startMs: line.startMs ?? 0,
+      })),
+    [syncedLines],
+  );
+  const measuredRowHeights = useMemo(
+    () =>
+      syncedDisplayLines.map((_, index) => {
+        const measured = rowHeights[index];
+        return Number.isFinite(measured) && measured > 0 ? measured : FALLBACK_ROW_TEXT_HEIGHT_PX;
+      }),
+    [rowHeights, syncedDisplayLines],
+  );
+  const rowLayout = useMemo(() => buildRowLayout(measuredRowHeights, BASE_ROW_GAP_PX), [measuredRowHeights]);
+
+  const setLyricRowRef = (index: number) => (element: HTMLParagraphElement | null) => {
+    lyricRowRefs.current[index] = element;
+  };
+  const cueAdjustedProgressMs = applyEarlyCue(estimatedProgressMs, DEFAULT_CUE_LEAD_MS);
+  const syncedTimeline = useMemo(
+    () =>
+      createLyricTimeline(
+        syncedDisplayLines.map((line) => ({
+          startMs: line.startMs,
+          text: line.text,
+        })),
+      ),
+    [syncedDisplayLines],
+  );
+  const lineIndices = syncedTimeline.lines.length > 0 ? getLineIndicesAt(syncedTimeline, cueAdjustedProgressMs) : { activeIndex: null, nextIndex: null };
+  const activeSyncedIndex = lineIndices.activeIndex;
+  const nextSyncedIndex = lineIndices.nextIndex;
+  const hasStartedSyncedLyrics = typeof activeSyncedIndex === "number";
   const syncedMotionState =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && typeof activeSyncedIndex === "number"
       ? (() => {
-          const currentAnchorOffsetPx = -activeSyncedIndex * SYNC_LINE_STEP_PX;
+          const currentAnchorOffsetPx = -getFloatingRowAnchorPx(rowLayout, activeSyncedIndex);
 
           if (typeof nextSyncedIndex !== "number") {
             return {
+              floatingIndex: activeSyncedIndex,
               targetOffsetPx: currentAnchorOffsetPx,
-              shouldAnimate: false,
+              transition: null,
+              easedProgress: 0,
             };
           }
 
@@ -103,12 +157,14 @@ export function FullscreenLyricsPage() {
           const nextLine = syncedDisplayLines[nextSyncedIndex];
           if (!currentLine || !nextLine) {
             return {
+              floatingIndex: activeSyncedIndex,
               targetOffsetPx: currentAnchorOffsetPx,
-              shouldAnimate: false,
+              transition: null,
+              easedProgress: 0,
             };
           }
 
-          const transition = getTransitionPhase({
+          const transition = getTransitionProgress({
             progressMs: cueAdjustedProgressMs,
             currentStartMs: currentLine.startMs,
             nextStartMs: nextLine.startMs,
@@ -117,104 +173,58 @@ export function FullscreenLyricsPage() {
             transitionFraction: DEFAULT_TRANSITION_WINDOW_FRACTION,
           });
 
+          let easedProgress = transition.easedProgress;
+          if (
+            transition.isShortGap &&
+            lastMotionAnchorRef.current.trackId === nowPlaying?.trackId &&
+            lastMotionAnchorRef.current.activeIndex === activeSyncedIndex &&
+            lastMotionAnchorRef.current.nextIndex === nextSyncedIndex
+          ) {
+            easedProgress = Math.max(lastMotionAnchorRef.current.easedProgress, easedProgress);
+          }
+
           if (transition.phase !== "transition" || nextSyncedIndex <= activeSyncedIndex) {
             return {
+              floatingIndex: activeSyncedIndex,
               targetOffsetPx: currentAnchorOffsetPx,
-              shouldAnimate: false,
+              transition: null,
+              easedProgress: 0,
             };
           }
 
-          const targetOffsetPx = getTargetScrollOffset({
+          const floatingIndex = getFloatingIndex({
             currentIndex: activeSyncedIndex,
             nextIndex: nextSyncedIndex,
-            phaseProgress: transition.phaseProgress,
             phase: transition.phase,
-            stepPx: SYNC_LINE_STEP_PX,
+            easedProgress,
           });
 
+          const measuredTargetOffsetPx = -getFloatingRowAnchorPx(
+            rowLayout,
+            floatingIndex,
+          );
+
           return {
-            targetOffsetPx,
-            shouldAnimate: true,
+            floatingIndex,
+            targetOffsetPx: measuredTargetOffsetPx,
+            transition,
+            easedProgress,
           };
         })()
-      : { targetOffsetPx: 0, shouldAnimate: false };
-  const syncedTrackOffsetPx = syncedMotionState.targetOffsetPx;
-  const shouldAnimateTrackOffset = syncedMotionState.shouldAnimate;
-  useEffect(() => {
-    displayTrackOffsetRef.current = displayTrackOffsetPx;
-  }, [displayTrackOffsetPx]);
+      : { floatingIndex: 0, targetOffsetPx: 0, transition: null, easedProgress: 0 };
 
-  useEffect(() => {
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    const canAnimate = resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0;
-    if (!canAnimate) {
-      setDisplayTrackOffsetPx(0);
-      return;
-    }
-
-    if (!shouldAnimateTrackOffset) {
-      setDisplayTrackOffsetPx(syncedTrackOffsetPx);
-      return;
-    }
-
-    const from = displayTrackOffsetRef.current;
-    const to = syncedTrackOffsetPx;
-    const deltaPx = Math.abs(to - from);
-
-    if (deltaPx < 0.01) {
-      setDisplayTrackOffsetPx(to);
-      return;
-    }
-
-    const durationMs = Math.min(MAX_OFFSET_ANIMATION_MS, Math.max(MIN_OFFSET_ANIMATION_MS, deltaPx * 5.5));
-    let startTs: number | null = null;
-
-    const tick = (timestamp: number) => {
-      if (startTs === null) {
-        startTs = timestamp;
-      }
-
-      const elapsed = timestamp - startTs;
-      const progress = Math.min(1, elapsed / durationMs);
-      const eased = easeInOutExpo(progress);
-      const nextOffset = from + (to - from) * eased;
-      setDisplayTrackOffsetPx(nextOffset);
-
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      animationFrameRef.current = null;
-    };
-
-    animationFrameRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    };
-  }, [hasStartedSyncedLyrics, resolvedLyrics?.renderMode, shouldAnimateTrackOffset, syncedDisplayLines.length, syncedTrackOffsetPx]);
-
-  const activeSyncedRenderIndex =
-    resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
-      ? Math.max(
-          0,
-          Math.min(syncedDisplayLines.length - 1, Math.round(Math.abs(displayTrackOffsetPx) / SYNC_LINE_STEP_PX)),
-        )
-      : 0;
-  const syncedVerticalPadding = `calc(50vh - ${Math.floor(SYNC_LINE_STEP_PX / 2)}px)`;
+  const floatingSyncedIndex = syncedMotionState.floatingIndex;
+  const canRenderSyncedMotion =
+    resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0;
+  const syncedVerticalPadding = "50vh";
+  const renderedTrackOffsetPx = canRenderSyncedMotion
+    ? -getFloatingRowAnchorPx(rowLayout, renderedFloatingIndex)
+    : 0;
   const syncedTrackTranslateY =
-    resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0
-      ? `${displayTrackOffsetPx}px`
+    canRenderSyncedMotion
+      ? `${renderedTrackOffsetPx}px`
       : "0px";
-  const elapsedProgressLabel = formatElapsedProgress(nowPlaying?.progressMs ?? 0);
+  const elapsedProgressLabel = formatElapsedProgress(estimatedProgressMs);
 
   const findLiveAnchorElement = (): HTMLElement | null => {
     if (typeof document === "undefined") {
@@ -264,9 +274,9 @@ export function FullscreenLyricsPage() {
     lyricsSourceState: resolvedLyrics?.sourceState ?? "loading",
     lyricsRenderMode: resolvedLyrics?.renderMode ?? null,
     resolvedLyrics: resolvedLyrics?.lines ?? [],
-    estimatedProgressMs: nowPlaying?.progressMs ?? 0,
-    polledProgressMs: nowPlaying?.progressMs ?? 0,
-    driftDeltaMs: 0,
+    estimatedProgressMs,
+    polledProgressMs: playbackSnapshot?.progressMs ?? 0,
+    driftDeltaMs: estimatedProgressMs - (playbackSnapshot?.progressMs ?? 0),
     correctionState: nowPlaying ? "synced" : "static",
     statusLine:
       resolvedLyrics?.sourceState === "not-found"
@@ -285,42 +295,186 @@ export function FullscreenLyricsPage() {
   });
 
   useEffect(() => {
-    if (!webAuth.sessionAccessToken) {
-      setNowPlaying(null);
+    if (playbackSnapshot === null) {
+      playbackAnchorRef.current = null;
+      setEstimatedProgressMs(0);
       return;
     }
 
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    const nowPerfMs = performance.now();
+    const currentAnchor = playbackAnchorRef.current;
+    let normalizedProgressMs = playbackSnapshot.progressMs;
 
-    const poll = async () => {
-      try {
-        const current = await fetchWebNowPlaying(webAuth.sessionAccessToken);
-        if (active) {
-          setNowPlaying(current);
-        }
-      } catch {
-        if (active) {
-          setNowPlaying(null);
-        }
-      } finally {
-        if (active) {
-          timer = setTimeout(() => {
-            void poll();
-          }, 1000);
-        }
+    if (currentAnchor && currentAnchor.trackId === playbackSnapshot.trackId && playbackSnapshot.isPlaying) {
+      const estimatedFromAnchor = estimatePlaybackProgressMs(currentAnchor, nowPerfMs);
+      const backwardDeltaMs = estimatedFromAnchor - normalizedProgressMs;
+      if (backwardDeltaMs > 0 && backwardDeltaMs <= JITTER_BACKWARD_TOLERANCE_MS) {
+        normalizedProgressMs = Math.floor(estimatedFromAnchor);
       }
+    }
+
+    playbackAnchorRef.current = createPlaybackClockAnchor({
+      snapshot: {
+        ...playbackSnapshot,
+        progressMs: normalizedProgressMs,
+      },
+      capturedAtPerfMs: nowPerfMs,
+    });
+    setEstimatedProgressMs(normalizedProgressMs);
+  }, [playbackSnapshot]);
+
+  useEffect(() => {
+    if (progressFrameRef.current !== null) {
+      cancelAnimationFrame(progressFrameRef.current);
+      progressFrameRef.current = null;
+    }
+
+    if (typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent)) {
+      return;
+    }
+
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const anchor = playbackAnchorRef.current;
+      if (anchor) {
+        const estimated = Math.floor(estimatePlaybackProgressMs(anchor, performance.now()));
+        setEstimatedProgressMs(estimated);
+      }
+
+      progressFrameRef.current = requestAnimationFrame(tick);
     };
 
-    void poll();
+    progressFrameRef.current = requestAnimationFrame(tick);
+    return () => {
+      cancelled = true;
+      if (progressFrameRef.current !== null) {
+        cancelAnimationFrame(progressFrameRef.current);
+        progressFrameRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    targetFloatingIndexRef.current = floatingSyncedIndex;
+    if (!canRenderSyncedMotion) {
+      renderedFloatingIndexRef.current = floatingSyncedIndex;
+      setRenderedFloatingIndex(floatingSyncedIndex);
+    }
+  }, [canRenderSyncedMotion, floatingSyncedIndex]);
+
+  useEffect(() => {
+    if (focusFrameRef.current !== null) {
+      cancelAnimationFrame(focusFrameRef.current);
+      focusFrameRef.current = null;
+    }
+
+    focusLastTsRef.current = null;
+    if (!canRenderSyncedMotion) {
+      return;
+    }
+
+    const tick = (timestamp: number) => {
+      const previousTimestamp = focusLastTsRef.current;
+      focusLastTsRef.current = timestamp;
+      const deltaMs = previousTimestamp === null ? 16 : timestamp - previousTimestamp;
+
+      const nextRendered = getRenderedFloatingIndex({
+        targetFloatingIndex: targetFloatingIndexRef.current,
+        previousRenderedFloatingIndex: renderedFloatingIndexRef.current,
+        deltaMs,
+      });
+
+      if (Math.abs(nextRendered - renderedFloatingIndexRef.current) > 0.0005) {
+        renderedFloatingIndexRef.current = nextRendered;
+        setRenderedFloatingIndex(nextRendered);
+      }
+
+      focusFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    focusFrameRef.current = requestAnimationFrame(tick);
 
     return () => {
-      active = false;
-      if (timer) {
-        clearTimeout(timer);
+      if (focusFrameRef.current !== null) {
+        cancelAnimationFrame(focusFrameRef.current);
+        focusFrameRef.current = null;
       }
+      focusLastTsRef.current = null;
     };
-  }, [webAuth.sessionAccessToken]);
+  }, [canRenderSyncedMotion]);
+
+  useEffect(() => {
+    lastMotionAnchorRef.current = {
+      trackId: nowPlaying?.trackId ?? null,
+      activeIndex: activeSyncedIndex,
+      nextIndex: nextSyncedIndex,
+      easedProgress: syncedMotionState.easedProgress,
+      offsetPx: renderedTrackOffsetPx,
+    };
+  }, [activeSyncedIndex, nextSyncedIndex, nowPlaying?.trackId, renderedTrackOffsetPx, syncedMotionState.easedProgress]);
+
+  useEffect(() => {
+    if (resolvedLyrics?.renderMode !== "synced") {
+      setRowHeights([]);
+      return;
+    }
+
+    let mounted = true;
+
+    const measureRows = () => {
+      if (!mounted) {
+        return;
+      }
+
+      const nextHeights = syncedDisplayLines.map((_, index) => {
+        const element = lyricRowRefs.current[index];
+        if (!element) {
+          return FALLBACK_ROW_TEXT_HEIGHT_PX;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const measured = Math.round(rect.height);
+        return measured > 0 ? measured : FALLBACK_ROW_TEXT_HEIGHT_PX;
+      });
+
+      setRowHeights((current) => {
+        if (current.length === nextHeights.length && current.every((value, index) => Math.abs(value - nextHeights[index]) <= 1)) {
+          return current;
+        }
+        return nextHeights;
+      });
+    };
+
+    measureRows();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        measureRows();
+      });
+      rowResizeObserverRef.current = observer;
+      for (const element of lyricRowRefs.current) {
+        if (element) {
+          observer.observe(element);
+        }
+      }
+    }
+
+    const onResize = () => {
+      measureRows();
+    };
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("resize", onResize);
+      rowResizeObserverRef.current?.disconnect();
+      rowResizeObserverRef.current = null;
+    };
+  }, [resolvedLyrics?.renderMode, syncedDisplayLines]);
 
   useEffect(() => {
     if (!webAuth.sessionAccessToken || !nowPlaying?.trackId) {
@@ -362,20 +516,6 @@ export function FullscreenLyricsPage() {
     setIsLiveLocked(true);
     scrollToLiveAnchor("auto");
   }, [nowPlaying?.trackId]);
-
-  useEffect(() => {
-    if (!isLiveLocked) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      scrollToLiveAnchor("auto");
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [isLiveLocked, activeSyncedRenderIndex, hasStartedSyncedLyrics]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -477,32 +617,38 @@ export function FullscreenLyricsPage() {
           <div className="relative" style={{ paddingTop: syncedVerticalPadding, paddingBottom: syncedVerticalPadding }}>
               <div
                 data-testid="fullscreen-lyrics-track"
-                className="space-y-3 leading-relaxed motion-reduce:transition-none"
+                className="space-y-0 leading-relaxed motion-reduce:transition-none"
                 style={{ transform: `translateY(${syncedTrackTranslateY})` }}
               >
               {resolvedLyrics?.renderMode === "synced"
                 ? syncedDisplayLines.map((line, index) => {
-                    const distance = Math.abs(index - activeSyncedRenderIndex);
-                    const transitionClassName =
-                      "transition-[opacity,color] duration-[360ms] ease-out motion-reduce:transition-none";
+                    const visualState = getLineFocusMetrics(index, renderedFloatingIndex);
+                    const transitionClassName = "transition-[filter,opacity,color] duration-[180ms] ease-linear motion-reduce:transition-none";
                     const tier = !hasStartedSyncedLyrics
                       ? index === 0
                         ? "near"
                         : "distant"
-                      : distance === 0
+                      : visualState.distance < 0.5
                         ? "active"
-                        : distance === 1
+                        : visualState.distance < 1.5
                           ? "near"
                           : "distant";
-                    const tierClassName =
-                      tier === "active"
-                        ? `h-[88px] flex items-center text-white font-semibold text-4xl sm:text-5xl ${transitionClassName}`
-                        : tier === "near"
-                          ? `h-[88px] flex items-center text-zinc-300 font-medium text-3xl sm:text-4xl ${transitionClassName}`
-                          : `h-[88px] flex items-center text-zinc-500 font-normal text-2xl sm:text-3xl ${transitionClassName}`;
+                    const tierClassName = `relative flex min-h-[52px] items-center py-2 text-4xl leading-[1.15] sm:text-5xl ${transitionClassName}`;
 
                   return (
-                    <p key={`${index}-${line.text}`} data-testid={`fullscreen-lyric-line-${tier}`} className={tierClassName}>
+                    <p
+                      key={`${index}-${line.text}`}
+                      data-testid={`fullscreen-lyric-line-${tier}`}
+                      className={tierClassName}
+                      ref={setLyricRowRef(index)}
+                      style={{
+                        opacity: visualState.opacity,
+                        transform: `scale(${visualState.scale})`,
+                        color: `rgba(255,255,255,${visualState.colorAlpha})`,
+                        filter: `blur(${visualState.blurPx}px) brightness(${visualState.brightness})`,
+                        fontWeight: 560,
+                      }}
+                    >
                       {line.text}
                     </p>
                   );

@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchWebNowPlaying } from "./now-playing";
+import { fetchWebNowPlaying, resetNowPlayingRateLimitForTests, SpotifyPlaybackError } from "./now-playing";
 
 function jsonResponse(status: number, payload: unknown): Response {
   return {
@@ -11,7 +11,11 @@ function jsonResponse(status: number, payload: unknown): Response {
 }
 
 describe("fetchWebNowPlaying", () => {
-  it("parses currently-playing payload when available", async () => {
+  beforeEach(() => {
+    resetNowPlayingRateLimitForTests();
+  });
+
+  it("parses /me/player payload when available", async () => {
     const fetchMock = vi.fn(async () =>
       jsonResponse(200, {
         is_playing: true,
@@ -36,32 +40,13 @@ describe("fetchWebNowPlaying", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("falls back to /me/player when /currently-playing returns 204", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, status: 204, json: async () => null } as Response)
-      .mockResolvedValueOnce(
-        jsonResponse(200, {
-          is_playing: false,
-          progress_ms: 456,
-          item: {
-            id: "track-2",
-            name: "Fallback Song",
-            artists: [{ name: "Fallback Artist" }],
-          },
-        }),
-      );
+  it("returns null when /me/player returns 204", async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 204, json: async () => null } as Response));
 
     const result = await fetchWebNowPlaying("token", fetchMock as unknown as typeof fetch);
 
-    expect(result).toEqual({
-      trackId: "track-2",
-      title: "Fallback Song",
-      artist: "Fallback Artist",
-      isPlaying: false,
-      progressMs: 456,
-    });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("returns null when required metadata is missing or malformed", async () => {
@@ -119,5 +104,44 @@ describe("fetchWebNowPlaying", () => {
     await expect(fetchWebNowPlaying("token", fetchMock as unknown as typeof fetch)).rejects.toThrow(
       "Spotify playback endpoint error (403)",
     );
+  });
+
+  it("exposes retry-after milliseconds for rate-limited responses", async () => {
+    const fetchMock = vi.fn(async () =>
+      ({
+        ok: false,
+        status: 429,
+        headers: { get: (name: string) => (name.toLowerCase() === "retry-after" ? "12" : null) },
+        json: async () => ({}),
+      }) as Response,
+    );
+
+    await expect(fetchWebNowPlaying("token", fetchMock as unknown as typeof fetch)).rejects.toMatchObject({
+      name: "SpotifyPlaybackError",
+      status: 429,
+      retryAfterMs: 12_000,
+    } as Partial<SpotifyPlaybackError>);
+  });
+
+  it("short-circuits repeated requests while globally rate-limited", async () => {
+    const firstFetch = vi.fn(async () =>
+      ({
+        ok: false,
+        status: 429,
+        headers: { get: (name: string) => (name.toLowerCase() === "retry-after" ? "12" : null) },
+        json: async () => ({}),
+      }) as Response,
+    );
+
+    await expect(fetchWebNowPlaying("token", firstFetch as unknown as typeof fetch)).rejects.toMatchObject({
+      status: 429,
+      retryAfterMs: 12_000,
+    } as Partial<SpotifyPlaybackError>);
+
+    const secondFetch = vi.fn(async () => jsonResponse(200, {}));
+    await expect(fetchWebNowPlaying("token", secondFetch as unknown as typeof fetch)).rejects.toMatchObject({
+      status: 429,
+    } as Partial<SpotifyPlaybackError>);
+    expect(secondFetch).not.toHaveBeenCalled();
   });
 });

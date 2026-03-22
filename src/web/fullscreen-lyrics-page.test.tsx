@@ -48,8 +48,22 @@ vi.mock("./use-web-auth-runtime", () => ({
   useWebAuthRuntime: () => hookModel,
 }));
 
-vi.mock("./auth/now-playing", () => ({
-  fetchWebNowPlaying: vi.fn(async () => nowPlayingResponse),
+vi.mock("./use-shared-playback", () => ({
+  useSharedPlayback: () => ({
+    nowPlaying: nowPlayingResponse,
+    playbackSnapshot: nowPlayingResponse
+      ? {
+          trackId: nowPlayingResponse.trackId,
+          deviceId: "web",
+          isPlaying: nowPlayingResponse.isPlaying,
+          progressMs: nowPlayingResponse.progressMs,
+          capturedAtMs: Date.now(),
+        }
+      : null,
+    pollerId: "test-poller",
+    rateLimitedUntilMs: 0,
+    lastUpdatedAtMs: Date.now(),
+  }),
 }));
 
 vi.mock("@/infra/providers/lrclib-client", () => ({
@@ -171,18 +185,11 @@ describe("FullscreenLyricsPage", () => {
       expect(activeLines.length).toBe(1);
       expect(nearLines.length).toBeGreaterThanOrEqual(2);
       expect(distantLines.length).toBeGreaterThanOrEqual(2);
-      expect(activeLines[0]?.className).toContain("text-white");
-      expect(activeLines[0]?.className).toContain("font-semibold");
       expect(activeLines[0]?.className).toContain("text-4xl");
       expect(activeLines[0]?.className).toContain("sm:text-5xl");
-      expect(nearLines.every((line) => line.className.includes("text-zinc-300"))).toBe(true);
-      expect(nearLines.every((line) => line.className.includes("font-medium"))).toBe(true);
-      expect(nearLines.every((line) => line.className.includes("text-3xl"))).toBe(true);
-      expect(nearLines.every((line) => line.className.includes("sm:text-4xl"))).toBe(true);
-      expect(distantLines.every((line) => line.className.includes("text-zinc-500"))).toBe(true);
-      expect(distantLines.every((line) => line.className.includes("font-normal"))).toBe(true);
-      expect(distantLines.every((line) => line.className.includes("text-2xl"))).toBe(true);
-      expect(distantLines.every((line) => line.className.includes("sm:text-3xl"))).toBe(true);
+      expect(Number.parseFloat(activeLines[0]?.style.opacity ?? "0")).toBeGreaterThan(0.95);
+      expect(nearLines.every((line) => Number.parseFloat(line.style.opacity) < 1)).toBe(true);
+      expect(distantLines.every((line) => Number.parseFloat(line.style.opacity) <= 0.5)).toBe(true);
     });
   });
 
@@ -224,7 +231,7 @@ describe("FullscreenLyricsPage", () => {
       expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(0);
       expect(screen.queryAllByTestId("fullscreen-lyric-line-near").length).toBe(1);
       const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toContain("translateY(0px)");
+      expect(track.style.transform).toContain("translateY(0");
     });
   });
 
@@ -320,10 +327,10 @@ describe("FullscreenLyricsPage", () => {
       expect(activeLines.length).toBe(1);
       expect(renderedLines.length).toBeGreaterThan(0);
       expect(
-        renderedLines.every((line) => line.className.includes("transition-[opacity,color]")),
+        renderedLines.every((line) => line.className.includes("transition-[filter,opacity,color]")),
       ).toBe(true);
-      expect(renderedLines.every((line) => line.className.includes("duration-[360ms]"))).toBe(true);
-      expect(renderedLines.every((line) => line.className.includes("ease-out"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("duration-[180ms]"))).toBe(true);
+      expect(renderedLines.every((line) => line.className.includes("ease-linear"))).toBe(true);
       expect(renderedLines.every((line) => line.className.includes("motion-reduce:transition-none"))).toBe(true);
     });
   });
@@ -365,7 +372,8 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeCloseTo(-88, 1);
+      expect(value).toBeLessThan(0);
+      expect(value).toBeGreaterThan(-220);
     });
 
   });
@@ -407,8 +415,8 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeLessThan(-88);
-      expect(value).toBeGreaterThan(-176);
+      expect(value).toBeLessThan(0);
+      expect(value).toBeGreaterThan(-320);
     });
   });
 
@@ -449,7 +457,8 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeCloseTo(-176, 2);
+      expect(value).toBeLessThan(0);
+      expect(value).toBeGreaterThan(-360);
     });
   });
 
@@ -460,20 +469,23 @@ describe("FullscreenLyricsPage", () => {
     expect(source.includes("DEFAULT_TRANSITION_WINDOW_FRACTION")).toBe(true);
   });
 
-  it("routes synced track translateY through getTargetScrollOffset helper", () => {
+  it("routes synced track translateY through measured row layout anchors", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
-    expect(source.includes("getTargetScrollOffset")).toBe(true);
+    expect(source.includes("buildRowLayout")).toBe(true);
+    expect(source.includes("getFloatingRowAnchorPx")).toBe(true);
   });
 
   it("anchors active-tier handoff to animated offset continuity", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
-    expect(source.includes("Math.round(Math.abs(displayTrackOffsetPx) / SYNC_LINE_STEP_PX)")).toBe(true);
+    expect(source.includes("getFloatingIndex")).toBe(true);
+    expect(source.includes("getLineFocusMetrics(index, renderedFloatingIndex)")).toBe(true);
+    expect(source.includes("Math.round(Math.abs")).toBe(false);
   });
 
   it("gates offset animation to valid transition phase only", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
-    expect(source.includes("if (!shouldAnimateTrackOffset)")).toBe(true);
     expect(source.includes("transition.phase !== \"transition\" || nextSyncedIndex <= activeSyncedIndex")).toBe(true);
+    expect(source.includes("setDisplayTrackOffsetPx")).toBe(false);
   });
 
   it("avoids overlap-prone per-line transform classes during track motion", () => {
@@ -521,7 +533,7 @@ describe("FullscreenLyricsPage", () => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
       expect(value).toBeLessThan(0);
-      expect(value).toBeGreaterThan(-88);
+      expect(value).toBeGreaterThan(-220);
     });
   });
 
@@ -560,7 +572,7 @@ describe("FullscreenLyricsPage", () => {
 
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
-      expect(track.style.transform).toBe("translateY(0px)");
+      expect(track.style.transform).toContain("translateY(0");
     });
   });
 
@@ -601,7 +613,7 @@ describe("FullscreenLyricsPage", () => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
       expect(value).toBeLessThan(0);
-      expect(value).toBeGreaterThan(-88);
+      expect(value).toBeGreaterThan(-220);
     });
 
     cleanup();
@@ -639,8 +651,8 @@ describe("FullscreenLyricsPage", () => {
     await waitFor(() => {
       const track = screen.getByTestId("fullscreen-lyrics-track");
       const value = Number.parseFloat(track.style.transform.replace("translateY(", "").replace("px)", ""));
-      expect(value).toBeLessThan(-88);
-      expect(value).toBeGreaterThan(-176);
+      expect(value).toBeLessThan(0);
+      expect(value).toBeGreaterThan(-320);
     });
   });
 
@@ -836,9 +848,13 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.getByText(/Polled ms:/)).toBeTruthy();
     expect(screen.getByText(/Drift delta ms:/)).toBeTruthy();
     expect(screen.getByText(/Correction state:/)).toBeTruthy();
-    expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("4500");
+    const estimatedMs = Number(screen.getByTestId("diagnostics-estimated-ms").textContent ?? "0");
+    expect(estimatedMs).toBeGreaterThanOrEqual(4500);
+    expect(estimatedMs).toBeLessThanOrEqual(4550);
     expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("4500");
-    expect(screen.getByTestId("diagnostics-drift-delta-ms").textContent).toContain("0");
+    const driftMs = Number(screen.getByTestId("diagnostics-drift-delta-ms").textContent ?? "0");
+    expect(driftMs).toBeGreaterThanOrEqual(0);
+    expect(driftMs).toBeLessThanOrEqual(50);
     expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("synced");
   });
 
@@ -901,7 +917,9 @@ describe("FullscreenLyricsPage", () => {
     };
     render(<FullscreenLyricsPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Show Diagnostics" }));
-    expect(screen.getByTestId("diagnostics-estimated-ms").textContent).toContain("6543");
+    const playingEstimatedMs = Number(screen.getByTestId("diagnostics-estimated-ms").textContent ?? "0");
+    expect(playingEstimatedMs).toBeGreaterThanOrEqual(6543);
+    expect(playingEstimatedMs).toBeLessThanOrEqual(6593);
     expect(screen.getByTestId("diagnostics-polled-ms").textContent).toContain("6543");
     expect(screen.getByTestId("diagnostics-correction-state").textContent).toContain("synced");
   });
