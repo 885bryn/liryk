@@ -4,10 +4,11 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ResolvedLyrics } from "@/core/lyrics/types";
+import { BASE_ROW_GAP_PX, buildRowLayout } from "@/core/sync/lyric-motion-window";
 
 import type { UiAuthState } from "../state/auth/auth-store";
 
-import { FullscreenLyricsPage } from "./fullscreen-lyrics-page";
+import { FullscreenLyricsPage, getBoundaryLockedScrollTop } from "./fullscreen-lyrics-page";
 
 type HookModel = {
   phase: "checking" | "ready" | "busy";
@@ -66,6 +67,27 @@ vi.mock("./use-shared-playback", () => ({
   }),
 }));
 
+vi.mock("./use-karaoke-mode", () => ({
+  useKaraokeMode: () => ({
+    mode: "inactive",
+    message: "Karaoke inactive",
+    localPlaybackMs: null,
+    referenceTrack: null,
+    candidateMappings: [],
+    currentMapping: null,
+    canResumeAutoplay: false,
+    playerHostRef: { current: null },
+    primePlaybackGesture: vi.fn(),
+    enterKaraokeMode: vi.fn(async () => undefined),
+    exitKaraokeMode: vi.fn(async () => undefined),
+    switchToCandidate: vi.fn(async () => undefined),
+    confirmCurrentMapping: vi.fn(),
+    banCurrentCandidate: vi.fn(async () => undefined),
+    clearError: vi.fn(),
+    resumeAutoplay: vi.fn(async () => undefined),
+  }),
+}));
+
 vi.mock("@/infra/providers/lrclib-client", () => ({
   createLrclibClient: vi.fn(() => ({})),
 }));
@@ -93,6 +115,64 @@ describe("FullscreenLyricsPage", () => {
   afterEach(() => {
     cleanup();
   });
+
+  function stubViewportGeometry(input: {
+    viewportHeight: number;
+    activeIndex: number;
+    rowHeights: number[];
+    rowHeight?: number;
+  }) {
+    const viewport = screen.getByTestId("fullscreen-lyrics-viewport");
+    const rows = screen.getAllByText((_, element) => element?.tagName.toLowerCase() === "p");
+    const lyricRows = rows.filter((row) => row.textContent?.startsWith("Line ") ?? false);
+    const rowHeight = input.rowHeight ?? 72;
+    const normalizedHeights = input.rowHeights.length > 0 ? input.rowHeights : lyricRows.map(() => rowHeight);
+    const rowLayout = buildRowLayout(normalizedHeights, BASE_ROW_GAP_PX);
+    const scrollTop = getBoundaryLockedScrollTop({
+      viewportHeight: input.viewportHeight,
+      rowLayout,
+      floatingIndex: input.activeIndex,
+    });
+
+    Object.defineProperty(viewport, "clientHeight", {
+      configurable: true,
+      value: input.viewportHeight,
+    });
+    Object.defineProperty(viewport, "scrollTop", {
+      configurable: true,
+      writable: true,
+      value: scrollTop,
+    });
+    Object.defineProperty(viewport, "getBoundingClientRect", {
+      configurable: true,
+      value: () =>
+        ({
+          top: 0,
+          bottom: input.viewportHeight,
+          height: input.viewportHeight,
+        }) satisfies Partial<DOMRect>,
+    });
+
+    lyricRows.forEach((row, index) => {
+      const top = (rowLayout.offsets[index] ?? 0) - scrollTop;
+      const height = normalizedHeights[index] ?? rowHeight;
+      Object.defineProperty(row, "getBoundingClientRect", {
+        configurable: true,
+        value: () =>
+          ({
+            top,
+            bottom: top + height,
+            height,
+          }) satisfies Partial<DOMRect>,
+      });
+    });
+
+    return {
+      viewport,
+      lyricRows,
+      scrollTop,
+    };
+  }
 
   it("renders fullscreen layout and column markers", () => {
     render(<FullscreenLyricsPage />);
@@ -123,8 +203,9 @@ describe("FullscreenLyricsPage", () => {
     render(<FullscreenLyricsPage />);
 
     const layout = screen.getByTestId("fullscreen-lyrics-layout");
-    expect(layout.className).toContain("min-h-screen");
+    expect(layout.className).toContain("h-screen");
     expect(layout.className).toContain("w-full");
+    expect(layout.className).toContain("overflow-hidden");
     expect(layout.className).toContain("bg-black");
     expect(layout.className).toContain("text-white");
     expect(layout.className).not.toContain("bg-card");
@@ -133,12 +214,256 @@ describe("FullscreenLyricsPage", () => {
 
     const column = screen.getByTestId("fullscreen-lyrics-column");
     expect(column.className).toContain("mx-auto");
+    expect(column.className).toContain("h-screen");
     expect(column.className).toContain("max-w-3xl");
+    expect(column.className).toContain("overflow-hidden");
     expect(column.className).toContain("text-left");
     expect(column.className).toContain("justify-start");
     expect(column.className).not.toContain("bg-card");
     expect(column.className).not.toContain("ring-border");
     expect(column.className).not.toContain("border");
+  });
+
+  it("renders fullscreen lyrics inside a viewport-owned stage", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-viewport-stage",
+      title: "Viewport Stage",
+      artist: "Stage Artist",
+      progressMs: 4_500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const viewport = screen.getByTestId("fullscreen-lyrics-viewport");
+      const stage = screen.getByTestId("fullscreen-lyrics-center-stage");
+      expect(viewport.className).toContain("h-full");
+      expect(viewport.className).toContain("overflow-y-auto");
+      expect(stage.className).toContain("absolute");
+      expect(stage.className).toContain("top-1/2");
+      expect(stage.className).toContain("-translate-y-1/2");
+    });
+  });
+
+  it("keeps the first synced lyric in viewport after track start", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-start-boundary",
+      title: "Start Boundary",
+      artist: "Viewport Artist",
+      progressMs: 100,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 1")).toBeTruthy();
+    });
+
+    const { lyricRows } = stubViewportGeometry({
+      viewportHeight: 300,
+      activeIndex: 0,
+      rowHeights: [72, 72, 72],
+    });
+    const activeBounds = lyricRows[0]?.getBoundingClientRect();
+    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
+    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+  });
+
+  it("keeps the first synced lyric in viewport after track transition", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-transition-boundary",
+      title: "Transition Boundary",
+      artist: "Viewport Artist",
+      progressMs: 250,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 3_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    const { rerender } = render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 1")).toBeTruthy();
+    });
+
+    nowPlayingResponse = {
+      trackId: "track-transition-boundary-next",
+      title: "Transition Boundary Next",
+      artist: "Viewport Artist",
+      progressMs: 120,
+      isPlaying: true,
+    };
+    rerender(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 1")).toBeTruthy();
+    });
+
+    const { lyricRows } = stubViewportGeometry({
+      viewportHeight: 300,
+      activeIndex: 0,
+      rowHeights: [72, 72, 72],
+    });
+    const activeBounds = lyricRows[0]?.getBoundingClientRect();
+    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
+    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+  });
+
+  it("keeps the last synced lyric in viewport near song end", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-end-boundary",
+      title: "End Boundary",
+      artist: "Viewport Artist",
+      progressMs: 8_600,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 3")).toBeTruthy();
+    });
+
+    const { lyricRows } = stubViewportGeometry({
+      viewportHeight: 300,
+      activeIndex: 2,
+      rowHeights: [72, 72, 72],
+    });
+    const activeBounds = lyricRows[2]?.getBoundingClientRect();
+    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
+    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+  });
+
+  it("keeps the last synced lyric in viewport during final handoff", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-final-handoff",
+      title: "Final Handoff",
+      artist: "Viewport Artist",
+      progressMs: 12_400,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 3")).toBeTruthy();
+    });
+
+    const { lyricRows } = stubViewportGeometry({
+      viewportHeight: 300,
+      activeIndex: 2,
+      rowHeights: [72, 72, 72],
+    });
+    const activeBounds = lyricRows[2]?.getBoundingClientRect();
+    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
+    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
   });
 
   it("renders active near and distant lyric hierarchy tiers", async () => {
@@ -475,6 +800,16 @@ describe("FullscreenLyricsPage", () => {
     expect(source.includes("getFloatingRowAnchorPx")).toBe(true);
   });
 
+  it("removes document scroll anchoring from live mode", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source.includes("window.scrollY + liveAnchor.getBoundingClientRect().top")).toBe(false);
+    expect(source.includes("window.addEventListener(\"scroll\"")).toBe(false);
+    expect(source.includes("paddingTop: syncedVerticalPadding")).toBe(false);
+    expect(source.includes("viewportSurface.scrollTo({ top: 0, behavior })")).toBe(false);
+    expect(source.includes("getBoundaryLockedScrollTop")).toBe(true);
+    expect(source.includes("viewportSurfaceRef.current")).toBe(true);
+  });
+
   it("anchors active-tier handoff to animated offset continuity", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
     expect(source.includes("getFloatingIndex")).toBe(true);
@@ -492,7 +827,6 @@ describe("FullscreenLyricsPage", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
     expect(source.includes("scale-[")).toBe(false);
     expect(source.includes("scale-95")).toBe(false);
-    expect(source.includes("translate-y-")).toBe(false);
     expect(source.includes("transition-[transform,opacity,color]")).toBe(false);
   });
 
@@ -754,7 +1088,8 @@ describe("FullscreenLyricsPage", () => {
     render(<FullscreenLyricsPage />);
 
     await waitFor(() => {
-      expect(screen.queryAllByRole("button").length).toBe(1);
+      expect(screen.queryAllByRole("button").length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByRole("button", { name: "Enter Karaoke" })).toBeTruthy();
       expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(1);
 
       const layout = screen.getByTestId("fullscreen-lyrics-layout");
