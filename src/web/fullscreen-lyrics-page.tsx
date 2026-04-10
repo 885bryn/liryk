@@ -99,6 +99,7 @@ export function FullscreenLyricsPage() {
   const [isLiveLocked, setIsLiveLocked] = useState(true);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const programmaticScrollRef = useRef(false);
+  const userScrollIntentRef = useRef(false);
   const viewportSurfaceRef = useRef<HTMLDivElement | null>(null);
   const playbackAnchorRef = useRef<ReturnType<typeof createPlaybackClockAnchor> | null>(null);
   const progressFrameRef = useRef<number | null>(null);
@@ -257,14 +258,11 @@ export function FullscreenLyricsPage() {
     }
 
     const viewportHeight = viewportSurface.clientHeight > 0 ? viewportSurface.clientHeight : window.innerHeight;
-    const targetScrollTop =
-      canRenderSyncedMotion && syncedDisplayLines.length > 0
-        ? getBoundaryLockedScrollTop({
-            viewportHeight,
-            rowLayout,
-            floatingIndex: floatingSyncedIndex,
-          })
-        : 0;
+    const targetScrollTop = getBoundaryLockedScrollTop({
+      viewportHeight,
+      rowLayout,
+      floatingIndex: canRenderSyncedMotion && syncedDisplayLines.length > 0 ? floatingSyncedIndex : 0,
+    });
 
     programmaticScrollRef.current = true;
     try {
@@ -542,21 +540,37 @@ export function FullscreenLyricsPage() {
         return;
       }
 
-      if (viewportSurface.scrollTop > 20 && isLiveLocked) {
-        setIsLiveLocked(false);
+      if (!isLiveLocked || !userScrollIntentRef.current) {
+        return;
       }
 
-      if (viewportSurface.scrollTop <= 4 && !isLiveLocked) {
-        setIsLiveLocked(true);
+      const viewportHeight = viewportSurface.clientHeight > 0 ? viewportSurface.clientHeight : window.innerHeight;
+      const liveAnchorScrollTop = getBoundaryLockedScrollTop({
+        viewportHeight,
+        rowLayout,
+        floatingIndex: canRenderSyncedMotion && syncedDisplayLines.length > 0 ? floatingSyncedIndex : 0,
+      });
+      const scrollDelta = Math.abs(viewportSurface.scrollTop - liveAnchorScrollTop);
+      if (scrollDelta > 20) {
+        userScrollIntentRef.current = false;
+        setIsLiveLocked(false);
       }
+    };
+
+    const armUserScrollIntent = () => {
+      userScrollIntentRef.current = true;
     };
 
     const viewportSurface = viewportSurfaceRef.current;
+    viewportSurface?.addEventListener("wheel", armUserScrollIntent, { passive: true });
+    viewportSurface?.addEventListener("touchmove", armUserScrollIntent, { passive: true });
     viewportSurface?.addEventListener("scroll", onScroll, { passive: true });
     return () => {
+      viewportSurface?.removeEventListener("wheel", armUserScrollIntent);
+      viewportSurface?.removeEventListener("touchmove", armUserScrollIntent);
       viewportSurface?.removeEventListener("scroll", onScroll);
     };
-  }, [isLiveLocked]);
+  }, [canRenderSyncedMotion, floatingSyncedIndex, isLiveLocked, rowLayout, syncedDisplayLines.length]);
 
   return (
     <div
@@ -576,6 +590,7 @@ export function FullscreenLyricsPage() {
           data-testid="fullscreen-return-live"
           className="fixed bottom-4 right-4 z-20 bg-transparent text-[10px] tracking-[0.16em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:bottom-6 sm:right-6"
           onClick={() => {
+            userScrollIntentRef.current = false;
             setIsLiveLocked(true);
             scrollToLiveAnchor("smooth");
           }}
