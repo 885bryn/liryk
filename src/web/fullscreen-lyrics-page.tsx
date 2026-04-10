@@ -14,6 +14,7 @@ import {
   getLineFocusMetrics,
   getRenderedFloatingIndex,
   getTransitionProgress,
+  type RowLayout,
 } from "@/core/sync/lyric-motion-window";
 import { createPlaybackClockAnchor, estimatePlaybackProgressMs } from "@/core/playback/playback-clock";
 import { createLyricTimeline, getLineIndicesAt } from "@/core/sync/lyric-timeline";
@@ -24,6 +25,7 @@ import { createLiveLyricsPanelBuilder } from "@/ui/lyrics/live-lyrics-panel";
 
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
 import { useSharedPlayback } from "./use-shared-playback";
+import { useKaraokeMode } from "./use-karaoke-mode";
 
 const baseSyncState: LiveSyncUiState = {
   playbackState: "idle",
@@ -64,6 +66,21 @@ function formatElapsedProgress(progressMs: number): string {
   return `${minutes}:${seconds}`;
 }
 
+export function getBoundaryLockedScrollTop(input: {
+  viewportHeight: number;
+  rowLayout: RowLayout;
+  floatingIndex: number;
+}): number {
+  const viewportHeight = Number.isFinite(input.viewportHeight) ? Math.max(0, input.viewportHeight) : 0;
+  if (viewportHeight <= 0 || input.rowLayout.heights.length === 0) {
+    return 0;
+  }
+
+  const centeredScrollTop = getFloatingRowAnchorPx(input.rowLayout, input.floatingIndex) - viewportHeight / 2;
+  const maxScrollTop = Math.max(input.rowLayout.totalHeight - viewportHeight, 0);
+  return Math.min(Math.max(centeredScrollTop, 0), maxScrollTop);
+}
+
 export function FullscreenLyricsPage() {
   const webAuth = useWebAuthRuntime();
   const sharedPlayback = useSharedPlayback({
@@ -71,12 +88,18 @@ export function FullscreenLyricsPage() {
     accessToken: webAuth.sessionAccessToken ?? null,
   });
   const nowPlaying = sharedPlayback.nowPlaying;
+  const karaoke = useKaraokeMode({
+    accessToken: webAuth.sessionAccessToken ?? null,
+    nowPlaying,
+  });
+  const activeTrack = karaoke.referenceTrack ?? nowPlaying;
   const playbackSnapshot = sharedPlayback.playbackSnapshot;
   const [estimatedProgressMs, setEstimatedProgressMs] = useState(0);
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
   const [isLiveLocked, setIsLiveLocked] = useState(true);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const programmaticScrollRef = useRef(false);
+  const viewportSurfaceRef = useRef<HTMLDivElement | null>(null);
   const playbackAnchorRef = useRef<ReturnType<typeof createPlaybackClockAnchor> | null>(null);
   const progressFrameRef = useRef<number | null>(null);
   const focusFrameRef = useRef<number | null>(null);
@@ -124,7 +147,9 @@ export function FullscreenLyricsPage() {
   const setLyricRowRef = (index: number) => (element: HTMLParagraphElement | null) => {
     lyricRowRefs.current[index] = element;
   };
-  const cueAdjustedProgressMs = applyEarlyCue(estimatedProgressMs, DEFAULT_CUE_LEAD_MS);
+  const progressSourceMs =
+    karaoke.mode === "karaoke" && typeof karaoke.localPlaybackMs === "number" ? karaoke.localPlaybackMs : estimatedProgressMs;
+  const cueAdjustedProgressMs = applyEarlyCue(progressSourceMs, DEFAULT_CUE_LEAD_MS);
   const syncedTimeline = useMemo(
     () =>
       createLyricTimeline(
@@ -176,7 +201,7 @@ export function FullscreenLyricsPage() {
           let easedProgress = transition.easedProgress;
           if (
             transition.isShortGap &&
-            lastMotionAnchorRef.current.trackId === nowPlaying?.trackId &&
+            lastMotionAnchorRef.current.trackId === activeTrack?.trackId &&
             lastMotionAnchorRef.current.activeIndex === activeSyncedIndex &&
             lastMotionAnchorRef.current.nextIndex === nextSyncedIndex
           ) {
@@ -216,7 +241,6 @@ export function FullscreenLyricsPage() {
   const floatingSyncedIndex = syncedMotionState.floatingIndex;
   const canRenderSyncedMotion =
     resolvedLyrics?.renderMode === "synced" && hasStartedSyncedLyrics && syncedDisplayLines.length > 0;
-  const syncedVerticalPadding = "50vh";
   const renderedTrackOffsetPx = canRenderSyncedMotion
     ? -getFloatingRowAnchorPx(rowLayout, renderedFloatingIndex)
     : 0;
@@ -224,41 +248,29 @@ export function FullscreenLyricsPage() {
     canRenderSyncedMotion
       ? `${renderedTrackOffsetPx}px`
       : "0px";
-  const elapsedProgressLabel = formatElapsedProgress(estimatedProgressMs);
-
-  const findLiveAnchorElement = (): HTMLElement | null => {
-    if (typeof document === "undefined") {
-      return null;
-    }
-
-    return (
-      (document.querySelector('[data-testid="fullscreen-lyric-line-active"]') as HTMLElement | null) ??
-      (document.querySelector('[data-testid="fullscreen-lyric-line-near"]') as HTMLElement | null)
-    );
-  };
+  const elapsedProgressLabel = formatElapsedProgress(progressSourceMs);
 
   const scrollToLiveAnchor = (behavior: ScrollBehavior) => {
-    if (typeof window === "undefined") {
+    const viewportSurface = viewportSurfaceRef.current;
+    if (typeof window === "undefined" || viewportSurface === null) {
       return;
     }
 
-    if (typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent)) {
-      return;
-    }
-
-    const liveAnchor = findLiveAnchorElement();
-    const targetScrollTop = liveAnchor
-      ? Math.max(
-          0,
-          window.scrollY + liveAnchor.getBoundingClientRect().top - (window.innerHeight / 2 - liveAnchor.offsetHeight / 2),
-        )
-      : 0;
+    const viewportHeight = viewportSurface.clientHeight > 0 ? viewportSurface.clientHeight : window.innerHeight;
+    const targetScrollTop =
+      canRenderSyncedMotion && syncedDisplayLines.length > 0
+        ? getBoundaryLockedScrollTop({
+            viewportHeight,
+            rowLayout,
+            floatingIndex: floatingSyncedIndex,
+          })
+        : 0;
 
     programmaticScrollRef.current = true;
     try {
-      window.scrollTo({ top: targetScrollTop, behavior });
+      viewportSurface.scrollTo({ top: targetScrollTop, behavior });
     } catch {
-      // jsdom and some embedded webviews may not implement scroll APIs.
+      viewportSurface.scrollTop = targetScrollTop;
     }
     window.setTimeout(() => {
       programmaticScrollRef.current = false;
@@ -267,17 +279,17 @@ export function FullscreenLyricsPage() {
 
   const syncState: LiveSyncUiState = {
     ...baseSyncState,
-    playbackState: nowPlaying ? (nowPlaying.isPlaying ? "playing" : "paused") : "idle",
-    trackId: nowPlaying?.trackId ?? null,
+    playbackState: activeTrack ? (karaoke.mode === "karaoke" ? "playing" : activeTrack.isPlaying ? "playing" : "paused") : "idle",
+    trackId: activeTrack?.trackId ?? null,
     activeLineIndex: resolvedLyrics?.renderMode === "synced" ? activeSyncedIndex : null,
     nextLineIndex: resolvedLyrics?.renderMode === "synced" ? nextSyncedIndex : null,
     lyricsSourceState: resolvedLyrics?.sourceState ?? "loading",
     lyricsRenderMode: resolvedLyrics?.renderMode ?? null,
     resolvedLyrics: resolvedLyrics?.lines ?? [],
-    estimatedProgressMs,
+    estimatedProgressMs: progressSourceMs,
     polledProgressMs: playbackSnapshot?.progressMs ?? 0,
-    driftDeltaMs: estimatedProgressMs - (playbackSnapshot?.progressMs ?? 0),
-    correctionState: nowPlaying ? "synced" : "static",
+    driftDeltaMs: progressSourceMs - (playbackSnapshot?.progressMs ?? 0),
+    correctionState: karaoke.mode === "karaoke" || activeTrack ? "synced" : "static",
     statusLine:
       resolvedLyrics?.sourceState === "not-found"
         ? "Lyrics not found"
@@ -289,13 +301,16 @@ export function FullscreenLyricsPage() {
   const lyricsPanel = createLiveLyricsPanelBuilder().build({
     syncState,
     lines: lyricTexts,
-    trackTitle: nowPlaying?.title,
-    trackArtist: nowPlaying?.artist,
+    trackTitle: activeTrack?.title,
+    trackArtist: activeTrack?.artist,
     showReturnToLive: false,
   });
 
   useEffect(() => {
     if (playbackSnapshot === null) {
+      if (karaoke.mode === "karaoke") {
+        return;
+      }
       playbackAnchorRef.current = null;
       setEstimatedProgressMs(0);
       return;
@@ -321,7 +336,7 @@ export function FullscreenLyricsPage() {
       capturedAtPerfMs: nowPerfMs,
     });
     setEstimatedProgressMs(normalizedProgressMs);
-  }, [playbackSnapshot]);
+  }, [karaoke.mode, playbackSnapshot]);
 
   useEffect(() => {
     if (progressFrameRef.current !== null) {
@@ -415,7 +430,7 @@ export function FullscreenLyricsPage() {
       easedProgress: syncedMotionState.easedProgress,
       offsetPx: renderedTrackOffsetPx,
     };
-  }, [activeSyncedIndex, nextSyncedIndex, nowPlaying?.trackId, renderedTrackOffsetPx, syncedMotionState.easedProgress]);
+  }, [activeSyncedIndex, nextSyncedIndex, activeTrack?.trackId, renderedTrackOffsetPx, syncedMotionState.easedProgress]);
 
   useEffect(() => {
     if (resolvedLyrics?.renderMode !== "synced") {
@@ -477,7 +492,7 @@ export function FullscreenLyricsPage() {
   }, [resolvedLyrics?.renderMode, syncedDisplayLines]);
 
   useEffect(() => {
-    if (!webAuth.sessionAccessToken || !nowPlaying?.trackId) {
+    if (!webAuth.sessionAccessToken || !activeTrack?.trackId) {
       setResolvedLyrics(null);
       return;
     }
@@ -489,9 +504,9 @@ export function FullscreenLyricsPage() {
       try {
         const resolved = await resolveLyricsForTrack(
           {
-            trackId: nowPlaying.trackId,
-            title: nowPlaying.title,
-            artist: nowPlaying.artist,
+            trackId: activeTrack.trackId,
+            title: activeTrack.title,
+            artist: activeTrack.artist,
           },
           lrclib,
         );
@@ -510,36 +525,44 @@ export function FullscreenLyricsPage() {
     return () => {
       active = false;
     };
-  }, [webAuth.sessionAccessToken, nowPlaying?.trackId, nowPlaying?.title, nowPlaying?.artist]);
+  }, [activeTrack?.artist, activeTrack?.title, activeTrack?.trackId, webAuth.sessionAccessToken]);
 
   useEffect(() => {
-    setIsLiveLocked(true);
+    if (!isLiveLocked) {
+      return;
+    }
+
     scrollToLiveAnchor("auto");
-  }, [nowPlaying?.trackId]);
+  }, [activeTrack?.trackId, canRenderSyncedMotion, floatingSyncedIndex, isLiveLocked, rowLayout, syncedDisplayLines.length]);
 
   useEffect(() => {
     const onScroll = () => {
-      if (programmaticScrollRef.current || typeof window === "undefined") {
+      const viewportSurface = viewportSurfaceRef.current;
+      if (programmaticScrollRef.current || viewportSurface === null) {
         return;
       }
 
-      if (window.scrollY > 20 && isLiveLocked) {
+      if (viewportSurface.scrollTop > 20 && isLiveLocked) {
         setIsLiveLocked(false);
       }
 
-      if (window.scrollY <= 4 && !isLiveLocked) {
+      if (viewportSurface.scrollTop <= 4 && !isLiveLocked) {
         setIsLiveLocked(true);
       }
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const viewportSurface = viewportSurfaceRef.current;
+    viewportSurface?.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      viewportSurface?.removeEventListener("scroll", onScroll);
     };
   }, [isLiveLocked]);
 
   return (
-    <div data-testid="fullscreen-lyrics-layout" className="min-h-screen w-full bg-black text-white">
+    <div
+      data-testid="fullscreen-lyrics-layout"
+      className="h-screen w-full overflow-hidden bg-black text-white overscroll-none"
+    >
       <a
         href="/"
         className="fixed left-4 top-3 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/40 transition-colors duration-200 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-4"
@@ -572,6 +595,106 @@ export function FullscreenLyricsPage() {
       >
         {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
       </button>
+
+      <div className="fixed right-4 top-16 z-20 flex max-w-[300px] flex-col items-end gap-2 text-right sm:right-6 sm:top-20">
+        <button
+          type="button"
+          className="rounded border border-white/25 bg-black/60 px-3 py-1 text-[11px] tracking-[0.12em] text-white/85 hover:bg-black/70"
+          onMouseDown={() => {
+            karaoke.primePlaybackGesture();
+          }}
+          onTouchStart={() => {
+            karaoke.primePlaybackGesture();
+          }}
+          onClick={() => {
+            if (karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original") {
+              void karaoke.exitKaraokeMode();
+              return;
+            }
+
+            void karaoke.enterKaraokeMode();
+          }}
+          disabled={karaoke.mode === "switching_to_karaoke" || karaoke.mode === "switching_to_original"}
+        >
+          {karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original" ? "Exit Karaoke" : "Enter Karaoke"}
+        </button>
+        <p className="text-[10px] text-white/60">{karaoke.message}</p>
+        {karaoke.candidateMappings.length > 0 ? (
+          <div className="w-full rounded border border-white/10 bg-black/40 p-2 text-left">
+            <p className="pb-1 text-[9px] tracking-[0.12em] text-white/50">Top Backing Tracks</p>
+            {karaoke.candidateMappings.slice(0, 3).map((candidate, index) => {
+              const selected = karaoke.currentMapping?.youtubeVideoId === candidate.youtubeVideoId;
+              return (
+                <button
+                  key={`${candidate.youtubeVideoId}-${index}`}
+                  type="button"
+                  className={`mb-1 block w-full truncate text-left text-[10px] ${
+                    selected ? "text-white" : "text-white/75 hover:text-white"
+                  }`}
+                  onClick={() => {
+                    void karaoke.switchToCandidate(candidate.youtubeVideoId);
+                  }}
+                  title={candidate.youtubeTitle}
+                >
+                  {selected ? "* " : ""}
+                  {index + 1}. {candidate.youtubeTitle}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {karaoke.mode === "karaoke" && karaoke.currentMapping && !karaoke.currentMapping.confirmedByUser ? (
+          <button
+            type="button"
+            className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+            onClick={() => {
+              karaoke.confirmCurrentMapping();
+            }}
+          >
+            Confirm current backing track
+          </button>
+        ) : null}
+        {karaoke.mode === "karaoke" && karaoke.currentMapping ? (
+          <button
+            type="button"
+            className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+            onClick={() => {
+              void karaoke.banCurrentCandidate();
+            }}
+          >
+            Ban current candidate
+          </button>
+        ) : null}
+        {karaoke.mode === "error" ? (
+          <button
+            type="button"
+            className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+            onClick={() => {
+              karaoke.clearError();
+            }}
+          >
+            Clear error
+          </button>
+        ) : null}
+        {karaoke.mode === "error" && karaoke.canResumeAutoplay ? (
+          <button
+            type="button"
+            className="text-[10px] tracking-[0.1em] text-white/80 underline underline-offset-2"
+            onClick={() => {
+              void karaoke.resumeAutoplay();
+            }}
+          >
+            Start YouTube audio
+          </button>
+        ) : null}
+      </div>
+
+      <div
+        ref={karaoke.playerHostRef}
+        data-testid="karaoke-youtube-host"
+        className="pointer-events-none fixed -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0"
+        aria-hidden="true"
+      />
 
       {showDiagnostics ? (
         <section
@@ -607,14 +730,22 @@ export function FullscreenLyricsPage() {
 
       <main
         data-testid="fullscreen-lyrics-column"
-        className="mx-auto flex min-h-screen w-full max-w-3xl flex-col justify-start px-6 text-left sm:px-8"
+        className="mx-auto flex h-screen w-full max-w-3xl flex-col justify-start overflow-hidden px-6 text-left sm:px-8"
       >
         {lyricsPanel.sourceState === "not-found" ? (
           <p className="text-lg text-white/70">Lyrics not found</p>
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
           <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
         ) : (
-          <div className="relative" style={{ paddingTop: syncedVerticalPadding, paddingBottom: syncedVerticalPadding }}>
+          <div
+            ref={viewportSurfaceRef}
+            data-testid="fullscreen-lyrics-viewport"
+            className="relative h-full overflow-x-hidden overflow-y-auto overscroll-none"
+          >
+            <div
+              data-testid="fullscreen-lyrics-center-stage"
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2"
+            >
               <div
                 data-testid="fullscreen-lyrics-track"
                 className="space-y-0 leading-relaxed motion-reduce:transition-none"
@@ -661,6 +792,7 @@ export function FullscreenLyricsPage() {
                   <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
                 ) : null}
               </div>
+            </div>
           </div>
         )}
       </main>
