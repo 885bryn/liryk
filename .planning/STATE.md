@@ -1,36 +1,30 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
+milestone: v1.5
 milestone_name: milestone
-current_plan: 0
-status: planning
-stopped_at: Completed 16-02-PLAN.md
-last_updated: "2026-03-21T05:36:53.762Z"
-last_activity: 2026-03-21
+status: executing
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-04-10T02:41:44.000Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 5
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-03-21)
+See: `.planning/PROJECT.md` (updated 2026-04-10)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** v1.4 roadmap ready; phase 15 planning pending.
+**Current focus:** Phase 19 - song-boundary-visibility-and-live-lock-recovery
 
 ## Current Position
 
-Phase: Not started (pre-Phase 15 planning)
-Plan: -
-Current Plan: 0
-Total Plans in Phase: 0
-Status: Ready for phase planning
-Last Activity: 2026-03-21
+Phase: 19 (song-boundary-visibility-and-live-lock-recovery) - EXECUTING
+Plan: 2 of 2
 
 ## Accumulated Context
 
@@ -71,17 +65,23 @@ Recent decisions affecting current work:
 - [Phase 16]: Validate eased transition output with explicit non-linear midpoint coverage so linear regressions are caught early.
 - [Phase 16]: Represent scroll targets as pixel offsets in core so renderer output can settle exactly at line boundaries.
 - [Phase 16]: Keep active-tier selection integer-based while only translateY uses phase-aware helper interpolation.
+- [Phase 19]: Clamp fullscreen boundary recentering with `getBoundaryLockedScrollTop(...)` derived from row-layout anchors and total height.
+- [Phase 19]: Verify first-line and last-line viewport visibility with deterministic geometry assertions instead of transform-only checks.
 
 ### Roadmap Evolution
 
 - v1.0 (Phases 1-4) complete.
 - v1.1 (Phases 5-8 plus inserted 07.1) complete.
 - v1.2 (Phases 9-11 fullscreen immersive mode) complete.
-- v1.3 initialized with Phases 12-14.
+- v1.3 (Phases 12-14 timing stabilization and early cueing) complete.
+- v1.4 (Phases 15-17 stable line-change motion model) closed on 2026-04-09 with deferred tech debt.
+- v1.5 (Phases 18-20 viewport-locked live lyrics) initialized on 2026-04-09.
 
 ### Pending Todos
 
-- Start Phase 15 planning.
+- Plan Phase 19: keep the highlighted lyric visible at song start/end and restore explicit Back to Live/manual browse-away behavior.
+- Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
+- Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
 ### Blockers/Concerns
 
@@ -89,6 +89,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-03-21T05:36:53.760Z
-Stopped at: Completed 16-02-PLAN.md
+Last session: 2026-04-10T02:41:44.000Z
+Stopped at: Completed 19-01-PLAN.md
 Resume file: None

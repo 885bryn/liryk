@@ -2,75 +2,70 @@
 
 ## Overview
 
-This milestone follows completed v1.3 timing stabilization and focuses on visual readability. The lyric stack should hold still while a line is being read, transition only near line changes, then settle cleanly. Playback timing correctness remains unchanged.
+This milestone fixes a fullscreen viewport correctness bug introduced by conflicting scroll and transform centering systems. The highlighted lyric must stay visible at track boundaries, live lock must only respond to user intent, and the fix must preserve the existing timing and motion contracts.
 
 ## Milestone
 
-- **Milestone:** v1.4 Stable Line-Change Motion Model
-- **Requirements mapped:** 8 of 8
-- **First phase number:** 15
+- **Milestone:** v1.5 Viewport-Locked Live Lyrics
+- **Requirements mapped:** 9 of 9
+- **First phase number:** 18
 
 ## Phases
 
-- [x] **Phase 15: Hold-and-Transition Motion Windowing** - Implement adaptive pre-change transition windows with stable hold behavior for active-line readability. (completed 2026-03-21)
-- [ ] **Phase 16: Smooth Transition Execution and Settling** - Deliver eased line-change motion that lands cleanly without drift, snap, bounce, or overshoot.
-- [ ] **Phase 17: Visual Continuity and Timing Guardrails** - Smooth neighboring line emphasis changes and verify no regressions in playback timing correctness.
+- [x] **Phase 18: Viewport Anchor Ownership and Scroll Surface** - Unify fullscreen live anchoring around one viewport model and remove accidental scroll-state drift from live mode. (completed 2026-04-10)
+- [ ] **Phase 19: Song-Boundary Visibility and Live-Lock Recovery** - Keep the highlighted lyric visible at track start/end while preserving explicit browse-away and Back to Live behavior.
+- [ ] **Phase 20: Viewport Regression and Timing Safety Closure** - Prove the viewport fix across boundary scenarios without regressing timing, active-line selection, or settle behavior.
 
 ## Phase Details
 
-### Phase 15: Hold-and-Transition Motion Windowing
-**Goal**: Lyrics stay still while reading and move only inside an adaptive pre-change window near the next line start.
-**Depends on**: Completed Phase 14
-**Requirements**: MOT-04, MOT-05, TRN-01
-**Success Criteria**:
-1. User sees active line remain visually anchored through most of the current line interval.
-2. User sees upward lyric motion begin only near the next line boundary, not continuously across the whole gap.
-3. User sees transition timing adapt to per-line gap with readable min/max clamp behavior.
-
-**Plans:** 3/3 plans complete
-
+### Phase 18: Viewport Anchor Ownership and Scroll Surface
+**Goal**: Fullscreen live lyrics use one coherent viewport anchor model and no longer rely on contradictory document scrolling during live mode.
+**Depends on**: Phase 16 delivered motion-window positioning behavior; v1.4 archive documents deferred polish work.
+**Requirements**: VIEW-03, LIVE-01, SCROLL-01
+**Plans**: 2 plans
 Plans:
-- [ ] 15-01-PLAN.md - Add transition-window helper contracts (`getAdaptiveTransitionMs`, `getTransitionPhase`) with deterministic tests.
-- [ ] 15-02-PLAN.md - Refactor fullscreen track offset calculation to hold before window and animate only within window.
-- [ ] 15-03-PLAN.md - Expose and tune motion constants for readable defaults and clamp behavior verification.
-
-### Phase 16: Smooth Transition Execution and Settling
-**Goal**: Transition movement feels calm and premium, then lands into a stable resting position on each line change.
-**Depends on**: Phase 15
-**Requirements**: MOT-06, TRN-02, VIS-04
+- [x] 18-01-PLAN.md - Move fullscreen live anchoring to a viewport-owned model and remove accidental document scroll ownership.
+- [x] 18-02-PLAN.md - Lock viewport ownership with regressions and publish a Phase 18 validation runbook.
 **Success Criteria**:
-1. User sees compact but smooth motion on short lyric gaps and late-start controlled motion on long gaps.
-2. User sees eased interpolation without bounce, overshoot, or spring-like wobble.
-3. User sees line-change motion complete with clear settle and no residual drift after landing.
+1. Track changes no longer force a non-zero `window.scrollY` that offsets the visually centered active lyric in live mode.
+2. Programmatic live-anchor correction cannot silently flip live lock off.
+3. Fullscreen lyrics no longer expose a large accidental scroll surface that can displace the active lyric while live mode is engaged.
 
-**Plans:** 2/3 plans executed
-
+### Phase 19: Song-Boundary Visibility and Live-Lock Recovery
+**Goal**: The highlighted lyric remains visible at the start and end of songs, and the user can intentionally leave and return to live mode without inconsistent state.
+**Depends on**: Phase 18
+**Requirements**: VIEW-01, VIEW-02, LIVE-02, LIVE-03
+**Plans**: 2 plans
 Plans:
-- [ ] 16-01-PLAN.md - Add core easing helper and deterministic transition-progress tests for calm interpolation.
-- [ ] 16-02-PLAN.md - Implement `getTargetScrollOffset` settle semantics and wire fullscreen short/long-gap edge handling.
-- [ ] 16-03-PLAN.md - Finalize quality gate with regression/build verification plus manual fullscreen playback checkpoint.
-
-### Phase 17: Visual Continuity and Timing Guardrails
-**Goal**: Neighboring line visual state changes remain smooth while preserving all existing timing correctness guarantees.
-**Depends on**: Phase 16
-**Requirements**: VIS-05, SAFE-01
+- [x] 19-01-PLAN.md - Add boundary-aware viewport geometry so first and last synced lyrics stay visible inside fullscreen.
+- [ ] 19-02-PLAN.md - Gate live lock on explicit user intent and restore the computed anchor through Back to Live recovery.
 **Success Criteria**:
-1. User sees active and nearby line opacity/color/scale transitions change smoothly during handoff without abrupt flips.
-2. User sees stable visual hierarchy before, during, and after transitions with no harsh style jumps.
-3. User retains timing correctness: playback clock, drift policy, and active-line selection tests remain green.
+1. The first synced lyric after track start or transition is visibly inside the fullscreen viewport.
+2. The last synced lyric and final handoff remain visibly inside the fullscreen viewport near song end.
+3. Manual browse-away disables live lock only on explicit user scroll intent.
+4. Back to Live restores the correct live anchor and returns the highlighted lyric to the intended viewport position.
 
-**Plans:** 0/3 plans complete
-
-Plans:
-- [ ] 17-01-PLAN.md - Smooth neighboring line tier transition contracts during line-change motion.
-- [ ] 17-02-PLAN.md - Add regression suite proving motion refactor does not alter timing correctness.
-- [ ] 17-03-PLAN.md - Publish readability verification runbook and finalize motion quality gate.
+### Phase 20: Viewport Regression and Timing Safety Closure
+**Goal**: Boundary-specific regressions and manual verification prove the viewport fix without changing playback timing or motion correctness.
+**Depends on**: Phase 19
+**Requirements**: SAFE-01, QA-01
+**Success Criteria**:
+1. Automated regression coverage proves correct behavior for track start, track end, track transitions, manual browse-away, and Back to Live recovery.
+2. Verification proves playback clock, drift policy, active-line selection, and settle semantics still match the validated contracts from earlier milestones.
+3. A reproducible validation runbook exists for fullscreen viewport-lock behavior and song-boundary checks.
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 15 -> 16 -> 17
+Phases execute in numeric order: 18 -> 19 -> 20
 
 | Phase | Requirements | Status |
 |-------|--------------|--------|
-| 15. Hold-and-Transition Motion Windowing | 3/3 | Complete   | 2026-03-21 | 16. Smooth Transition Execution and Settling | 2/3 | In Progress|  | 17. Visual Continuity and Timing Guardrails | VIS-05, SAFE-01 | Not started |
+| 18. Viewport Anchor Ownership and Scroll Surface | VIEW-03, LIVE-01, SCROLL-01 | Complete (2026-04-10) |
+| 19. Song-Boundary Visibility and Live-Lock Recovery | VIEW-01, VIEW-02, LIVE-02, LIVE-03 | In progress (1/2 plans complete) |
+| 20. Viewport Regression and Timing Safety Closure | SAFE-01, QA-01 | Not started |
+
+## Future Candidate (After v1.5)
+
+- **Private Karaoke Mode** remains deferred until fullscreen live-anchor correctness is stable.
+- **VIS-05 / final motion polish** remains deferred and can be folded into a later polish milestone if still needed after viewport locking is fixed.
