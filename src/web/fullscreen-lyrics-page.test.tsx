@@ -156,12 +156,12 @@ describe("FullscreenLyricsPage", () => {
     lyricRows.forEach((row, index) => {
       const top = (rowLayout.offsets[index] ?? 0) - scrollTop;
       const height = normalizedHeights[index] ?? rowHeight;
-      Object.defineProperty(row, "getBoundingClientRect", {
-        configurable: true,
-        value: () =>
+    Object.defineProperty(row, "getBoundingClientRect", {
+      configurable: true,
+      value: () =>
           ({
-            top,
-            bottom: top + height,
+            top: (rowLayout.offsets[index] ?? 0) - viewport.scrollTop,
+            bottom: (rowLayout.offsets[index] ?? 0) - viewport.scrollTop + height,
             height,
           }) satisfies Partial<DOMRect>,
       });
@@ -170,8 +170,50 @@ describe("FullscreenLyricsPage", () => {
     return {
       viewport,
       lyricRows,
+      rowLayout,
       scrollTop,
     };
+  }
+
+  function installViewportScrollToStub() {
+    const originalScrollTo = HTMLDivElement.prototype.scrollTo;
+    const scrollToMock = vi.fn(function scrollTo(
+      this: HTMLDivElement,
+      optionsOrX?: ScrollToOptions | number,
+      y?: number,
+    ) {
+      const top =
+        typeof optionsOrX === "number"
+          ? y ?? 0
+          : typeof optionsOrX?.top === "number"
+            ? optionsOrX.top
+            : 0;
+      this.scrollTop = top;
+      fireEvent.scroll(this);
+    });
+
+    Object.defineProperty(HTMLDivElement.prototype, "scrollTo", {
+      configurable: true,
+      writable: true,
+      value: scrollToMock,
+    });
+
+    return {
+      scrollToMock,
+      restore: () => {
+        Object.defineProperty(HTMLDivElement.prototype, "scrollTo", {
+          configurable: true,
+          writable: true,
+          value: originalScrollTo,
+        });
+      },
+    };
+  }
+
+  async function waitForProgrammaticScrollWindowToSettle() {
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, 120);
+    });
   }
 
   it("renders fullscreen layout and column markers", () => {
@@ -464,6 +506,200 @@ describe("FullscreenLyricsPage", () => {
     const activeBounds = lyricRows[2]?.getBoundingClientRect();
     expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
     expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+  });
+
+  it("keeps live lock enabled during programmatic recentering and hides fullscreen-return-live", async () => {
+    const { scrollToMock, restore } = installViewportScrollToStub();
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-programmatic-recenter",
+      title: "Programmatic Recenter",
+      artist: "Viewport Artist",
+      progressMs: 4_200,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    try {
+      const { rerender } = render(<FullscreenLyricsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Line 3")).toBeTruthy();
+      });
+
+      const { viewport } = stubViewportGeometry({
+        viewportHeight: 320,
+        activeIndex: 2,
+        rowHeights: [72, 72, 72, 72],
+      });
+
+      nowPlayingResponse = {
+        trackId: "track-programmatic-recenter-next",
+        title: "Programmatic Recenter Next",
+        artist: "Viewport Artist",
+        progressMs: 150,
+        isPlaying: true,
+      };
+      rerender(<FullscreenLyricsPage />);
+
+      await waitFor(() => {
+        expect(scrollToMock).toHaveBeenCalled();
+      });
+
+      expect(viewport.scrollTop).toBe(0);
+      expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
+    } finally {
+      restore();
+    }
+  });
+
+  it("disables live lock only after explicit user scroll intent", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-manual-intent",
+      title: "Manual Intent",
+      artist: "Viewport Artist",
+      progressMs: 4_200,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 5", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 3")).toBeTruthy();
+    });
+
+    const { viewport } = stubViewportGeometry({
+      viewportHeight: 320,
+      activeIndex: 2,
+      rowHeights: [72, 72, 72, 72, 72],
+    });
+
+    expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
+
+    await waitForProgrammaticScrollWindowToSettle();
+    fireEvent.wheel(viewport, { deltaY: 120 });
+    viewport.scrollTop = 128;
+    fireEvent.scroll(viewport);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("fullscreen-return-live")).toBeTruthy();
+    });
+  });
+
+  it("Back to Live restores the boundary-aware live anchor", async () => {
+    const { scrollToMock, restore } = installViewportScrollToStub();
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-back-to-live",
+      title: "Back to Live",
+      artist: "Viewport Artist",
+      progressMs: 4_200,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+        { startMs: 4_000, text: "Line 3", renderMode: "synced", isTimestamped: true },
+        { startMs: 6_000, text: "Line 4", renderMode: "synced", isTimestamped: true },
+        { startMs: 8_000, text: "Line 5", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    try {
+      render(<FullscreenLyricsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Line 3")).toBeTruthy();
+      });
+
+      const { viewport, lyricRows, rowLayout } = stubViewportGeometry({
+        viewportHeight: 320,
+        activeIndex: 2,
+        rowHeights: [72, 72, 72, 72, 72],
+      });
+      const expectedScrollTop = getBoundaryLockedScrollTop({
+        viewportHeight: 320,
+        rowLayout,
+        floatingIndex: 2,
+      });
+
+      await waitForProgrammaticScrollWindowToSettle();
+      fireEvent.wheel(viewport, { deltaY: 120 });
+      viewport.scrollTop = expectedScrollTop + 132;
+      fireEvent.scroll(viewport);
+
+      const backToLive = await screen.findByTestId("fullscreen-return-live");
+      fireEvent.click(backToLive);
+
+      await waitFor(() => {
+        expect(scrollToMock).toHaveBeenCalledWith({ top: expectedScrollTop, behavior: "smooth" });
+        expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
+      });
+
+      expect(viewport.scrollTop).toBe(expectedScrollTop);
+      const activeBounds = lyricRows[2]?.getBoundingClientRect();
+      expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
+      expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(320);
+    } finally {
+      restore();
+    }
   });
 
   it("renders active near and distant lyric hierarchy tiers", async () => {
