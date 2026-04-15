@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
-status: unknown
-stopped_at: Completed 20-05-PLAN.md
-last_updated: "2026-04-15T23:40:16.665Z"
+status: blocked
+stopped_at: 20-06 checkpoint failed (manual QA drift blocker unresolved)
+last_updated: "2026-04-15T23:52:30.082Z"
 progress:
   total_phases: 3
   completed_phases: 2
@@ -89,16 +89,16 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 20 manual verification: rerun all seven fullscreen scenarios in `20-04-SUMMARY.md` and confirm sustained drift check passes with current 20-05 regression baseline evidence.
+- Phase 20 manual verification: rerun all seven fullscreen scenarios in `20-04-SUMMARY.md`, capture full evidence fields (browser/viewport/track/ID), and confirm sustained drift check plus Back to Live recentering both pass.
 - Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
 - Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
 ### Blockers/Concerns
 
-- QA-01 final sign-off remains pending manual fullscreen rerun in Plan 20-06; 20-05 added sustained drift regression and measurement stabilization, but browser verification still needs fresh evidence capture.
+- QA-01 remains blocked after Plan 20-06 manual checkpoint failure: sustained mid-song progression still drifts upward off-screen, and Back to Live recenters to the wrong drifted anchor state.
 
 ## Session Continuity
 
-Last session: 2026-04-15T23:40:16.663Z
-Stopped at: Completed 20-05-PLAN.md
+Last session: 2026-04-15T23:52:30.082Z
+Stopped at: 20-06 failed human verification checkpoint (Task 2)
 Resume file: None

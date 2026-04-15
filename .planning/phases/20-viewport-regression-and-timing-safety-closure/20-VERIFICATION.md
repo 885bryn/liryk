@@ -1,11 +1,11 @@
 ---
 phase: 20-viewport-regression-and-timing-safety-closure
-verified: 2026-04-15T23:19:53.891Z
+verified: 2026-04-15T23:52:30.082Z
 status: gaps_found
 score: 5/6 truths verified
 manual_approval:
   approved: false
-  note: "Manual fullscreen verification failed again: the highlighted active lyric remains visibly above physical center and still drifts upward over sustained playback. Evidence: C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png"
+  note: "Manual fullscreen verification failed again: `Sustained mid-song progression (drift check)` still drifts upward until the active lyric goes off-screen, and Back to Live recenters to that already-drifted off-screen state instead of restoring a centered live anchor. Evidence: Task 2 manual checkpoint failure report (2026-04-15) and prior screenshot C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png"
 human_verification:
   - test: "Run all seven manual fullscreen scenarios from the Phase 20 gap-closure ledger, including sustained drift check"
     expected: "Track start, track transition, song end, final handoff, manual browse-away, Back to Live recovery, and sustained mid-song progression are all signed off as pass in 20-04-SUMMARY.md."
@@ -15,7 +15,7 @@ human_verification:
 # Phase 20: Viewport Regression and Timing Safety Closure Verification Report
 
 **Phase Goal:** Boundary-specific regressions and manual verification prove the viewport fix without changing playback timing or motion correctness.
-**Verified:** 2026-04-15T23:19:53.891Z
+**Verified:** 2026-04-15T23:52:30.082Z
 **Status:** gaps_found
 **Re-verification:** Yes - failed human checkpoint update
 
@@ -46,7 +46,7 @@ human_verification:
 | Requirement | Source Plan | Description | Status | Evidence |
 | --- | --- | --- | --- | --- |
 | `SAFE-01` | `20-01-PLAN.md`, `20-02-PLAN.md` | The viewport-lock fix does not regress playback timing correctness, drift correction behavior, active-line selection, or settle semantics. | ✓ SATISFIED | Targeted safety suite plus build recorded in `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md:77` and `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md:81`. |
-| `QA-01` | `20-01-PLAN.md`, `20-02-PLAN.md`, `20-04-PLAN.md` | Automated and manual regression coverage proves correct behavior at track start, track end, track transitions, manual browse-away, Back to Live recovery, and sustained no-drift progression. | ✗ NOT SATISFIED | `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-04-SUMMARY.md` records `Sustained mid-song progression (drift check)` as `fail` with screenshot evidence at `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`; this blocks QA-01 closure. |
+| `QA-01` | `20-01-PLAN.md`, `20-02-PLAN.md`, `20-04-PLAN.md` | Automated and manual regression coverage proves correct behavior at track start, track end, track transitions, manual browse-away, Back to Live recovery, and sustained no-drift progression. | ✗ NOT SATISFIED | `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-04-SUMMARY.md` records `Sustained mid-song progression (drift check)` as `fail` because the active lyric still drifts upward until off-screen; the same attempt reports Back to Live recentering to that wrong off-screen state rather than restoring centered live anchor. QA-01 remains blocked. |
 
 No orphaned Phase 20 requirement IDs were found: the plan frontmatters declare `SAFE-01` and `QA-01`, and both IDs are mapped in `.planning/REQUIREMENTS.md:24`.
 
@@ -60,8 +60,8 @@ No blocker implementation gaps were found in the Phase 20 plan artifacts reviewe
 
 **Test:** Execute all seven scenarios in `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-04-SUMMARY.md`, including `Sustained mid-song progression (drift check)`.
 **Expected:** Each scenario is recorded with browser, viewport size, track title, Spotify track ID, evidence, and `pass`, with no cumulative upward active-line drift in sustained playback.
-**Observed:** Failed. The highlighted active lyric remains too far above physical center and continues drifting upward during real playback.
-**Evidence:** `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`.
+**Observed:** Failed. The highlighted active lyric remains too far above physical center and continues drifting upward during real playback until it exits the viewport. Pressing `Back to Live` then recenters to the already-wrong off-screen state instead of restoring a true centered live anchor.
+**Evidence:** Task 2 manual checkpoint failure report (2026-04-15 continuation response) and prior screenshot `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`.
 **Why human:** `QA-01` requires browser-visible fullscreen confirmation, which automated geometry assertions cannot fully replace.
 
 ### Gaps Summary
@@ -69,13 +69,14 @@ No blocker implementation gaps were found in the Phase 20 plan artifacts reviewe
 Manual fullscreen verification remains blocked by unresolved live viewport behavior:
 
 - Failing scenario: `Sustained mid-song progression (drift check)` in `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-04-SUMMARY.md`.
-- The highlighted lyric remains visibly above physical center and still drifts upward as playback progresses.
+- The highlighted lyric remains visibly above physical center and still drifts upward as playback progresses until it goes off-screen.
+- `Back to Live recovery` is still incorrect under sustained drift because recentering follows the wrong drifted anchor instead of restoring centered live positioning.
 - The blocker is unchanged from prior reports; Phase 20 cannot be marked passed and `QA-01` remains unsatisfied.
-- Screenshot evidence confirms the unresolved drift bug: `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`.
+- Evidence chain: Task 2 manual checkpoint failure report plus screenshot `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`.
 
 Recommended gap closure focus: investigate why the highlighted line's literal screen position drifts upward over time despite the boundary-aware anchor model, then add a regression that captures cumulative mid-song viewport drift.
 
 ---
 
-_Verified: 2026-04-15T23:19:53.891Z_
+_Verified: 2026-04-15T23:52:30.082Z_
 _Verifier: OpenCode inline fallback (gsd-verifier task unavailable)_
