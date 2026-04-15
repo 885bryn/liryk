@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ResolvedLyrics } from "@/core/lyrics/types";
@@ -39,11 +39,49 @@ let nowPlayingResponse: {
   isPlaying: boolean;
 } | null = null;
 
+let cachedPlaybackSnapshot:
+  | {
+      trackId: string;
+      deviceId: string;
+      isPlaying: boolean;
+      progressMs: number;
+      capturedAtMs: number;
+    }
+  | null = null;
+let cachedPlaybackSnapshotKey: string | null = null;
+let originalConsoleError: typeof console.error;
+
 let resolvedLyricsResponse: ResolvedLyrics = {
   sourceState: "not-found",
   renderMode: "plain-static",
   lines: [],
 };
+
+function getCachedPlaybackSnapshot() {
+  if (nowPlayingResponse === null) {
+    cachedPlaybackSnapshot = null;
+    cachedPlaybackSnapshotKey = null;
+    return null;
+  }
+
+  const snapshotKey = [
+    nowPlayingResponse.trackId,
+    nowPlayingResponse.isPlaying ? "playing" : "paused",
+    nowPlayingResponse.progressMs,
+  ].join(":");
+  if (cachedPlaybackSnapshotKey !== snapshotKey) {
+    cachedPlaybackSnapshotKey = snapshotKey;
+    cachedPlaybackSnapshot = {
+      trackId: nowPlayingResponse.trackId,
+      deviceId: "web",
+      isPlaying: nowPlayingResponse.isPlaying,
+      progressMs: nowPlayingResponse.progressMs,
+      capturedAtMs: Date.now(),
+    };
+  }
+
+  return cachedPlaybackSnapshot;
+}
 
 vi.mock("./use-web-auth-runtime", () => ({
   useWebAuthRuntime: () => hookModel,
@@ -52,15 +90,7 @@ vi.mock("./use-web-auth-runtime", () => ({
 vi.mock("./use-shared-playback", () => ({
   useSharedPlayback: () => ({
     nowPlaying: nowPlayingResponse,
-    playbackSnapshot: nowPlayingResponse
-      ? {
-          trackId: nowPlayingResponse.trackId,
-          deviceId: "web",
-          isPlaying: nowPlayingResponse.isPlaying,
-          progressMs: nowPlayingResponse.progressMs,
-          capturedAtMs: Date.now(),
-        }
-      : null,
+    playbackSnapshot: getCachedPlaybackSnapshot(),
     pollerId: "test-poller",
     rateLimitedUntilMs: 0,
     lastUpdatedAtMs: Date.now(),
@@ -93,11 +123,18 @@ vi.mock("@/infra/providers/lrclib-client", () => ({
 }));
 
 vi.mock("@/core/lyrics/lyrics-resolver", () => ({
-  resolveLyricsForTrack: vi.fn(async () => resolvedLyricsResponse),
+  resolveLyricsForTrack: vi.fn(() => resolvedLyricsResponse),
 }));
 
 describe("FullscreenLyricsPage", () => {
   beforeEach(() => {
+    originalConsoleError = console.error;
+    console.error = (...args: Parameters<typeof console.error>) => {
+      if (String(args[0]).includes("not wrapped in act")) {
+        return;
+      }
+      originalConsoleError(...args);
+    };
     hookModel = {
       phase: "checking",
       statusCopy: "Checking Spotify connection...",
@@ -105,6 +142,8 @@ describe("FullscreenLyricsPage", () => {
       onConnect: async () => undefined,
     };
     nowPlayingResponse = null;
+    cachedPlaybackSnapshot = null;
+    cachedPlaybackSnapshotKey = null;
     resolvedLyricsResponse = {
       sourceState: "not-found",
       renderMode: "plain-static",
@@ -114,6 +153,7 @@ describe("FullscreenLyricsPage", () => {
 
   afterEach(() => {
     cleanup();
+    console.error = originalConsoleError;
   });
 
   function stubViewportGeometry(input: {
@@ -218,9 +258,56 @@ describe("FullscreenLyricsPage", () => {
     };
   }
 
+  function installAnimationFrameStub() {
+    const originalRequestAnimationFrame = window.requestAnimationFrame;
+    const originalCancelAnimationFrame = window.cancelAnimationFrame;
+    let nextFrameId = 1;
+
+    Object.defineProperty(window, "requestAnimationFrame", {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => nextFrameId++),
+    });
+    Object.defineProperty(window, "cancelAnimationFrame", {
+      configurable: true,
+      writable: true,
+      value: vi.fn(),
+    });
+
+    return {
+      restore: () => {
+        Object.defineProperty(window, "requestAnimationFrame", {
+          configurable: true,
+          writable: true,
+          value: originalRequestAnimationFrame,
+        });
+        Object.defineProperty(window, "cancelAnimationFrame", {
+          configurable: true,
+          writable: true,
+          value: originalCancelAnimationFrame,
+        });
+      },
+    };
+  }
+
   async function waitForProgrammaticScrollWindowToSettle() {
-    await new Promise((resolve) => {
-      window.setTimeout(resolve, 120);
+    await flushFullscreenEffects();
+    await act(async () => {
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, 120);
+      });
+    });
+    await flushFullscreenEffects();
+  }
+
+  async function flushFullscreenEffects() {
+    await act(async () => {
+      await new Promise((resolve) => {
+        window.setTimeout(resolve, 0);
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
     });
   }
 
@@ -564,7 +651,8 @@ describe("FullscreenLyricsPage", () => {
   });
 
   it("keeps live lock enabled during programmatic recentering and hides fullscreen-return-live", async () => {
-    const { scrollToMock, restore } = installViewportScrollToStub();
+    const { scrollToMock, restore: restoreScrollTo } = installViewportScrollToStub();
+    const { restore: restoreAnimationFrame } = installAnimationFrameStub();
     hookModel = {
       phase: "ready",
       statusCopy: "Connected - waiting for playback",
@@ -597,11 +685,11 @@ describe("FullscreenLyricsPage", () => {
 
     try {
       const { rerender } = render(<FullscreenLyricsPage />);
+      await flushFullscreenEffects();
 
-      await waitFor(() => {
-        expect(screen.getByText("Line 3")).toBeTruthy();
-      });
+      expect(await screen.findByText("Line 3")).toBeTruthy();
 
+      await waitForProgrammaticScrollWindowToSettle();
       const { viewport } = stubViewportGeometry({
         viewportHeight: 320,
         activeIndex: 2,
@@ -615,16 +703,22 @@ describe("FullscreenLyricsPage", () => {
         progressMs: 150,
         isPlaying: true,
       };
-      rerender(<FullscreenLyricsPage />);
+      await act(async () => {
+        rerender(<FullscreenLyricsPage />);
+      });
+      await flushFullscreenEffects();
+      await waitForProgrammaticScrollWindowToSettle();
 
       await waitFor(() => {
         expect(scrollToMock).toHaveBeenCalled();
       });
+      await waitForProgrammaticScrollWindowToSettle();
 
       expect(viewport.scrollTop).toBe(0);
       expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
     } finally {
-      restore();
+      restoreAnimationFrame();
+      restoreScrollTo();
     }
   });
 
@@ -675,9 +769,11 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
 
     await waitForProgrammaticScrollWindowToSettle();
-    fireEvent.wheel(viewport, { deltaY: 120 });
-    viewport.scrollTop = 128;
-    fireEvent.scroll(viewport);
+    await act(async () => {
+      fireEvent.wheel(viewport, { deltaY: 120 });
+      viewport.scrollTop = 128;
+      fireEvent.scroll(viewport);
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("fullscreen-return-live")).toBeTruthy();
@@ -685,7 +781,8 @@ describe("FullscreenLyricsPage", () => {
   });
 
   it("Back to Live restores the boundary-aware live anchor", async () => {
-    const { scrollToMock, restore } = installViewportScrollToStub();
+    const { scrollToMock, restore: restoreScrollTo } = installViewportScrollToStub();
+    const { restore: restoreAnimationFrame } = installAnimationFrameStub();
     hookModel = {
       phase: "ready",
       statusCopy: "Connected - waiting for playback",
@@ -719,10 +816,9 @@ describe("FullscreenLyricsPage", () => {
 
     try {
       render(<FullscreenLyricsPage />);
+      await flushFullscreenEffects();
 
-      await waitFor(() => {
-        expect(screen.getByText("Line 3")).toBeTruthy();
-      });
+      expect(await screen.findByText("Line 3")).toBeTruthy();
 
       const { viewport, lyricRows, rowLayout } = stubViewportGeometry({
         viewportHeight: 320,
@@ -736,12 +832,18 @@ describe("FullscreenLyricsPage", () => {
       });
 
       await waitForProgrammaticScrollWindowToSettle();
-      fireEvent.wheel(viewport, { deltaY: 120 });
-      viewport.scrollTop = expectedScrollTop + 132;
-      fireEvent.scroll(viewport);
+      await act(async () => {
+        fireEvent.wheel(viewport, { deltaY: 120 });
+        viewport.scrollTop = expectedScrollTop + 132;
+        fireEvent.scroll(viewport);
+      });
 
       const backToLive = await screen.findByTestId("fullscreen-return-live");
-      fireEvent.click(backToLive);
+      await act(async () => {
+        fireEvent.click(backToLive);
+      });
+      await flushFullscreenEffects();
+      await waitForProgrammaticScrollWindowToSettle();
 
       await waitFor(() => {
         expect(scrollToMock).toHaveBeenCalledWith({ top: expectedScrollTop, behavior: "auto" });
@@ -753,7 +855,8 @@ describe("FullscreenLyricsPage", () => {
       expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
       expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(320);
     } finally {
-      restore();
+      restoreAnimationFrame();
+      restoreScrollTo();
     }
   });
 
