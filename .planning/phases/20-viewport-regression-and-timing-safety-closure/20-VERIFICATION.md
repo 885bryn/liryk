@@ -1,10 +1,11 @@
 ---
 phase: 20-viewport-regression-and-timing-safety-closure
 verified: 2026-04-15T20:30:34.703Z
-status: human_needed
-score: 5/5 automated must-haves verified
+status: gaps_found
+score: 5/6 truths verified
 manual_approval:
   approved: false
+  note: "User reported the active lyric drifts upward on the physical screen by about half a line per transition until it moves off-screen mid-song."
 human_verification:
   - test: "Run the six manual fullscreen scenarios from the Phase 20 closure ledger"
     expected: "Track start, track transition, song end, final handoff, manual browse-away, and Back to Live recovery all behave as documented and are signed off in the ledger."
@@ -15,7 +16,7 @@ human_verification:
 
 **Phase Goal:** Boundary-specific regressions and manual verification prove the viewport fix without changing playback timing or motion correctness.
 **Verified:** 2026-04-15T20:30:34.703Z
-**Status:** human_needed
+**Status:** gaps_found
 **Re-verification:** No - initial verification
 
 ## Goal Achievement
@@ -30,7 +31,7 @@ human_verification:
 | 4 | A reproducible runbook and closure ledger exist for SAFE-01 and QA-01, including exact commands, requirement mapping, warning policy, and manual sign-off fields. | ✓ VERIFIED | `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-VALIDATION.md:14` defines the three exact commands and `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md:85` captures the six manual scenarios plus requirement coverage. |
 | 5 | Production build remains green after Phase 20 closure work, with only the pre-existing chunk-size warning recorded as residual risk. | ✓ VERIFIED | `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md:81` records `rtk npm run build` passing, and `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md:107` records the known non-blocking Vite chunk-size warning. |
 
-**Score:** 5/5 automated truths verified
+**Score:** 5/6 truths verified
 
 ### Required Artifacts
 
@@ -63,7 +64,13 @@ No blocker implementation gaps were found in the Phase 20 plan artifacts reviewe
 
 ### Gaps Summary
 
-No automated implementation gaps were found against the Phase 20 must-haves. Automated safety gates are green, but manual fullscreen verification has not yet been approved, so the phase cannot be marked passed.
+Manual fullscreen verification found a blocker in the live viewport behavior:
+
+- The highlighted lyric starts near the middle of the screen, but each progression nudges its literal on-screen position upward by roughly half a line.
+- Mid-song, the active line has drifted high enough that it becomes partially or fully off-screen.
+- This means the viewport-lock fix is still incomplete in real browser playback even though the automated geometry suite is green.
+
+Recommended gap closure focus: investigate why the highlighted line's literal screen position drifts upward over time despite the boundary-aware anchor model, then add a regression that captures cumulative mid-song viewport drift.
 
 ---
 

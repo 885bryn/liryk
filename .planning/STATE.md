@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
 status: unknown
-stopped_at: Awaiting human verification for Phase 20 manual fullscreen runbook
+stopped_at: Phase 20 manual verification found viewport drift; gap planning needed
 last_updated: "2026-04-15T20:30:34.703Z"
 progress:
   total_phases: 3
@@ -91,10 +91,10 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-None currently.
+- Manual fullscreen verification found cumulative upward drift: the highlighted lyric starts near mid-screen but climbs roughly half a line per progression until it moves off-screen mid-song.
 
 ## Session Continuity
 
 Last session: 2026-04-15T20:30:34.703Z
-Stopped at: Waiting for Phase 20 human verification approval
+Stopped at: Human verification reported cumulative upward active-line drift; next step is Phase 20 gap planning
 Resume file: None
