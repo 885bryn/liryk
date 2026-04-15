@@ -49,10 +49,12 @@ Plans:
 **Goal**: Boundary-specific regressions and manual verification prove the viewport fix without changing playback timing or motion correctness.
 **Depends on**: Phase 19
 **Requirements**: SAFE-01, QA-01
-**Plans**: 2 plans
+**Plans**: 4 plans
 Plans:
 - [x] 20-01-PLAN.md - Harden fullscreen viewport regressions and the targeted timing/motion safety gate.
 - [x] 20-02-PLAN.md - Publish the Phase 20 validation runbook and closure evidence ledger.
+- [ ] 20-03-PLAN.md - Fix cumulative mid-song active-line viewport drift and lock it with sustained-progression regressions.
+- [ ] 20-04-PLAN.md - Re-run browser QA with drift-specific evidence and publish final verification status.
 **Success Criteria**:
 1. Automated regression coverage proves correct behavior for track start, track end, track transitions, manual browse-away, and Back to Live recovery.
 2. Verification proves playback clock, drift policy, active-line selection, and settle semantics still match the validated contracts from earlier milestones.
@@ -67,7 +69,7 @@ Phases execute in numeric order: 18 -> 19 -> 20
 |-------|--------------|--------|
 | 18. Viewport Anchor Ownership and Scroll Surface | VIEW-03, LIVE-01, SCROLL-01 | Complete (2026-04-10) |
 | 19. Song-Boundary Visibility and Live-Lock Recovery | VIEW-01, VIEW-02, LIVE-02, LIVE-03 | Complete (2026-04-15) |
-| 20. Viewport Regression and Timing Safety Closure | SAFE-01, QA-01 | Human verification pending (2/2 plans complete) |
+| 20. Viewport Regression and Timing Safety Closure | SAFE-01, QA-01 | Gap closure planned (2/4 plans complete) |
 
 ## Future Candidate (After v1.5)
 
