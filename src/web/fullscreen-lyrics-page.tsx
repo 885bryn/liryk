@@ -503,8 +503,12 @@ export function FullscreenLyricsPage() {
           return FALLBACK_ROW_TEXT_HEIGHT_PX;
         }
 
-        const rect = element.getBoundingClientRect();
-        const measured = Math.round(rect.height);
+        const measured = Math.round(
+          element.offsetHeight ||
+            element.clientHeight ||
+            element.scrollHeight ||
+            element.getBoundingClientRect().height,
+        );
         return measured > 0 ? measured : FALLBACK_ROW_TEXT_HEIGHT_PX;
       });
 
