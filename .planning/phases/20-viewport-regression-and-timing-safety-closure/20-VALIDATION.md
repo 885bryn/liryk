@@ -48,6 +48,15 @@ If `not wrapped in act` appears, execution must either:
 
 Use a real browser fullscreen session and complete all seven scenarios.
 
+Execute scenarios in this exact order:
+1. Track start
+2. Track transition
+3. Song end
+4. Final handoff
+5. Manual browse-away
+6. Back to Live recovery
+7. Sustained mid-song progression (drift check)
+
 | Scenario | Setup | Action | Expected Result | Evidence |
 |---|---|---|---|---|
 | Track start | Open fullscreen lyrics on a synced track before first lyric timestamp. | Start playback and wait for first active synced line. | Highlighted line appears inside viewport; live lock remains engaged; no clipping above top edge. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
@@ -64,7 +73,12 @@ For each automated command and manual scenario, capture:
 - Timestamp (UTC)
 - Executor initials
 - Command or scenario label
-- Result (`pass` or `fail`)
+- Browser
+- Viewport dimensions (exact pixels)
+- Track title
+- Spotify track ID
+- Observation window (`N/A` for non-sustained scenarios)
+- Result (`pass|fail`)
 - Observed output (test count, build status, warning text, or viewport observation)
-- Evidence pointer (console transcript path, screenshot link, or recording)
+- Evidence path/URI (console transcript path, screenshot URI, or recording URI)
 - Notes and follow-up (if any)
