@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
 status: unknown
-stopped_at: Failed checkpoint at 20-04-PLAN.md Task 2 (manual fullscreen verification)
-last_updated: "2026-04-15T23:19:53.891Z"
+stopped_at: Completed 20-05-PLAN.md
+last_updated: "2026-04-15T23:40:16.665Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-15)
 ## Current Position
 
 Phase: 20 (viewport-regression-and-timing-safety-closure) — EXECUTING
-Plan: 4 of 4
+Plan: 6 of 6
 
 ## Accumulated Context
 
@@ -75,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 20]: Treat the known Vite chunk-size warning as non-blocking residual risk because build exits 0 and warning predates this closure plan.
 - [Phase 20]: Use offsetHeight/clientHeight/scrollHeight as primary row-height sources before getBoundingClientRect fallback to keep live anchor invariant under visual transforms.
 - [Phase 20]: Preserve existing timing authority and motion-window contracts while fixing drift strictly in fullscreen measurement flow.
+- [Phase 20]: Treat sustained-drift closure as a TDD cycle with a failing 12-transition regression before measurement stabilization.
+- [Phase 20]: Keep timing authority contracts unchanged and scope the fix to fullscreen row measurement stability.
 
 ### Roadmap Evolution
 
@@ -87,16 +89,16 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 20 manual verification: rerun all seven fullscreen scenarios in `20-04-SUMMARY.md` after fixing sustained active-line drift and sign off QA-01.
+- Phase 20 manual verification: rerun all seven fullscreen scenarios in `20-04-SUMMARY.md` and confirm sustained drift check passes with current 20-05 regression baseline evidence.
 - Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
 - Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
 ### Blockers/Concerns
 
-- QA-01 remains blocked: Task 2 failed manual fullscreen verification in `20-04-PLAN.md`; sustained mid-song drift still moves the active lyric above physical center (evidence: `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`).
+- QA-01 final sign-off remains pending manual fullscreen rerun in Plan 20-06; 20-05 added sustained drift regression and measurement stabilization, but browser verification still needs fresh evidence capture.
 
 ## Session Continuity
 
-Last session: 2026-04-15T23:19:53.891Z
-Stopped at: Failed checkpoint at 20-04-PLAN.md Task 2 manual fullscreen verification
+Last session: 2026-04-15T23:40:16.663Z
+Stopped at: Completed 20-05-PLAN.md
 Resume file: None
