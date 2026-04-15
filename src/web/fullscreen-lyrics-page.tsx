@@ -48,6 +48,7 @@ const baseSyncState: LiveSyncUiState = {
 
 const JITTER_BACKWARD_TOLERANCE_MS = 500;
 const FALLBACK_ROW_TEXT_HEIGHT_PX = 72;
+const LIVE_INDEX_SNAP_THRESHOLD = 3;
 
 type MotionAnchor = {
   trackId: string | null;
@@ -117,6 +118,7 @@ export function FullscreenLyricsPage() {
   const progressFrameRef = useRef<number | null>(null);
   const focusFrameRef = useRef<number | null>(null);
   const focusLastTsRef = useRef<number | null>(null);
+  const renderedTrackIdRef = useRef<string | null>(null);
   const renderedFloatingIndexRef = useRef(0);
   const targetFloatingIndexRef = useRef(0);
   const lyricRowRefs = useRef<Array<HTMLParagraphElement | null>>([]);
@@ -385,11 +387,24 @@ export function FullscreenLyricsPage() {
 
   useEffect(() => {
     targetFloatingIndexRef.current = floatingSyncedIndex;
+    const trackChanged = renderedTrackIdRef.current !== activeTrack?.trackId;
+    const indexJump = Math.abs(renderedFloatingIndexRef.current - floatingSyncedIndex);
     if (!canRenderSyncedMotion) {
+      renderedTrackIdRef.current = activeTrack?.trackId ?? null;
       renderedFloatingIndexRef.current = floatingSyncedIndex;
       setRenderedFloatingIndex(floatingSyncedIndex);
+      return;
     }
-  }, [canRenderSyncedMotion, floatingSyncedIndex]);
+
+    if (trackChanged || indexJump > LIVE_INDEX_SNAP_THRESHOLD) {
+      renderedTrackIdRef.current = activeTrack?.trackId ?? null;
+      renderedFloatingIndexRef.current = floatingSyncedIndex;
+      setRenderedFloatingIndex(floatingSyncedIndex);
+      return;
+    }
+
+    renderedTrackIdRef.current = activeTrack?.trackId ?? null;
+  }, [activeTrack?.trackId, canRenderSyncedMotion, floatingSyncedIndex]);
 
   useEffect(() => {
     if (focusFrameRef.current !== null) {

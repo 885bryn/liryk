@@ -424,6 +424,51 @@ describe("FullscreenLyricsPage", () => {
     expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
   });
 
+  it("snaps the rendered lyric position to the current line on mid-song fullscreen entry", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+    nowPlayingResponse = {
+      trackId: "track-mid-song-entry",
+      title: "Mid Song Entry",
+      artist: "Viewport Artist",
+      progressMs: 10_100,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: Array.from({ length: 10 }, (_, index) => ({
+        startMs: index * 2_000,
+        text: `Line ${index + 1}`,
+        renderMode: "synced" as const,
+        isTimestamped: true,
+      })),
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 6")).toBeTruthy();
+    });
+
+    const rowLayout = buildRowLayout(Array.from({ length: 10 }, () => 72), BASE_ROW_GAP_PX);
+    const expectedTransform = `translateY(${-getFloatingRowAnchorPx(rowLayout, 5)}px)`;
+
+    await waitFor(() => {
+      expect(screen.getByTestId("fullscreen-lyrics-track").getAttribute("style")).toContain(expectedTransform);
+    });
+  });
+
   it("keeps the last synced lyric in viewport near song end", async () => {
     hookModel = {
       phase: "ready",
