@@ -19,6 +19,11 @@ Run these commands in order and record results in `20-02-SUMMARY.md`.
 2. `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts`
 3. `rtk npm run build`
 
+Latest execution (2026-04-15):
+- `rtk proxy npm run test -- src/web/fullscreen-lyrics-page.test.tsx` -> pass (1 file, 37 tests)
+- `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts` -> pass (6 files, 80 tests)
+- `rtk npm run build` -> pass (Vite build succeeded; known chunk-size warning only)
+
 Expected outcomes:
 - Fullscreen regression command passes and remains warning-clean for React `act` output.
 - Targeted safety command passes across playback-clock, timeline, sync engine, motion window, and live runtime contracts.
