@@ -1,75 +1,64 @@
 ---
 phase: 20
 slug: viewport-regression-and-timing-safety-closure
-status: draft
+status: final
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-04-15
 ---
 
-# Phase 20 - Validation Strategy
+# Phase 20 Validation Runbook
 
-> Per-phase validation contract for viewport regression and timing safety closure.
+This runbook is the reproducible closure gate for viewport regressions and timing safety in Phase 20.
 
----
+## Automated Safety Gate
 
-## Test Infrastructure
+Run these commands in order and record results in `20-02-SUMMARY.md`.
 
-| Property | Value |
-|----------|-------|
-| **Framework** | Vitest with Testing Library and jsdom |
-| **Config file** | `vite.config.ts` |
-| **Quick run command** | `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts` |
-| **Full suite command** | `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts; rtk npm run build` |
-| **Estimated runtime** | ~45 seconds |
+1. `rtk proxy npm run test -- src/web/fullscreen-lyrics-page.test.tsx`
+2. `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts`
+3. `rtk npm run build`
 
----
+Expected outcomes:
+- Fullscreen regression command passes and remains warning-clean for React `act` output.
+- Targeted safety command passes across playback-clock, timeline, sync engine, motion window, and live runtime contracts.
+- Build command exits 0. A known Vite chunk-size warning may appear and is tracked as non-blocking residual risk.
 
-## Sampling Rate
+## React act Warning Policy
 
-- **After every task commit:** Run `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts`
-- **After every plan wave:** Run `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts; rtk npm run build`
-- **Before `$gsd-verify-work`:** The targeted safety suite and build must be green.
-- **Max feedback latency:** 60 seconds
+The raw output from `rtk proxy npm run test -- src/web/fullscreen-lyrics-page.test.tsx` must not contain `not wrapped in act`.
 
----
+If `not wrapped in act` appears, execution must either:
+- fix the fullscreen test harness so the warning is removed, or
+- record the exact non-blocking reason in `20-02-SUMMARY.md` under `## React act Warning Status` before closure sign-off.
 
-## Per-Task Verification Map
+## Requirement Traceability
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 20-01-01 | 01 | 1 | QA-01 | fullscreen integration | `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx` | yes | pending |
-| 20-01-02 | 01 | 1 | SAFE-01 | timing and motion safety | `rtk npm run test -- src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts` | yes | pending |
-| 20-02-01 | 02 | 1 | QA-01 | docs/manual | `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts; rtk npm run build` | no - Wave 0 | pending |
-| 20-02-02 | 02 | 1 | SAFE-01, QA-01 | final safety gate | `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts; rtk npm run build` | yes | pending |
+| Requirement | Coverage | Evidence Command | Artifact |
+|---|---|---|---|
+| SAFE-01 | Timing safety and motion contracts remain green with viewport fixes | `rtk npm run test -- src/web/fullscreen-lyrics-page.test.tsx src/core/sync/lyric-timeline.test.ts src/core/sync/lyric-sync-engine.test.ts src/core/sync/lyric-motion-window.test.ts src/core/playback/playback-clock.test.ts src/app/live-sync-runtime.test.ts` | `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md` |
+| QA-01 | Fullscreen regression test plus manual browser runbook cover boundary and recovery flows | `rtk proxy npm run test -- src/web/fullscreen-lyrics-page.test.tsx` | `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md` |
 
----
+## Manual Fullscreen Runbook
 
-## Wave 0 Requirements
+Use a real browser fullscreen session and complete all six scenarios.
 
-- [ ] `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-VALIDATION.md` - maps `SAFE-01` and `QA-01` to exact commands and manual checks.
-- [ ] `.planning/phases/20-viewport-regression-and-timing-safety-closure/20-02-SUMMARY.md` - final reproducible runbook and evidence ledger created during execution.
-- [ ] `src/web/fullscreen-lyrics-page.test.tsx` - programmatic recentering and Back to Live tests either run without React `act(...)` warnings or the summary records why the warnings are non-blocking.
+| Scenario | Setup | Action | Expected Result | Evidence |
+|---|---|---|---|---|
+| Track start | Open fullscreen lyrics on a synced track before first lyric timestamp. | Start playback and wait for first active synced line. | Highlighted line appears inside viewport; live lock remains engaged; no clipping above top edge. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
+| Track transition | Queue another synced track while fullscreen remains open. | Trigger track change and observe first active line in new track. | First active line of next track remains visible inside viewport after transition. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
+| Song end | Use a synced track and seek near last synced lyric. | Play through final synced lyric window. | Last highlighted synced line stays inside viewport through end timing window. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
+| Final handoff | Stay on same track after last synced timestamp. | Observe handoff beyond final lyric timestamp. | Final handoff state keeps end lyric visible and stable; no jump off-screen. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
+| Manual browse-away | While live lock is active, ensure content is centered on live anchor. | Intentionally wheel or touch scroll away from live anchor. | Live lock disengages only after explicit user intent and Back to Live appears. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
+| Back to Live recovery | Begin from a manual browse-away state with Back to Live visible. | Click Back to Live. | Live lock re-engages and highlighted line returns to boundary-aware live anchor. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
 
----
+## Evidence Capture Fields
 
-## Manual-Only Verifications
-
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Real fullscreen track start and track transition visibility | QA-01 | jsdom stubs can prove geometry math, but real browser fullscreen depends on fonts, viewport chrome, and rendered scroll behavior. | In a Chromium browser, start a synced Spotify track from before the first lyric and then switch to a second synced track. In fullscreen lyrics, confirm the highlighted first synced row is inside the visible viewport after each entry. Record browser, viewport size, track names, and result in `20-02-SUMMARY.md`. |
-| Real fullscreen song end and final handoff visibility | QA-01 | End-of-song rendering depends on actual lyric lengths, font metrics, and viewport height. | Seek near the last synced lyric of a synced track. Confirm the highlighted final row and the final handoff remain inside the visible fullscreen viewport until playback advances beyond the final timestamp. Record result in `20-02-SUMMARY.md`. |
-| Manual browse-away and Back to Live recovery | QA-01 | Pointer, wheel, and touch intent can differ from synthetic jsdom scroll events. | While live locked, intentionally wheel-scroll or touch-scroll away from the live anchor, confirm Back to Live appears, then activate Back to Live. Confirm live lock is restored and the highlighted row returns to the boundary-aware anchor. Record result in `20-02-SUMMARY.md`. |
-
----
-
-## Validation Sign-Off
-
-- [x] All tasks have automated verification or Wave 0 dependencies.
-- [x] Sampling continuity: no 3 consecutive tasks without automated verification.
-- [x] Wave 0 covers all missing references.
-- [x] No watch-mode flags.
-- [x] Feedback latency < 60s.
-- [x] `nyquist_compliant: true` set in frontmatter.
-
-**Approval:** pending
+For each automated command and manual scenario, capture:
+- Timestamp (UTC)
+- Executor initials
+- Command or scenario label
+- Result (`pass` or `fail`)
+- Observed output (test count, build status, warning text, or viewport observation)
+- Evidence pointer (console transcript path, screenshot link, or recording)
+- Notes and follow-up (if any)
