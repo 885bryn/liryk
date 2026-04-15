@@ -832,7 +832,7 @@ export function FullscreenLyricsPage() {
           >
             <div
               data-testid="fullscreen-lyrics-center-stage"
-              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2"
+              className="pointer-events-none absolute inset-x-0 top-1/2"
             >
               <div
                 data-testid="fullscreen-lyrics-track"

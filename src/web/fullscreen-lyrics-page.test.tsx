@@ -315,7 +315,7 @@ describe("FullscreenLyricsPage", () => {
       expect(viewport.className).toContain("overflow-hidden");
       expect(stage.className).toContain("absolute");
       expect(stage.className).toContain("top-1/2");
-      expect(stage.className).toContain("-translate-y-1/2");
+      expect(stage.className).not.toContain("-translate-y-1/2");
     });
   });
 
@@ -363,6 +363,7 @@ describe("FullscreenLyricsPage", () => {
     const activeBounds = lyricRows[0]?.getBoundingClientRect();
     expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
     expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+    expect(((activeBounds?.top ?? 0) + (activeBounds?.bottom ?? 0)) / 2).toBe(150);
   });
 
   it("keeps the first synced lyric in viewport after track transition", async () => {
@@ -513,6 +514,7 @@ describe("FullscreenLyricsPage", () => {
     const activeBounds = lyricRows[2]?.getBoundingClientRect();
     expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
     expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+    expect(((activeBounds?.top ?? 0) + (activeBounds?.bottom ?? 0)) / 2).toBe(150);
   });
 
   it("keeps the last synced lyric in viewport during final handoff", async () => {
