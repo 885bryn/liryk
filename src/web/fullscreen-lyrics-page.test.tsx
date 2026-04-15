@@ -1197,6 +1197,17 @@ describe("FullscreenLyricsPage", () => {
     expect(source.includes("DEFAULT_TRANSITION_WINDOW_FRACTION")).toBe(true);
   });
 
+  it("preserves playback timing authority while viewport locking", () => {
+    const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
+    expect(source).toContain("estimatedProgressMs");
+    expect(source).toContain("applyEarlyCue(progressSourceMs, DEFAULT_CUE_LEAD_MS)");
+    expect(source).toContain("getLineIndicesAt(syncedTimeline, cueAdjustedProgressMs)");
+    expect(source).toContain("getTransitionProgress({");
+    expect(source).toContain("getRenderedFloatingIndex({");
+    expect(source).not.toContain("HARD_DRIFT_SNAP_MS =");
+    expect(source).not.toContain("MAX_SOFT_CORRECTION_MS =");
+  });
+
   it("routes synced track translateY through measured row layout anchors", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
     expect(source.includes("buildRowLayout")).toBe(true);
