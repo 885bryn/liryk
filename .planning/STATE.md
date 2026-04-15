@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-04-15T20:27:14.345Z"
+stopped_at: Awaiting human verification for Phase 20 manual fullscreen runbook
+last_updated: "2026-04-15T20:30:34.703Z"
 progress:
   total_phases: 3
-  completed_phases: 3
+  completed_phases: 2
   total_plans: 6
   completed_plans: 6
 ---
@@ -23,7 +23,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 20 (viewport-regression-and-timing-safety-closure) — COMPLETE
+Phase: 20 (viewport-regression-and-timing-safety-closure) — VERIFYING
 Plan: 2 of 2
 
 ## Accumulated Context
@@ -85,7 +85,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 20: complete (validation runbook and closure evidence ledger published in 20-02).
+- Phase 20 manual verification: run the six fullscreen scenarios from `20-02-SUMMARY.md` and sign off QA-01.
 - Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
 - Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
@@ -95,6 +95,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-04-15T20:27:14.341Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-04-15T20:30:34.703Z
+Stopped at: Waiting for Phase 20 human verification approval
 Resume file: None
