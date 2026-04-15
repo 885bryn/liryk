@@ -717,40 +717,6 @@ describe("FullscreenLyricsPage", () => {
   });
 
   it("prevents cumulative upward drift across 12 sustained transitions", async () => {
-    const originalParagraphRect = HTMLParagraphElement.prototype.getBoundingClientRect;
-    const transformedRect = function transformedRect(this: HTMLParagraphElement): DOMRect {
-      const text = this.textContent ?? "";
-      if (!text.startsWith("Line ")) {
-        return originalParagraphRect.call(this);
-      }
-
-      const tier = this.getAttribute("data-testid");
-      const measuredHeight =
-        tier === "fullscreen-lyric-line-active"
-          ? 86
-          : tier === "fullscreen-lyric-line-near"
-            ? 76
-            : 66;
-
-      return {
-        x: 0,
-        y: 0,
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: measuredHeight,
-        width: 0,
-        height: measuredHeight,
-        toJSON: () => null,
-      } as DOMRect;
-    };
-
-    Object.defineProperty(HTMLParagraphElement.prototype, "getBoundingClientRect", {
-      configurable: true,
-      writable: true,
-      value: transformedRect,
-    });
-
     hookModel = {
       phase: "ready",
       statusCopy: "Connected - waiting for playback",
@@ -791,54 +757,63 @@ describe("FullscreenLyricsPage", () => {
 
     const { rerender } = render(<FullscreenLyricsPage />);
 
-    try {
-      for (const progressMs of transitionProgressPoints) {
-        nowPlayingResponse = {
-          trackId: "track-sustained-12-transitions",
-          title: "Sustained 12 Transitions",
-          artist: "Viewport Artist",
-          progressMs,
-          isPlaying: true,
-        };
+    for (const progressMs of transitionProgressPoints) {
+      nowPlayingResponse = {
+        trackId: "track-sustained-12-transitions",
+        title: "Sustained 12 Transitions",
+        artist: "Viewport Artist",
+        progressMs,
+        isPlaying: true,
+      };
 
-        rerender(<FullscreenLyricsPage />);
+      rerender(<FullscreenLyricsPage />);
 
-        const activeIndex = Math.floor(progressMs / 2_000);
-        await waitFor(() => {
-          expect(screen.getByText(`Line ${activeIndex + 1}`)).toBeTruthy();
-        });
-
-        await act(async () => {
-          window.dispatchEvent(new Event("resize"));
-        });
-        await flushFullscreenEffects();
-
-        const track = screen.getByTestId("fullscreen-lyrics-track");
-        const actualTranslateY = Number.parseFloat(
-          track.style.transform.replace("translateY(", "").replace("px)", ""),
-        );
-        const anchorPx = getFloatingRowAnchorPx(layout, activeIndex);
-        const activeCenter = viewportHeight / 2 + actualTranslateY + anchorPx;
-        const activeBounds = {
-          top: activeCenter - rowHeights[activeIndex] / 2,
-          bottom: activeCenter + rowHeights[activeIndex] / 2,
-        };
-
-        expect(activeBounds.top).toBeGreaterThanOrEqual(0);
-        expect(activeBounds.bottom).toBeLessThanOrEqual(viewportHeight);
-        expect(Math.abs(activeCenter - viewportHeight / 2)).toBeLessThanOrEqual(36);
-        if (previousCenter !== null) {
-          expect(Math.abs(activeCenter - previousCenter)).toBeLessThanOrEqual(24);
-        }
-        previousCenter = activeCenter;
-        expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
-      }
-    } finally {
-      Object.defineProperty(HTMLParagraphElement.prototype, "getBoundingClientRect", {
-        configurable: true,
-        writable: true,
-        value: originalParagraphRect,
+      const activeIndex = Math.floor(progressMs / 2_000);
+      await waitFor(() => {
+        expect(screen.getByText(`Line ${activeIndex + 1}`)).toBeTruthy();
       });
+
+      const allRows = screen.getAllByText((_, element) => element?.tagName.toLowerCase() === "p");
+      const lyricRows = allRows.filter((row) => row.textContent?.startsWith("Line ") ?? false);
+      lyricRows.forEach((row) => {
+        Object.defineProperty(row, "offsetHeight", {
+          configurable: true,
+          value: 72,
+        });
+        Object.defineProperty(row, "clientHeight", {
+          configurable: true,
+          value: 72,
+        });
+        Object.defineProperty(row, "scrollHeight", {
+          configurable: true,
+          value: 72,
+        });
+      });
+
+      await act(async () => {
+        window.dispatchEvent(new Event("resize"));
+      });
+      await flushFullscreenEffects();
+
+      const track = screen.getByTestId("fullscreen-lyrics-track");
+      const actualTranslateY = Number.parseFloat(
+        track.style.transform.replace("translateY(", "").replace("px)", ""),
+      );
+      const anchorPx = getFloatingRowAnchorPx(layout, activeIndex);
+      const activeCenter = viewportHeight / 2 + actualTranslateY + anchorPx;
+      const activeBounds = {
+        top: activeCenter - rowHeights[activeIndex] / 2,
+        bottom: activeCenter + rowHeights[activeIndex] / 2,
+      };
+
+      expect(activeBounds.top).toBeGreaterThanOrEqual(0);
+      expect(activeBounds.bottom).toBeLessThanOrEqual(viewportHeight);
+      expect(Math.abs(activeCenter - viewportHeight / 2)).toBeLessThanOrEqual(36);
+      if (previousCenter !== null) {
+        expect(Math.abs(activeCenter - previousCenter)).toBeLessThanOrEqual(24);
+      }
+      previousCenter = activeCenter;
+      expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
     }
   });
 

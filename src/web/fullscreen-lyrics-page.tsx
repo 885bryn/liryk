@@ -130,7 +130,6 @@ export function FullscreenLyricsPage() {
   const renderedFloatingIndexRef = useRef(0);
   const targetFloatingIndexRef = useRef(0);
   const lyricRowRefs = useRef<Array<HTMLParagraphElement | null>>([]);
-  const rowResizeObserverRef = useRef<ResizeObserver | null>(null);
   const [rowHeights, setRowHeights] = useState<number[]>([]);
   const [renderedFloatingIndex, setRenderedFloatingIndex] = useState(0);
   const lastMotionAnchorRef = useRef<MotionAnchor>({
@@ -497,22 +496,29 @@ export function FullscreenLyricsPage() {
         return;
       }
 
-      const nextHeights = syncedDisplayLines.map((_, index) => {
-        const element = lyricRowRefs.current[index];
-        if (!element) {
-          return FALLBACK_ROW_TEXT_HEIGHT_PX;
-        }
-
-        const measured = Math.round(
-          element.offsetHeight ||
-            element.clientHeight ||
-            element.scrollHeight ||
-            element.getBoundingClientRect().height,
-        );
-        return measured > 0 ? measured : FALLBACK_ROW_TEXT_HEIGHT_PX;
-      });
-
       setRowHeights((current) => {
+        const nextHeights = syncedDisplayLines.map((_, index) => {
+          const element = lyricRowRefs.current[index];
+          if (!element) {
+            return FALLBACK_ROW_TEXT_HEIGHT_PX;
+          }
+
+          const layoutHeights = [element.offsetHeight, element.clientHeight, element.scrollHeight]
+            .map((value) => Math.round(value))
+            .filter((value) => value > 0);
+          if (layoutHeights.length > 0) {
+            return Math.max(...layoutHeights);
+          }
+
+          const previousMeasured = current[index];
+          if (Number.isFinite(previousMeasured) && previousMeasured > 0) {
+            return previousMeasured;
+          }
+
+          const rectMeasured = Math.round(element.getBoundingClientRect().height);
+          return rectMeasured > 0 ? rectMeasured : FALLBACK_ROW_TEXT_HEIGHT_PX;
+        });
+
         if (current.length === nextHeights.length && current.every((value, index) => Math.abs(value - nextHeights[index]) <= 1)) {
           return current;
         }
@@ -522,18 +528,6 @@ export function FullscreenLyricsPage() {
 
     measureRows();
 
-    if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(() => {
-        measureRows();
-      });
-      rowResizeObserverRef.current = observer;
-      for (const element of lyricRowRefs.current) {
-        if (element) {
-          observer.observe(element);
-        }
-      }
-    }
-
     const onResize = () => {
       measureRows();
     };
@@ -542,8 +536,6 @@ export function FullscreenLyricsPage() {
     return () => {
       mounted = false;
       window.removeEventListener("resize", onResize);
-      rowResizeObserverRef.current?.disconnect();
-      rowResizeObserverRef.current = null;
     };
   }, [resolvedLyrics?.renderMode, syncedDisplayLines]);
 
