@@ -312,7 +312,7 @@ describe("FullscreenLyricsPage", () => {
       const viewport = screen.getByTestId("fullscreen-lyrics-viewport");
       const stage = screen.getByTestId("fullscreen-lyrics-center-stage");
       expect(viewport.className).toContain("h-full");
-      expect(viewport.className).toContain("overflow-y-auto");
+      expect(viewport.className).toContain("overflow-hidden");
       expect(stage.className).toContain("absolute");
       expect(stage.className).toContain("top-1/2");
       expect(stage.className).toContain("-translate-y-1/2");

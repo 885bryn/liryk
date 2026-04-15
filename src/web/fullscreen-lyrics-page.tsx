@@ -49,6 +49,7 @@ const baseSyncState: LiveSyncUiState = {
 const JITTER_BACKWARD_TOLERANCE_MS = 500;
 const FALLBACK_ROW_TEXT_HEIGHT_PX = 72;
 const LIVE_INDEX_SNAP_THRESHOLD = 3;
+const MANUAL_BROWSE_STEP_LIMIT_PX = 220;
 
 type MotionAnchor = {
   trackId: string | null;
@@ -65,6 +66,11 @@ function formatElapsedProgress(progressMs: number): string {
     .padStart(2, "0");
   const seconds = (totalSeconds % 60).toString().padStart(2, "0");
   return `${minutes}:${seconds}`;
+}
+
+function clampManualBrowseOffset(offsetPx: number, rowLayout: RowLayout, viewportHeight: number): number {
+  const maxOffset = Math.max(rowLayout.totalHeight, viewportHeight);
+  return Math.min(Math.max(offsetPx, -maxOffset), maxOffset);
 }
 
 export function getBoundaryLockedScrollTop(input: {
@@ -111,9 +117,11 @@ export function FullscreenLyricsPage() {
   const [resolvedLyrics, setResolvedLyrics] = useState<ResolvedLyrics | null>(null);
   const [isLiveLocked, setIsLiveLocked] = useState(true);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [manualBrowseOffsetPx, setManualBrowseOffsetPx] = useState(0);
   const programmaticScrollRef = useRef(false);
   const userScrollIntentRef = useRef(false);
   const viewportSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const touchLastYRef = useRef<number | null>(null);
   const playbackAnchorRef = useRef<ReturnType<typeof createPlaybackClockAnchor> | null>(null);
   const progressFrameRef = useRef<number | null>(null);
   const focusFrameRef = useRef<number | null>(null);
@@ -259,9 +267,10 @@ export function FullscreenLyricsPage() {
   const renderedTrackOffsetPx = canRenderSyncedMotion
     ? -getFloatingRowAnchorPx(rowLayout, renderedFloatingIndex)
     : 0;
+  const trackBrowseOffsetPx = isLiveLocked ? 0 : manualBrowseOffsetPx;
   const syncedTrackTranslateY =
     canRenderSyncedMotion
-      ? `${renderedTrackOffsetPx}px`
+      ? `${renderedTrackOffsetPx + trackBrowseOffsetPx}px`
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(progressSourceMs);
 
@@ -290,6 +299,7 @@ export function FullscreenLyricsPage() {
     });
 
     snapRenderedLiveAnchor();
+    setManualBrowseOffsetPx(0);
     programmaticScrollRef.current = true;
     viewportSurface.scrollTop = targetScrollTop;
     try {
@@ -578,43 +588,62 @@ export function FullscreenLyricsPage() {
   }, [activeTrack?.trackId, canRenderSyncedMotion, floatingSyncedIndex, isLiveLocked, rowLayout, syncedDisplayLines.length]);
 
   useEffect(() => {
-    const onScroll = () => {
+    if (isLiveLocked) {
+      setManualBrowseOffsetPx(0);
+    }
+  }, [isLiveLocked]);
+
+  useEffect(() => {
+    const browseBy = (deltaY: number) => {
       const viewportSurface = viewportSurfaceRef.current;
-      if (programmaticScrollRef.current || viewportSurface === null) {
+      if (programmaticScrollRef.current || viewportSurface === null || !canRenderSyncedMotion) {
         return;
       }
 
-      if (!isLiveLocked || !userScrollIntentRef.current) {
+      const clampedDelta = Math.min(Math.max(deltaY, -MANUAL_BROWSE_STEP_LIMIT_PX), MANUAL_BROWSE_STEP_LIMIT_PX);
+      if (Math.abs(clampedDelta) <= 1) {
         return;
       }
 
+      userScrollIntentRef.current = true;
       const viewportHeight = viewportSurface.clientHeight > 0 ? viewportSurface.clientHeight : window.innerHeight;
-      const liveAnchorScrollTop = getBoundaryLockedScrollTop({
-        viewportHeight,
-        rowLayout,
-        floatingIndex: canRenderSyncedMotion && syncedDisplayLines.length > 0 ? floatingSyncedIndex : 0,
-      });
-      const scrollDelta = Math.abs(viewportSurface.scrollTop - liveAnchorScrollTop);
-      if (scrollDelta > 20) {
-        userScrollIntentRef.current = false;
+      setManualBrowseOffsetPx((current) => clampManualBrowseOffset(current - clampedDelta, rowLayout, viewportHeight));
+      if (isLiveLocked) {
         setIsLiveLocked(false);
       }
     };
 
-    const armUserScrollIntent = () => {
-      userScrollIntentRef.current = true;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      browseBy(event.deltaY);
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      touchLastYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const currentY = event.touches[0]?.clientY ?? null;
+      const previousY = touchLastYRef.current;
+      if (currentY === null || previousY === null) {
+        touchLastYRef.current = currentY;
+        return;
+      }
+      event.preventDefault();
+      touchLastYRef.current = currentY;
+      browseBy(previousY - currentY);
     };
 
     const viewportSurface = viewportSurfaceRef.current;
-    viewportSurface?.addEventListener("wheel", armUserScrollIntent, { passive: true });
-    viewportSurface?.addEventListener("touchmove", armUserScrollIntent, { passive: true });
-    viewportSurface?.addEventListener("scroll", onScroll, { passive: true });
+    viewportSurface?.addEventListener("wheel", onWheel, { passive: false });
+    viewportSurface?.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewportSurface?.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => {
-      viewportSurface?.removeEventListener("wheel", armUserScrollIntent);
-      viewportSurface?.removeEventListener("touchmove", armUserScrollIntent);
-      viewportSurface?.removeEventListener("scroll", onScroll);
+      viewportSurface?.removeEventListener("wheel", onWheel);
+      viewportSurface?.removeEventListener("touchstart", onTouchStart);
+      viewportSurface?.removeEventListener("touchmove", onTouchMove);
     };
-  }, [canRenderSyncedMotion, floatingSyncedIndex, isLiveLocked, rowLayout, syncedDisplayLines.length]);
+  }, [canRenderSyncedMotion, isLiveLocked, rowLayout]);
 
   return (
     <div
@@ -799,7 +828,7 @@ export function FullscreenLyricsPage() {
           <div
             ref={viewportSurfaceRef}
             data-testid="fullscreen-lyrics-viewport"
-            className="relative h-full overflow-x-hidden overflow-y-auto overscroll-none"
+            className="relative h-full overflow-hidden overscroll-none"
           >
             <div
               data-testid="fullscreen-lyrics-center-stage"
