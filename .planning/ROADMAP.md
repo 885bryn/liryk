@@ -49,6 +49,10 @@ Plans:
 **Goal**: Boundary-specific regressions and manual verification prove the viewport fix without changing playback timing or motion correctness.
 **Depends on**: Phase 19
 **Requirements**: SAFE-01, QA-01
+**Plans**: 2 plans
+Plans:
+- [ ] 20-01-PLAN.md - Harden fullscreen viewport regressions and the targeted timing/motion safety gate.
+- [ ] 20-02-PLAN.md - Publish the Phase 20 validation runbook and closure evidence ledger.
 **Success Criteria**:
 1. Automated regression coverage proves correct behavior for track start, track end, track transitions, manual browse-away, and Back to Live recovery.
 2. Verification proves playback clock, drift policy, active-line selection, and settle semantics still match the validated contracts from earlier milestones.
