@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
-status: Ready for phase discussion
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-04-15T05:34:36.608Z"
+status: unknown
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-04-15T06:35:55.938Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-04-15)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** Phase 20 - viewport-regression-and-timing-safety-closure
+**Current focus:** Phase 20 — viewport-regression-and-timing-safety-closure
 
 ## Current Position
 
-Phase: 20 (viewport-regression-and-timing-safety-closure) - READY
-Plan: 0 of 0
+Phase: 20 (viewport-regression-and-timing-safety-closure) — EXECUTING
+Plan: 2 of 2
 
 ## Accumulated Context
 
@@ -69,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 19]: Verify first-line and last-line viewport visibility with deterministic geometry assertions instead of transform-only checks.
 - [Phase 19-song-boundary-visibility-and-live-lock-recovery]: Gate fullscreen live-lock exit behind a dedicated userScrollIntentRef so programmatic recentering and row-measurement corrections cannot masquerade as manual browse-away.
 - [Phase 19-song-boundary-visibility-and-live-lock-recovery]: Remove scroll-position auto-relock and make Back to Live the explicit path that re-enables live lock while restoring the current boundary-aware anchor.
+- [Phase 20-viewport-regression-and-timing-safety-closure]: Keep Phase 20 production code read-only while hardening fullscreen viewport and timing guarantees in tests.
+- [Phase 20-viewport-regression-and-timing-safety-closure]: Guard fullscreen timing authority with source assertions for estimated progress, early cueing, timeline selection, and motion-window helpers.
 
 ### Roadmap Evolution
 
@@ -91,6 +93,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-04-10T02:54:37.008Z
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-04-15T06:35:55.932Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None

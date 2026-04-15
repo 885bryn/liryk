@@ -21,8 +21,8 @@
 
 ### Safety and Verification
 
-- [ ] **SAFE-01**: The viewport-lock fix does not regress playback timing correctness, drift correction behavior, active-line selection, or settle semantics.
-- [ ] **QA-01**: Automated and manual regression coverage proves correct behavior at track start, track end, track transitions, manual browse-away, and Back to Live recovery.
+- [x] **SAFE-01**: The viewport-lock fix does not regress playback timing correctness, drift correction behavior, active-line selection, or settle semantics.
+- [x] **QA-01**: Automated and manual regression coverage proves correct behavior at track start, track end, track transitions, manual browse-away, and Back to Live recovery.
 
 ## v2 Requirements
 
@@ -58,8 +58,8 @@ Deferred until after v1.5 ships.
 | LIVE-02 | Phase 19 | Complete |
 | LIVE-03 | Phase 19 | Complete |
 | SCROLL-01 | Phase 18 | Complete |
-| SAFE-01 | Phase 20 | Pending |
-| QA-01 | Phase 20 | Pending |
+| SAFE-01 | Phase 20 | Complete |
+| QA-01 | Phase 20 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 9 total
@@ -68,4 +68,4 @@ Deferred until after v1.5 ships.
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-15 after Phase 19 completion*
+*Last updated: 2026-04-15 after Phase 20 Plan 01 completion*

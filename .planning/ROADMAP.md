@@ -51,7 +51,7 @@ Plans:
 **Requirements**: SAFE-01, QA-01
 **Plans**: 2 plans
 Plans:
-- [ ] 20-01-PLAN.md - Harden fullscreen viewport regressions and the targeted timing/motion safety gate.
+- [x] 20-01-PLAN.md - Harden fullscreen viewport regressions and the targeted timing/motion safety gate.
 - [ ] 20-02-PLAN.md - Publish the Phase 20 validation runbook and closure evidence ledger.
 **Success Criteria**:
 1. Automated regression coverage proves correct behavior for track start, track end, track transitions, manual browse-away, and Back to Live recovery.
@@ -67,7 +67,7 @@ Phases execute in numeric order: 18 -> 19 -> 20
 |-------|--------------|--------|
 | 18. Viewport Anchor Ownership and Scroll Surface | VIEW-03, LIVE-01, SCROLL-01 | Complete (2026-04-10) |
 | 19. Song-Boundary Visibility and Live-Lock Recovery | VIEW-01, VIEW-02, LIVE-02, LIVE-03 | Complete (2026-04-15) |
-| 20. Viewport Regression and Timing Safety Closure | SAFE-01, QA-01 | Not started |
+| 20. Viewport Regression and Timing Safety Closure | SAFE-01, QA-01 | In Progress (1/2 plans complete) |
 
 ## Future Candidate (After v1.5)
 
