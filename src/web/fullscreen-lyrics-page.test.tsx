@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ResolvedLyrics } from "@/core/lyrics/types";
-import { BASE_ROW_GAP_PX, buildRowLayout } from "@/core/sync/lyric-motion-window";
+import { BASE_ROW_GAP_PX, buildRowLayout, getFloatingRowAnchorPx } from "@/core/sync/lyric-motion-window";
 
 import type { UiAuthState } from "../state/auth/auth-store";
 
@@ -154,14 +154,22 @@ describe("FullscreenLyricsPage", () => {
     });
 
     lyricRows.forEach((row, index) => {
-      const top = (rowLayout.offsets[index] ?? 0) - scrollTop;
       const height = normalizedHeights[index] ?? rowHeight;
     Object.defineProperty(row, "getBoundingClientRect", {
       configurable: true,
       value: () =>
           ({
-            top: (rowLayout.offsets[index] ?? 0) - viewport.scrollTop,
-            bottom: (rowLayout.offsets[index] ?? 0) - viewport.scrollTop + height,
+            top:
+              input.viewportHeight / 2 -
+              getFloatingRowAnchorPx(rowLayout, input.activeIndex) +
+              (rowLayout.offsets[index] ?? 0) -
+              viewport.scrollTop,
+            bottom:
+              input.viewportHeight / 2 -
+              getFloatingRowAnchorPx(rowLayout, input.activeIndex) +
+              (rowLayout.offsets[index] ?? 0) -
+              viewport.scrollTop +
+              height,
             height,
           }) satisfies Partial<DOMRect>,
       });

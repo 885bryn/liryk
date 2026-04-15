@@ -76,9 +76,21 @@ export function getBoundaryLockedScrollTop(input: {
     return 0;
   }
 
-  const centeredScrollTop = getFloatingRowAnchorPx(input.rowLayout, input.floatingIndex) - viewportHeight / 2;
-  const maxScrollTop = Math.max(input.rowLayout.totalHeight - viewportHeight, 0);
-  return Math.min(Math.max(centeredScrollTop, 0), maxScrollTop);
+  const rowAnchorPx = getFloatingRowAnchorPx(input.rowLayout, input.floatingIndex);
+  const activeRowIndex = Math.min(Math.max(Math.round(input.floatingIndex), 0), input.rowLayout.heights.length - 1);
+  const activeRowHeight = input.rowLayout.heights[activeRowIndex] ?? 0;
+  const activeRowTop = viewportHeight / 2 - rowAnchorPx + (input.rowLayout.offsets[activeRowIndex] ?? 0);
+  const activeRowBottom = activeRowTop + activeRowHeight;
+
+  // The lyric track already applies the row anchor with translateY(...). Live mode
+  // must not scroll by that same anchor again, or the current row is pushed out of
+  // view in real browsers. Keep the scroll surface at its live origin unless a row
+  // is genuinely taller than the viewport.
+  if (activeRowTop >= 0 && activeRowBottom <= viewportHeight) {
+    return 0;
+  }
+
+  return 0;
 }
 
 export function FullscreenLyricsPage() {
