@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-04-15T20:57:35.792Z"
+stopped_at: Failed checkpoint at 20-04-PLAN.md Task 2 (manual fullscreen verification)
+last_updated: "2026-04-15T23:19:53.891Z"
 progress:
   total_phases: 3
   completed_phases: 2
@@ -87,16 +87,16 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 20 manual verification: run the six fullscreen scenarios from `20-02-SUMMARY.md` and sign off QA-01.
+- Phase 20 manual verification: rerun all seven fullscreen scenarios in `20-04-SUMMARY.md` after fixing sustained active-line drift and sign off QA-01.
 - Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
 - Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
 ### Blockers/Concerns
 
-- QA-01 manual fullscreen runbook sign-off is still required in browser for final phase closure.
+- QA-01 remains blocked: Task 2 failed manual fullscreen verification in `20-04-PLAN.md`; sustained mid-song drift still moves the active lyric above physical center (evidence: `C:/Users/bryan/Documents/ShareX/Screenshots/2026-04/brave_WBij3i2HxH.png`).
 
 ## Session Continuity
 
-Last session: 2026-04-15T20:57:35.790Z
-Stopped at: Completed 20-03-PLAN.md
+Last session: 2026-04-15T23:19:53.891Z
+Stopped at: Failed checkpoint at 20-04-PLAN.md Task 2 manual fullscreen verification
 Resume file: None
