@@ -630,6 +630,7 @@ describe("FullscreenLyricsPage", () => {
 
     const progressChecks = [4_100, 6_100, 8_100, 10_100, 12_100, 14_100, 16_100, 18_100];
     const viewportHeight = 360;
+    const centerTolerancePx = 36;
     const invariantRowHeights = Array.from({ length: 10 }, () => 72);
     const invariantLayout = buildRowLayout(invariantRowHeights, BASE_ROW_GAP_PX);
 
@@ -688,7 +689,7 @@ describe("FullscreenLyricsPage", () => {
           track.style.transform.replace("translateY(", "").replace("px)", ""),
         );
         const expectedTranslateY = -getFloatingRowAnchorPx(invariantLayout, activeIndex);
-        expect(Math.abs(actualTranslateY - expectedTranslateY)).toBeLessThanOrEqual(36);
+        expect(Math.abs(actualTranslateY - expectedTranslateY)).toBeLessThanOrEqual(centerTolerancePx);
 
         const geometry = stubViewportGeometry({
           viewportHeight,
@@ -700,7 +701,7 @@ describe("FullscreenLyricsPage", () => {
         expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
         expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(viewportHeight);
         const activeCenter = ((activeBounds?.top ?? 0) + (activeBounds?.bottom ?? 0)) / 2;
-        expect(Math.abs(activeCenter - viewportHeight / 2)).toBeLessThanOrEqual(36);
+        expect(Math.abs(activeCenter - viewportHeight / 2)).toBeLessThanOrEqual(centerTolerancePx);
         expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
       }
 
