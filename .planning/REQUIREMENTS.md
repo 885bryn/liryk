@@ -10,14 +10,14 @@
 
 - [x] **VIEW-01**: User always sees the highlighted synced lyric row inside the visible fullscreen viewport on the first active lyric after a track starts or transitions.
 - [x] **VIEW-02**: User always sees the highlighted synced lyric row inside the visible fullscreen viewport on the last active lyric and final line handoff near song end.
-- [ ] **VIEW-03**: Automatic live-anchor correction uses the same viewport reference model as fullscreen lyric positioning instead of a contradictory document-scroll calculation.
+- [x] **VIEW-03**: Automatic live-anchor correction uses the same viewport reference model as fullscreen lyric positioning instead of a contradictory document-scroll calculation.
 
 ### Live Lock and Scroll Intent
 
-- [ ] **LIVE-01**: Programmatic live-anchor correction does not disable live lock.
-- [ ] **LIVE-02**: Live lock disables only after explicit user scroll intent moves the viewport away from live mode.
-- [ ] **LIVE-03**: Back to Live restores the correct live anchor and re-enables live lock without leaving the active lyric misaligned.
-- [ ] **SCROLL-01**: The fullscreen lyrics page no longer exposes a large accidental document scroll range that can push translateY-centered lyrics off-screen during live mode.
+- [x] **LIVE-01**: Programmatic live-anchor correction does not disable live lock.
+- [x] **LIVE-02**: Live lock disables only after explicit user scroll intent moves the viewport away from live mode.
+- [x] **LIVE-03**: Back to Live restores the correct live anchor and re-enables live lock without leaving the active lyric misaligned.
+- [x] **SCROLL-01**: The fullscreen lyrics page no longer exposes a large accidental document scroll range that can push translateY-centered lyrics off-screen during live mode.
 
 ### Safety and Verification
 
@@ -55,8 +55,8 @@ Deferred until after v1.5 ships.
 | VIEW-02 | Phase 19 | Complete (19-01) |
 | VIEW-03 | Phase 18 | Complete |
 | LIVE-01 | Phase 18 | Complete |
-| LIVE-02 | Phase 19 | Pending |
-| LIVE-03 | Phase 19 | Pending |
+| LIVE-02 | Phase 19 | Complete |
+| LIVE-03 | Phase 19 | Complete |
 | SCROLL-01 | Phase 18 | Complete |
 | SAFE-01 | Phase 20 | Pending |
 | QA-01 | Phase 20 | Pending |
@@ -68,4 +68,4 @@ Deferred until after v1.5 ships.
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-10 after Phase 19 Plan 01 completion*
+*Last updated: 2026-04-15 after Phase 19 completion*

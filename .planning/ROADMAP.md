@@ -13,7 +13,7 @@ This milestone fixes a fullscreen viewport correctness bug introduced by conflic
 ## Phases
 
 - [x] **Phase 18: Viewport Anchor Ownership and Scroll Surface** - Unify fullscreen live anchoring around one viewport model and remove accidental scroll-state drift from live mode. (completed 2026-04-10)
-- [ ] **Phase 19: Song-Boundary Visibility and Live-Lock Recovery** - Keep the highlighted lyric visible at track start/end while preserving explicit browse-away and Back to Live behavior.
+- [x] **Phase 19: Song-Boundary Visibility and Live-Lock Recovery** - Keep the highlighted lyric visible at track start/end while preserving explicit browse-away and Back to Live behavior. (completed 2026-04-10)
 - [ ] **Phase 20: Viewport Regression and Timing Safety Closure** - Prove the viewport fix across boundary scenarios without regressing timing, active-line selection, or settle behavior.
 
 ## Phase Details
@@ -38,7 +38,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 19-01-PLAN.md - Add boundary-aware viewport geometry so first and last synced lyrics stay visible inside fullscreen.
-- [ ] 19-02-PLAN.md - Gate live lock on explicit user intent and restore the computed anchor through Back to Live recovery.
+- [x] 19-02-PLAN.md - Gate live lock on explicit user intent and restore the computed anchor through Back to Live recovery.
 **Success Criteria**:
 1. The first synced lyric after track start or transition is visibly inside the fullscreen viewport.
 2. The last synced lyric and final handoff remain visibly inside the fullscreen viewport near song end.
@@ -62,7 +62,7 @@ Phases execute in numeric order: 18 -> 19 -> 20
 | Phase | Requirements | Status |
 |-------|--------------|--------|
 | 18. Viewport Anchor Ownership and Scroll Surface | VIEW-03, LIVE-01, SCROLL-01 | Complete (2026-04-10) |
-| 19. Song-Boundary Visibility and Live-Lock Recovery | VIEW-01, VIEW-02, LIVE-02, LIVE-03 | In progress (1/2 plans complete) |
+| 19. Song-Boundary Visibility and Live-Lock Recovery | VIEW-01, VIEW-02, LIVE-02, LIVE-03 | Complete (2026-04-15) |
 | 20. Viewport Regression and Timing Safety Closure | SAFE-01, QA-01 | Not started |
 
 ## Future Candidate (After v1.5)

@@ -2,29 +2,29 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
-status: executing
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-04-10T02:41:44.000Z"
+status: Ready for phase discussion
+stopped_at: Completed 19-02-PLAN.md
+last_updated: "2026-04-15T05:34:36.608Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-04-10)
+See: `.planning/PROJECT.md` (updated 2026-04-15)
 
 **Core value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
-**Current focus:** Phase 19 - song-boundary-visibility-and-live-lock-recovery
+**Current focus:** Phase 20 - viewport-regression-and-timing-safety-closure
 
 ## Current Position
 
-Phase: 19 (song-boundary-visibility-and-live-lock-recovery) - EXECUTING
-Plan: 2 of 2
+Phase: 20 (viewport-regression-and-timing-safety-closure) - READY
+Plan: 0 of 0
 
 ## Accumulated Context
 
@@ -67,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 16]: Keep active-tier selection integer-based while only translateY uses phase-aware helper interpolation.
 - [Phase 19]: Clamp fullscreen boundary recentering with `getBoundaryLockedScrollTop(...)` derived from row-layout anchors and total height.
 - [Phase 19]: Verify first-line and last-line viewport visibility with deterministic geometry assertions instead of transform-only checks.
+- [Phase 19-song-boundary-visibility-and-live-lock-recovery]: Gate fullscreen live-lock exit behind a dedicated userScrollIntentRef so programmatic recentering and row-measurement corrections cannot masquerade as manual browse-away.
+- [Phase 19-song-boundary-visibility-and-live-lock-recovery]: Remove scroll-position auto-relock and make Back to Live the explicit path that re-enables live lock while restoring the current boundary-aware anchor.
 
 ### Roadmap Evolution
 
@@ -79,7 +81,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 19: keep the highlighted lyric visible at song start/end and restore explicit Back to Live/manual browse-away behavior.
+- Plan Phase 20: close viewport regression safety and milestone verification for start/end, manual browse-away, and Back to Live behavior.
 - Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
 - Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
@@ -89,6 +91,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-04-10T02:41:44.000Z
-Stopped at: Completed 19-01-PLAN.md
+Last session: 2026-04-10T02:54:37.008Z
+Stopped at: Completed 19-02-PLAN.md
 Resume file: None
