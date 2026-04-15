@@ -311,6 +311,19 @@ describe("FullscreenLyricsPage", () => {
     });
   }
 
+  function expectActiveRowInsideViewport(input: {
+    viewport: HTMLElement;
+    lyricRows: HTMLElement[];
+    activeIndex: number;
+    viewportHeight: number;
+  }) {
+    const { activeIndex, lyricRows, viewport, viewportHeight } = input;
+    const activeBounds = lyricRows[activeIndex]?.getBoundingClientRect();
+    expect(viewport.scrollTop).toBe(0);
+    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
+    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(viewportHeight);
+  }
+
   it("renders fullscreen layout and column markers", () => {
     render(<FullscreenLyricsPage />);
 
@@ -442,15 +455,15 @@ describe("FullscreenLyricsPage", () => {
       expect(screen.getByText("Line 1")).toBeTruthy();
     });
 
-    const { lyricRows } = stubViewportGeometry({
+    const { viewport, lyricRows } = stubViewportGeometry({
       viewportHeight: 300,
       activeIndex: 0,
       rowHeights: [72, 72, 72],
     });
+    expectActiveRowInsideViewport({ viewport, lyricRows, activeIndex: 0, viewportHeight: 300 });
     const activeBounds = lyricRows[0]?.getBoundingClientRect();
-    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
-    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
     expect(((activeBounds?.top ?? 0) + (activeBounds?.bottom ?? 0)) / 2).toBe(150);
+    expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
   });
 
   it("keeps the first synced lyric in viewport after track transition", async () => {
@@ -502,14 +515,13 @@ describe("FullscreenLyricsPage", () => {
       expect(screen.getByText("Line 1")).toBeTruthy();
     });
 
-    const { lyricRows } = stubViewportGeometry({
+    const { viewport, lyricRows } = stubViewportGeometry({
       viewportHeight: 300,
       activeIndex: 0,
       rowHeights: [72, 72, 72],
     });
-    const activeBounds = lyricRows[0]?.getBoundingClientRect();
-    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
-    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+    expectActiveRowInsideViewport({ viewport, lyricRows, activeIndex: 0, viewportHeight: 300 });
+    expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
   });
 
   it("snaps the rendered lyric position to the current line on mid-song fullscreen entry", async () => {
@@ -593,15 +605,15 @@ describe("FullscreenLyricsPage", () => {
       expect(screen.getByText("Line 3")).toBeTruthy();
     });
 
-    const { lyricRows } = stubViewportGeometry({
+    const { viewport, lyricRows } = stubViewportGeometry({
       viewportHeight: 300,
       activeIndex: 2,
       rowHeights: [72, 72, 72],
     });
+    expectActiveRowInsideViewport({ viewport, lyricRows, activeIndex: 2, viewportHeight: 300 });
     const activeBounds = lyricRows[2]?.getBoundingClientRect();
-    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
-    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
     expect(((activeBounds?.top ?? 0) + (activeBounds?.bottom ?? 0)) / 2).toBe(150);
+    expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
   });
 
   it("keeps the last synced lyric in viewport during final handoff", async () => {
@@ -640,14 +652,13 @@ describe("FullscreenLyricsPage", () => {
       expect(screen.getByText("Line 3")).toBeTruthy();
     });
 
-    const { lyricRows } = stubViewportGeometry({
+    const { viewport, lyricRows } = stubViewportGeometry({
       viewportHeight: 300,
       activeIndex: 2,
       rowHeights: [72, 72, 72],
     });
-    const activeBounds = lyricRows[2]?.getBoundingClientRect();
-    expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
-    expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(300);
+    expectActiveRowInsideViewport({ viewport, lyricRows, activeIndex: 2, viewportHeight: 300 });
+    expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
   });
 
   it("keeps live lock enabled during programmatic recentering and hides fullscreen-return-live", async () => {
@@ -851,9 +862,7 @@ describe("FullscreenLyricsPage", () => {
       });
 
       expect(viewport.scrollTop).toBe(expectedScrollTop);
-      const activeBounds = lyricRows[2]?.getBoundingClientRect();
-      expect(activeBounds?.top ?? -1).toBeGreaterThanOrEqual(0);
-      expect(activeBounds?.bottom ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(320);
+      expectActiveRowInsideViewport({ viewport, lyricRows, activeIndex: 2, viewportHeight: 320 });
     } finally {
       restoreAnimationFrame();
       restoreScrollTo();
