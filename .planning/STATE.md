@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 20 manual verification found viewport drift; gap planning needed
-last_updated: "2026-04-15T20:30:34.703Z"
+stopped_at: Completed 20-03-PLAN.md
+last_updated: "2026-04-15T20:57:35.792Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: `.planning/PROJECT.md` (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 20 (viewport-regression-and-timing-safety-closure) — VERIFYING
-Plan: 2 of 2
+Phase: 20 (viewport-regression-and-timing-safety-closure) — EXECUTING
+Plan: 4 of 4
 
 ## Accumulated Context
 
@@ -73,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 20-viewport-regression-and-timing-safety-closure]: Guard fullscreen timing authority with source assertions for estimated progress, early cueing, timeline selection, and motion-window helpers.
 - [Phase 20]: Keep Phase 20 production code read-only and close the phase through validation artifacts and command evidence only.
 - [Phase 20]: Treat the known Vite chunk-size warning as non-blocking residual risk because build exits 0 and warning predates this closure plan.
+- [Phase 20]: Use offsetHeight/clientHeight/scrollHeight as primary row-height sources before getBoundingClientRect fallback to keep live anchor invariant under visual transforms.
+- [Phase 20]: Preserve existing timing authority and motion-window contracts while fixing drift strictly in fullscreen measurement flow.
 
 ### Roadmap Evolution
 
@@ -91,10 +93,10 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- Manual fullscreen verification found cumulative upward drift: the highlighted lyric starts near mid-screen but climbs roughly half a line per progression until it moves off-screen mid-song.
+- QA-01 manual fullscreen runbook sign-off is still required in browser for final phase closure.
 
 ## Session Continuity
 
-Last session: 2026-04-15T20:30:34.703Z
-Stopped at: Human verification reported cumulative upward active-line drift; next step is Phase 20 gap planning
+Last session: 2026-04-15T20:57:35.790Z
+Stopped at: Completed 20-03-PLAN.md
 Resume file: None
