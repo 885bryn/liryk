@@ -14,7 +14,7 @@ This milestone fixes a fullscreen viewport correctness bug introduced by conflic
 
 - [x] **Phase 18: Viewport Anchor Ownership and Scroll Surface** - Unify fullscreen live anchoring around one viewport model and remove accidental scroll-state drift from live mode. (completed 2026-04-10)
 - [x] **Phase 19: Song-Boundary Visibility and Live-Lock Recovery** - Keep the highlighted lyric visible at track start/end while preserving explicit browse-away and Back to Live behavior. (completed 2026-04-10)
-- [ ] **Phase 20: Viewport Regression and Timing Safety Closure** - Prove the viewport fix across boundary scenarios without regressing timing, active-line selection, or settle behavior.
+- [x] **Phase 20: Viewport Regression and Timing Safety Closure** - Prove the viewport fix across boundary scenarios without regressing timing, active-line selection, or settle behavior. (completed 2026-04-15)
 
 ## Phase Details
 

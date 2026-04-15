@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-04-15T06:35:55.938Z"
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-04-15T20:27:14.345Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -23,7 +23,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 20 (viewport-regression-and-timing-safety-closure) — EXECUTING
+Phase: 20 (viewport-regression-and-timing-safety-closure) — COMPLETE
 Plan: 2 of 2
 
 ## Accumulated Context
@@ -71,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 19-song-boundary-visibility-and-live-lock-recovery]: Remove scroll-position auto-relock and make Back to Live the explicit path that re-enables live lock while restoring the current boundary-aware anchor.
 - [Phase 20-viewport-regression-and-timing-safety-closure]: Keep Phase 20 production code read-only while hardening fullscreen viewport and timing guarantees in tests.
 - [Phase 20-viewport-regression-and-timing-safety-closure]: Guard fullscreen timing authority with source assertions for estimated progress, early cueing, timeline selection, and motion-window helpers.
+- [Phase 20]: Keep Phase 20 production code read-only and close the phase through validation artifacts and command evidence only.
+- [Phase 20]: Treat the known Vite chunk-size warning as non-blocking residual risk because build exits 0 and warning predates this closure plan.
 
 ### Roadmap Evolution
 
@@ -83,7 +85,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan Phase 20: close viewport regression safety and milestone verification for start/end, manual browse-away, and Back to Live behavior.
+- Plan Phase 20: complete (validation runbook and closure evidence ledger published in 20-02).
 - Decide after v1.5 whether deferred v1.4 items (`16-03`, `VIS-05`) should become a separate polish milestone or fold into a later fullscreen quality pass.
 - Keep Private Karaoke Mode deferred until fullscreen viewport locking is stable.
 
@@ -93,6 +95,6 @@ None currently.
 
 ## Session Continuity
 
-Last session: 2026-04-15T06:35:55.932Z
-Stopped at: Completed 20-01-PLAN.md
+Last session: 2026-04-15T20:27:14.341Z
+Stopped at: Completed 20-02-PLAN.md
 Resume file: None
