@@ -46,7 +46,7 @@ If `not wrapped in act` appears, execution must either:
 
 ## Manual Fullscreen Runbook
 
-Use a real browser fullscreen session and complete all six scenarios.
+Use a real browser fullscreen session and complete all seven scenarios.
 
 | Scenario | Setup | Action | Expected Result | Evidence |
 |---|---|---|---|---|
@@ -56,6 +56,7 @@ Use a real browser fullscreen session and complete all six scenarios.
 | Final handoff | Stay on same track after last synced timestamp. | Observe handoff beyond final lyric timestamp. | Final handoff state keeps end lyric visible and stable; no jump off-screen. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
 | Manual browse-away | While live lock is active, ensure content is centered on live anchor. | Intentionally wheel or touch scroll away from live anchor. | Live lock disengages only after explicit user intent and Back to Live appears. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
 | Back to Live recovery | Begin from a manual browse-away state with Back to Live visible. | Click Back to Live. | Live lock re-engages and highlighted line returns to boundary-aware live anchor. | Browser, viewport size, track title, Spotify track ID, screenshot/video link, pass/fail. |
+| Sustained mid-song progression (drift check) | Open a synced track in fullscreen at least 30 seconds before the midpoint. | Observe playback for >=90 seconds spanning >=12 lyric transitions while live lock stays on. | Active lyric remains visible and centered within tolerance with no cumulative upward drift over the observation window. | Browser, viewport size, track title, Spotify track ID, observation window, screenshot/video link, pass/fail. |
 
 ## Evidence Capture Fields
 
