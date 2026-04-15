@@ -742,7 +742,7 @@ describe("FullscreenLyricsPage", () => {
       fireEvent.click(backToLive);
 
       await waitFor(() => {
-        expect(scrollToMock).toHaveBeenCalledWith({ top: expectedScrollTop, behavior: "smooth" });
+        expect(scrollToMock).toHaveBeenCalledWith({ top: expectedScrollTop, behavior: "auto" });
         expect(screen.queryByTestId("fullscreen-return-live")).toBeNull();
       });
 

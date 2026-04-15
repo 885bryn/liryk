@@ -265,6 +265,17 @@ export function FullscreenLyricsPage() {
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(progressSourceMs);
 
+  const snapRenderedLiveAnchor = () => {
+    if (!canRenderSyncedMotion) {
+      return;
+    }
+
+    targetFloatingIndexRef.current = floatingSyncedIndex;
+    renderedTrackIdRef.current = activeTrack?.trackId ?? null;
+    renderedFloatingIndexRef.current = floatingSyncedIndex;
+    setRenderedFloatingIndex(floatingSyncedIndex);
+  };
+
   const scrollToLiveAnchor = (behavior: ScrollBehavior) => {
     const viewportSurface = viewportSurfaceRef.current;
     if (typeof window === "undefined" || viewportSurface === null) {
@@ -278,13 +289,19 @@ export function FullscreenLyricsPage() {
       floatingIndex: canRenderSyncedMotion && syncedDisplayLines.length > 0 ? floatingSyncedIndex : 0,
     });
 
+    snapRenderedLiveAnchor();
     programmaticScrollRef.current = true;
+    viewportSurface.scrollTop = targetScrollTop;
     try {
-      viewportSurface.scrollTo({ top: targetScrollTop, behavior });
+      viewportSurface.scrollTo({ top: targetScrollTop, behavior: behavior === "smooth" ? "auto" : behavior });
     } catch {
       viewportSurface.scrollTop = targetScrollTop;
     }
+    window.requestAnimationFrame(() => {
+      viewportSurface.scrollTop = targetScrollTop;
+    });
     window.setTimeout(() => {
+      viewportSurface.scrollTop = targetScrollTop;
       programmaticScrollRef.current = false;
     }, behavior === "smooth" ? 350 : 80);
   };
