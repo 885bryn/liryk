@@ -1460,6 +1460,9 @@ describe("FullscreenLyricsPage", () => {
     const source = readFileSync("src/web/fullscreen-lyrics-page.tsx", "utf8");
     expect(source.includes("buildRowLayout")).toBe(true);
     expect(source.includes("getFloatingRowAnchorPx")).toBe(true);
+    expect(source.includes("offsetHeight")).toBe(true);
+    expect(source.includes("clientHeight")).toBe(true);
+    expect(source.includes("scrollHeight")).toBe(true);
   });
 
   it("removes document scroll anchoring from live mode", () => {
