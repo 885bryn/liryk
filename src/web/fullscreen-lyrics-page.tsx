@@ -4,7 +4,6 @@ import { resolveLyricsForTrack } from "@/core/lyrics/lyrics-resolver";
 import type { ResolvedLyrics } from "@/core/lyrics/types";
 import { applyEarlyCue, DEFAULT_CUE_LEAD_MS } from "@/core/sync/early-cue";
 import {
-  BASE_ROW_GAP_PX,
   DEFAULT_MAX_TRANSITION_MS,
   DEFAULT_MIN_TRANSITION_MS,
   DEFAULT_TRANSITION_WINDOW_FRACTION,
@@ -50,6 +49,12 @@ const JITTER_BACKWARD_TOLERANCE_MS = 500;
 const FALLBACK_ROW_TEXT_HEIGHT_PX = 72;
 const LIVE_INDEX_SNAP_THRESHOLD = 3;
 const MANUAL_BROWSE_STEP_LIMIT_PX = 220;
+const FULLSCREEN_ROW_GAP_PX = 0;
+const ACTIVE_CENTER_CORRECTION_GAIN = 0.06;
+const ACTIVE_CENTER_CORRECTION_STEP_LIMIT_PX = 1.5;
+const ACTIVE_CENTER_CORRECTION_MAX_PX = 96;
+const ACTIVE_CENTER_CORRECTION_DEADZONE_PX = 6;
+const ACTIVE_CENTER_CORRECTION_SETTLE_DELAY_MS = 220;
 
 type MotionAnchor = {
   trackId: string | null;
@@ -71,6 +76,21 @@ function formatElapsedProgress(progressMs: number): string {
 function clampManualBrowseOffset(offsetPx: number, rowLayout: RowLayout, viewportHeight: number): number {
   const maxOffset = Math.max(rowLayout.totalHeight, viewportHeight);
   return Math.min(Math.max(offsetPx, -maxOffset), maxOffset);
+}
+
+function getUnscaledRectHeight(element: HTMLParagraphElement): number {
+  const rectHeight = element.getBoundingClientRect().height;
+  if (!(rectHeight > 0)) {
+    return 0;
+  }
+
+  const match = element.style.transform.match(/scale\(([^)]+)\)/);
+  const scale = match ? Number.parseFloat(match[1] ?? "1") : 1;
+  if (!Number.isFinite(scale) || scale <= 0) {
+    return rectHeight;
+  }
+
+  return rectHeight / scale;
 }
 
 export function getBoundaryLockedScrollTop(input: {
@@ -125,13 +145,17 @@ export function FullscreenLyricsPage() {
   const playbackAnchorRef = useRef<ReturnType<typeof createPlaybackClockAnchor> | null>(null);
   const progressFrameRef = useRef<number | null>(null);
   const focusFrameRef = useRef<number | null>(null);
+  const centerCorrectionTimeoutRef = useRef<number | null>(null);
   const focusLastTsRef = useRef<number | null>(null);
   const renderedTrackIdRef = useRef<string | null>(null);
   const renderedFloatingIndexRef = useRef(0);
   const targetFloatingIndexRef = useRef(0);
   const lyricRowRefs = useRef<Array<HTMLParagraphElement | null>>([]);
+  const rowResizeObserverRef = useRef<ResizeObserver | null>(null);
   const [rowHeights, setRowHeights] = useState<number[]>([]);
   const [renderedFloatingIndex, setRenderedFloatingIndex] = useState(0);
+  const centerCorrectionPxRef = useRef(0);
+  const [centerCorrectionPx, setCenterCorrectionPx] = useState(0);
   const lastMotionAnchorRef = useRef<MotionAnchor>({
     trackId: null,
     activeIndex: null,
@@ -164,7 +188,7 @@ export function FullscreenLyricsPage() {
       }),
     [rowHeights, syncedDisplayLines],
   );
-  const rowLayout = useMemo(() => buildRowLayout(measuredRowHeights, BASE_ROW_GAP_PX), [measuredRowHeights]);
+  const rowLayout = useMemo(() => buildRowLayout(measuredRowHeights, FULLSCREEN_ROW_GAP_PX, 0), [measuredRowHeights]);
 
   const setLyricRowRef = (index: number) => (element: HTMLParagraphElement | null) => {
     lyricRowRefs.current[index] = element;
@@ -269,7 +293,7 @@ export function FullscreenLyricsPage() {
   const trackBrowseOffsetPx = isLiveLocked ? 0 : manualBrowseOffsetPx;
   const syncedTrackTranslateY =
     canRenderSyncedMotion
-      ? `${renderedTrackOffsetPx + trackBrowseOffsetPx}px`
+      ? `${renderedTrackOffsetPx + centerCorrectionPx + trackBrowseOffsetPx}px`
       : "0px";
   const elapsedProgressLabel = formatElapsedProgress(progressSourceMs);
 
@@ -474,6 +498,87 @@ export function FullscreenLyricsPage() {
   }, [canRenderSyncedMotion]);
 
   useEffect(() => {
+    if (centerCorrectionTimeoutRef.current !== null) {
+      window.clearTimeout(centerCorrectionTimeoutRef.current);
+      centerCorrectionTimeoutRef.current = null;
+    }
+
+    if (!canRenderSyncedMotion || !isLiveLocked || typeof activeSyncedIndex !== "number") {
+      return;
+    }
+
+    centerCorrectionTimeoutRef.current = window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
+        const target = targetFloatingIndexRef.current;
+        const targetFraction = Math.abs(target - Math.round(target));
+        const animDiff = Math.abs(renderedFloatingIndexRef.current - target);
+        if (targetFraction > 0.001 || animDiff > 0.001) {
+          return;
+        }
+
+        const viewportSurface = viewportSurfaceRef.current;
+        const activeRow = lyricRowRefs.current[activeSyncedIndex] ?? null;
+        if (!viewportSurface || !activeRow) {
+          return;
+        }
+
+        const viewportRect = viewportSurface.getBoundingClientRect();
+        const activeRect = activeRow.getBoundingClientRect();
+        if (!(viewportRect.height > 0) || !(activeRect.height > 0)) {
+          return;
+        }
+
+        const viewportCenter = (viewportRect.top + viewportRect.bottom) / 2;
+        const activeCenter = (activeRect.top + activeRect.bottom) / 2;
+        const residualDeltaPx = activeCenter - viewportCenter;
+        if (Math.abs(residualDeltaPx) <= ACTIVE_CENTER_CORRECTION_DEADZONE_PX) {
+          return;
+        }
+
+        const correctionStepPx = Math.max(
+          -ACTIVE_CENTER_CORRECTION_STEP_LIMIT_PX,
+          Math.min(ACTIVE_CENTER_CORRECTION_STEP_LIMIT_PX, -residualDeltaPx * ACTIVE_CENTER_CORRECTION_GAIN),
+        );
+        if (Math.abs(correctionStepPx) <= 0.05) {
+          return;
+        }
+
+        const nextCorrectionPx = Math.max(
+          -ACTIVE_CENTER_CORRECTION_MAX_PX,
+          Math.min(ACTIVE_CENTER_CORRECTION_MAX_PX, centerCorrectionPxRef.current + correctionStepPx),
+        );
+        if (Math.abs(nextCorrectionPx - centerCorrectionPxRef.current) <= 0.05) {
+          return;
+        }
+
+        centerCorrectionPxRef.current = nextCorrectionPx;
+        setCenterCorrectionPx(nextCorrectionPx);
+      });
+    }, ACTIVE_CENTER_CORRECTION_SETTLE_DELAY_MS);
+
+    return () => {
+      if (centerCorrectionTimeoutRef.current !== null) {
+        window.clearTimeout(centerCorrectionTimeoutRef.current);
+        centerCorrectionTimeoutRef.current = null;
+      }
+    };
+  }, [activeSyncedIndex, canRenderSyncedMotion, isLiveLocked]);
+
+  useEffect(() => {
+    if (canRenderSyncedMotion) {
+      return;
+    }
+
+    centerCorrectionPxRef.current = 0;
+    setCenterCorrectionPx(0);
+  }, [canRenderSyncedMotion]);
+
+  useEffect(() => {
+    centerCorrectionPxRef.current = 0;
+    setCenterCorrectionPx(0);
+  }, [activeTrack?.trackId]);
+
+  useEffect(() => {
     lastMotionAnchorRef.current = {
       trackId: nowPlaying?.trackId ?? null,
       activeIndex: activeSyncedIndex,
@@ -503,8 +608,12 @@ export function FullscreenLyricsPage() {
             return FALLBACK_ROW_TEXT_HEIGHT_PX;
           }
 
+          const rectMeasured = getUnscaledRectHeight(element);
+          if (rectMeasured > 0) {
+            return rectMeasured;
+          }
+
           const layoutHeights = [element.offsetHeight, element.clientHeight, element.scrollHeight]
-            .map((value) => Math.round(value))
             .filter((value) => value > 0);
           if (layoutHeights.length > 0) {
             return Math.max(...layoutHeights);
@@ -515,8 +624,7 @@ export function FullscreenLyricsPage() {
             return previousMeasured;
           }
 
-          const rectMeasured = Math.round(element.getBoundingClientRect().height);
-          return rectMeasured > 0 ? rectMeasured : FALLBACK_ROW_TEXT_HEIGHT_PX;
+          return FALLBACK_ROW_TEXT_HEIGHT_PX;
         });
 
         if (current.length === nextHeights.length && current.every((value, index) => Math.abs(value - nextHeights[index]) <= 1)) {
@@ -528,6 +636,29 @@ export function FullscreenLyricsPage() {
 
     measureRows();
 
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => {
+        measureRows();
+      });
+      rowResizeObserverRef.current = observer;
+      for (const element of lyricRowRefs.current) {
+        if (element) {
+          observer.observe(element);
+        }
+      }
+    }
+
+    const fontSet = typeof document !== "undefined" ? document.fonts : null;
+    const onFontsChanged = () => {
+      measureRows();
+    };
+    void fontSet?.ready.then(() => {
+      if (mounted) {
+        measureRows();
+      }
+    });
+    fontSet?.addEventListener?.("loadingdone", onFontsChanged);
+
     const onResize = () => {
       measureRows();
     };
@@ -536,6 +667,9 @@ export function FullscreenLyricsPage() {
     return () => {
       mounted = false;
       window.removeEventListener("resize", onResize);
+      fontSet?.removeEventListener?.("loadingdone", onFontsChanged);
+      rowResizeObserverRef.current?.disconnect();
+      rowResizeObserverRef.current = null;
     };
   }, [resolvedLyrics?.renderMode, syncedDisplayLines]);
 
@@ -640,6 +774,14 @@ export function FullscreenLyricsPage() {
       viewportSurface?.removeEventListener("touchmove", onTouchMove);
     };
   }, [canRenderSyncedMotion, isLiveLocked, rowLayout]);
+
+  const activeRowElement = typeof activeSyncedIndex === "number" ? lyricRowRefs.current[activeSyncedIndex] : null;
+  const viewportRect = viewportSurfaceRef.current?.getBoundingClientRect() ?? null;
+  const activeRowRect = activeRowElement?.getBoundingClientRect() ?? null;
+  const activeRowCenterDeltaPx =
+    viewportRect && activeRowRect
+      ? (activeRowRect.top + activeRowRect.bottom) / 2 - (viewportRect.top + viewportRect.bottom) / 2
+      : null;
 
   return (
     <div
@@ -797,6 +939,18 @@ export function FullscreenLyricsPage() {
           </p>
           <p>
             Correction state: <span data-testid="diagnostics-correction-state">{syncState.correctionState}</span>
+          </p>
+          <p>
+            Active center delta px: <span data-testid="diagnostics-active-center-delta">{activeRowCenterDeltaPx?.toFixed(2) ?? "n/a"}</span>
+          </p>
+          <p>
+            Active row height px: <span data-testid="diagnostics-active-row-height">{activeRowRect?.height.toFixed(2) ?? "n/a"}</span>
+          </p>
+          <p>
+            Floating index: <span data-testid="diagnostics-floating-index">{renderedFloatingIndex.toFixed(3)}</span>
+          </p>
+          <p>
+            Center correction px: <span data-testid="diagnostics-center-correction">{centerCorrectionPx.toFixed(2)}</span>
           </p>
         </section>
       ) : null}
