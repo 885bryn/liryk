@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "paused_at": "2026-04-17T00:00:00.000Z",
+  "branch": "gsd/phase-21-panel-container-toggle-and-ux-shell",
+  "milestone": "v1.6",
+  "phase": "21",
+  "phase_slug": "panel-container-toggle-and-ux-shell",
+  "plan": "2",
+  "status": "wave-1-complete-wave-2-not-started",
+  "wave_1_status": "complete",
+  "wave_2_status": "not_started",
+  "commits": {
+    "wave_1": "2f85fbd feat(21-01): implement useDevActivityLog ring-buffer hook and DevActivityPanel component"
+  },
+  "tests": {
+    "dev_activity_panel": "14 passing"
+  },
+  "next_action": "Execute Plan 21-02 — wire toggle, panel JSX, and auth events into fullscreen-lyrics-page.tsx",
+  "resume_command": "/gsd:execute-phase 21",
+  "handoff_file": ".planning/phases/21-panel-container-toggle-and-ux-shell/.continue-here.md"
+}

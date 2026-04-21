@@ -1,102 +1,123 @@
-# Requirements: Spotify Live Lyrics Desktop App
+# Requirements: Spotify Live Lyrics Web App
 
-**Defined:** 2026-03-19
 **Core Value:** When a Spotify track is playing, the app shows the right lyric line at the right moment with smooth auto-scrolling.
+**Current Milestone:** v1.6 Developer Activity Panel
 
-## v1 Requirements
+## v1.6 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+### Panel Toggle
 
-### Authentication & Session
+- [ ] **DEV-01**: User can toggle the developer activity panel open/closed via a small button in fullscreen mode
+- [ ] **DEV-02**: Panel and toggle button render inside the fullscreen root element (not portaled to document.body) and are positioned absolutely so they do not affect lyric layout or fire the row ResizeObserver
+- [ ] **DEV-03**: Panel scroll events do not bubble to the lyric viewport scroll surface (live lock is not accidentally disengaged by scrolling the log)
 
-- [x] **AUTH-01**: User can connect their Spotify account through OAuth PKCE without entering credentials into the app
-- [x] **AUTH-02**: User stays connected across app restarts through secure token refresh handling
+### Event Log
 
-### Playback Detection
+- [ ] **DEV-04**: Panel displays timestamped entries for lyrics fetch events (fetch initiated, cache hit, failure, provider used)
+- [ ] **DEV-05**: Panel displays timestamped entries for Spotify sync events (API poll, track change, playback state update)
+- [ ] **DEV-06**: Panel displays timestamped entries for playback clock events (drift corrections, hard resets)
+- [ ] **DEV-07**: Panel displays timestamped entries for auth/connection events (token refresh, auth state change, connection status)
 
-- [x] **PLAY-01**: User can see lyrics tied to the currently playing Spotify track without requiring Spotify Premium
-- [x] **PLAY-02**: User sees lyric sync update based on current playback position (`progress_ms`) while a track is playing
-- [x] **PLAY-03**: User sees lyric sync react correctly when playback is paused, resumed, skipped, or seeked
+### UX & Visual
 
-### Lyrics Retrieval & Matching
+- [ ] **DEV-08**: Panel auto-scrolls to the latest entry, with a toggle to pause auto-scroll for inspection
+- [ ] **DEV-09**: Panel is styled to match the dark fullscreen aesthetic and does not disrupt lyric display
 
-- [x] **LYR-01**: User gets lyrics fetched from internet sources for the active Spotify track
-- [x] **LYR-02**: User gets the best-matching lyric version using track metadata (title, artist, album, duration)
-- [x] **LYR-03**: User gets timestamped lyrics when available, with plain-lyrics fallback when timestamps are unavailable
-- [x] **LYR-04**: User sees "Lyrics not found" when no usable lyrics are available
+## Future Requirements (v1.7+)
 
-### Live Sync Experience
+### Extended Panel UX
 
-- [x] **SYNC-01**: User sees the correct lyric line highlighted in real time during playback
-- [x] **SYNC-02**: User sees the lyrics view auto-scroll to keep the active line in view as the song progresses
+- **DEV-F1**: User can filter log entries by event category
+- **DEV-F2**: User can clear the log without closing the panel
+- **DEV-F3**: Keyboard shortcut (e.g. `?`) toggles the panel
+- **DEV-F4**: Panel displays motion/transition events (line change, settle, phase transitions)
+- **DEV-F5**: Panel displays viewport events (live-lock state changes, Back to Live activations)
 
-### Internationalization & Rendering
+---
 
-- [x] **I18N-01**: User can read lyrics in any supported UTF-8 language, including CJK, Arabic, and Korean scripts
+**Archived: v1.5 Viewport-Locked Live Lyrics**
+**Defined:** 2026-04-09
 
-### Cache & Performance
+## v1.5 Requirements (Archived)
 
-- [ ] **CACH-01**: User gets faster repeat lyric loads through local cache keyed by Spotify track ID
-- [ ] **CACH-02**: User gets fresh lyric updates when cache entries become stale or invalid
+### Viewport Anchoring
 
-### UI & Implementation Constraints
+- [x] **VIEW-01**: User always sees the highlighted synced lyric row inside the visible fullscreen viewport on the first active lyric after a track starts or transitions.
+- [x] **VIEW-02**: User always sees the highlighted synced lyric row inside the visible fullscreen viewport on the last active lyric and final line handoff near song end.
+- [x] **VIEW-03**: Automatic live-anchor correction uses the same viewport reference model as fullscreen lyric positioning instead of a contradictory document-scroll calculation.
 
-- [x] **UI-01**: User sees the milestone UI implemented with the project's existing shadcn/ui components
+### Live Lock and Scroll Intent
 
-### Security & Configuration
+- [x] **LIVE-01**: Programmatic live-anchor correction does not disable live lock.
+- [x] **LIVE-02**: Live lock disables only after explicit user scroll intent moves the viewport away from live mode.
+- [x] **LIVE-03**: Back to Live restores the correct live anchor and re-enables live lock without leaving the active lyric misaligned.
+- [x] **SCROLL-01**: The fullscreen lyrics page no longer exposes a large accidental document scroll range that can push translateY-centered lyrics off-screen during live mode.
 
-- [x] **SECU-01**: User's API credentials and tokens are loaded from environment configuration (`.env`) and never hardcoded
+### Safety and Verification
+
+- [x] **SAFE-01**: The viewport-lock fix does not regress playback timing correctness, drift correction behavior, active-line selection, or settle semantics.
+- [x] **QA-01**: Automated and manual regression coverage proves correct behavior at track start, track end, track transitions, manual browse-away, and Back to Live recovery.
 
 ## v2 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Deferred until after v1.5 ships.
 
-### Quality & Power Features
+### Motion Polish
 
-- **QUAL-01**: User can see a sync quality indicator (`Synced`, `Estimated`, `Static`)
-- **QUAL-02**: User can apply per-track timing offset correction for imperfect community timestamps
-- **DESK-01**: User can use desktop productivity features such as always-on-top mini mode and keyboard navigation
+- **VIS-05**: User sees nearby line style transitions update smoothly during line handoff.
+- **VAL-01**: User-facing motion quality gate from deferred `16-03-PLAN.md` is executed and documented.
+
+### Karaoke
+
+- **KAR-01**: User can enter Karaoke Mode from fullscreen while Spotify remains the remote selector/reference.
+- **KAR-02**: Karaoke Mode uses local YouTube playback as the backing source with durable mapping and cache support.
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| Mobile app support | Milestone 1 is explicitly desktop-only |
-| Playback control features (play/pause/seek from app) | Not required to validate core live-lyrics value |
-| Word-level karaoke highlighting | High complexity and inconsistent data availability; line-level sync is milestone target |
-| Multi-provider music services (non-Spotify) | Scope is Spotify-only for milestone reliability |
-| Deployment/publishing/distribution pipeline | Explicitly excluded in current milestone constraints |
+| Log export / copy to clipboard | Nice to have but not needed for testing; defer to future |
+| Resizable / draggable panel | Complexity outweighs testing benefit for v1.6 |
+| Dev panel in production builds | Developer tool only; not a user-facing feature |
+| Karaoke mode implementation | Separate milestone candidate |
+| Playback clock or drift-policy redesign | Timing architecture is already validated and must remain stable |
+| New lyric providers or source changes | Out of scope for this milestone |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+### v1.6
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Complete |
-| AUTH-02 | Phase 1 | Complete |
-| PLAY-01 | Phase 2 | Complete |
-| PLAY-02 | Phase 2 | Complete |
-| PLAY-03 | Phase 2 | Complete |
-| LYR-01 | Phase 3 | Complete |
-| LYR-02 | Phase 3 | Complete |
-| LYR-03 | Phase 3 | Complete |
-| LYR-04 | Phase 3 | Complete |
-| SYNC-01 | Phase 2 | Complete |
-| SYNC-02 | Phase 2 | Complete |
-| I18N-01 | Phase 3 | Complete |
-| CACH-01 | Phase 4 | Pending |
-| CACH-02 | Phase 4 | Pending |
-| UI-01 | Phase 3 | Complete |
-| SECU-01 | Phase 1 | Complete |
+| DEV-01 | Phase 21 | Pending |
+| DEV-02 | Phase 21 | Pending |
+| DEV-03 | Phase 21 | Pending |
+| DEV-04 | Phase 22 | Pending |
+| DEV-05 | Phase 22 | Pending |
+| DEV-06 | Phase 22 | Pending |
+| DEV-07 | Phase 21 | Pending |
+| DEV-08 | Phase 21 | Pending |
+| DEV-09 | Phase 21 | Pending |
 
 **Coverage:**
-- v1 requirements: 16 total
-- Mapped to phases: 16
+- v1.6 requirements: 9 total
+- Mapped to phases: 9
 - Unmapped: 0 ✓
 
+### v1.5 (Archived)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| VIEW-01 | Phase 19 | Complete (19-01) |
+| VIEW-02 | Phase 19 | Complete (19-01) |
+| VIEW-03 | Phase 18 | Complete |
+| LIVE-01 | Phase 18 | Complete |
+| LIVE-02 | Phase 19 | Complete |
+| LIVE-03 | Phase 19 | Complete |
+| SCROLL-01 | Phase 18 | Complete |
+| SAFE-01 | Phase 20 | Complete |
+| QA-01 | Phase 20 | Complete |
+
 ---
-*Requirements defined: 2026-03-19*
-*Last updated: 2026-03-20 after Phase 1 gap-closure verification*
+*Requirements defined: 2026-04-17 (v1.6)*
+*Last updated: 2026-04-17 after milestone v1.6 initialization*

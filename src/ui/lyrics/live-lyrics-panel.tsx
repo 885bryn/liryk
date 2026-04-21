@@ -4,6 +4,11 @@ import type { LiveSyncUiState } from "../../state/playback/live-sync-store";
 export type LiveLyricsPanelModel = LiveLyricsViewModel & {
   title: string;
   trackLabel: string;
+  nowPlayingTitle: string;
+  nowPlayingArtist: string;
+  isNowPlayingKnown: boolean;
+  stateRailMessage: string;
+  stateRailVariant: "idle" | "info" | "warning";
 };
 
 export function createLiveLyricsPanelBuilder() {
@@ -14,6 +19,7 @@ export function createLiveLyricsPanelBuilder() {
       syncState: LiveSyncUiState;
       lines: string[];
       trackTitle?: string;
+      trackArtist?: string;
       transientStatus?: "syncing" | "reconnecting";
       showReturnToLive: boolean;
     }): LiveLyricsPanelModel {
@@ -36,9 +42,21 @@ export function createLiveLyricsPanelBuilder() {
         showReturnToLive: input.showReturnToLive,
       });
 
+      const stateRailVariant: LiveLyricsPanelModel["stateRailVariant"] =
+        view.sourceState === "not-found" || view.status === "unsupported"
+          ? "warning"
+          : view.status === "idle" || view.status === "no-track"
+            ? "idle"
+            : "info";
+
       return {
         title: "Live Lyrics",
         trackLabel: input.trackTitle ?? "No active track",
+        nowPlayingTitle: input.trackTitle ?? "No active track",
+        nowPlayingArtist: input.trackArtist ?? "Spotify",
+        isNowPlayingKnown: typeof input.trackTitle === "string" && input.syncState.trackId !== null,
+        stateRailMessage: view.statusLine,
+        stateRailVariant,
         ...view,
       };
     },

@@ -16,7 +16,7 @@ vi.mock("../../infra/config/env", () => {
 
 function createClientMock(): SpotifyAuthClient {
   return {
-    beginAuthorization: vi.fn(() => ({
+    beginAuthorization: vi.fn(async () => ({
       authorizeUrl: "https://accounts.spotify.com/authorize?state=state-123",
       state: "state-123",
       codeVerifier: "verifier-abc",
@@ -41,7 +41,7 @@ describe("SpotifyAuthService", () => {
 
     expect(service.getState()).toEqual({ status: "disconnected" });
 
-    const authorizing = service.startAuthorization();
+    const authorizing = await service.startAuthorization();
     expect(authorizing.status).toBe("authorizing");
 
     const connected = await service.completeAuthorization({ code: "auth-code", state: "state-123" });
@@ -58,7 +58,7 @@ describe("SpotifyAuthService", () => {
   it("returns recoverable_error when callback state does not match", async () => {
     const client = createClientMock();
     const service = new SpotifyAuthService(client, () => 1000);
-    service.startAuthorization();
+    await service.startAuthorization();
 
     const errored = await service.completeAuthorization({
       code: "auth-code",
@@ -76,7 +76,7 @@ describe("SpotifyAuthService", () => {
   it("never includes tokens in renderer-facing state", async () => {
     const client = createClientMock();
     const service = new SpotifyAuthService(client, () => 1000);
-    service.startAuthorization();
+    await service.startAuthorization();
 
     await service.completeAuthorization({ code: "auth-code", state: "state-123" });
     const stateJson = JSON.stringify(service.getState());

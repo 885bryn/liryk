@@ -6,10 +6,22 @@ import { createLyricSyncEngine } from "../core/sync/lyric-sync-engine";
 import { LiveSyncStore } from "../state/playback/live-sync-store";
 
 describe("createLiveSyncRuntime", () => {
-  it("updates store for playing, paused, and idle playback states", () => {
+  it("schedules requestAnimationFrame while playing and updates progress on callbacks", () => {
     let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    let nextFrameId = 1;
+    const pendingFrames = new Map<number, FrameRequestCallback>();
+    let nowPerfMs = 1_000;
     const store = new LiveSyncStore();
-    const engine = createLyricSyncEngine({ nowPerfMs: () => 1_000 });
+    const engine = createLyricSyncEngine({ nowPerfMs: () => nowPerfMs });
+    const requestAnimationFrameFn = vi.fn((callback: FrameRequestCallback) => {
+      const frameId = nextFrameId;
+      nextFrameId += 1;
+      pendingFrames.set(frameId, callback);
+      return frameId;
+    });
+    const cancelAnimationFrameFn = vi.fn((frameId: number) => {
+      pendingFrames.delete(frameId);
+    });
 
     const runtime = createLiveSyncRuntime({
       subscribePlayback: (listener) => {
@@ -24,8 +36,9 @@ describe("createLiveSyncRuntime", () => {
         { startMs: 0, text: "a" },
         { startMs: 1_000, text: "b" },
       ],
-      setIntervalFn: vi.fn(() => 0 as unknown as ReturnType<typeof setInterval>),
-      clearIntervalFn: vi.fn(),
+      nowPerfMs: () => nowPerfMs,
+      requestAnimationFrameFn,
+      cancelAnimationFrameFn,
     });
 
     runtime.start();
@@ -42,6 +55,173 @@ describe("createLiveSyncRuntime", () => {
 
     expect(store.selectPlaybackState()).toBe("playing");
     expect(store.selectLiveSync().activeLineIndex).toBe(0);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(400);
+    expect(store.selectLiveSync().polledProgressMs).toBe(400);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("synced");
+    expect(requestAnimationFrameFn).toHaveBeenCalledTimes(1);
+
+    nowPerfMs = 1_750;
+    pendingFrames.get(1)?.(0);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(1_150);
+    expect(requestAnimationFrameFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows bounded in-band drift convergence without hard reset state", () => {
+    let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    const engine = createLyricSyncEngine({ nowPerfMs: () => 100 });
+
+    const runtime = createLiveSyncRuntime({
+      subscribePlayback: (listener) => {
+        playbackListener = listener;
+        return () => {
+          playbackListener = null;
+        };
+      },
+      syncEngine: engine,
+      liveSyncStore: store,
+      getTimelineForTrack: () => [{ startMs: 0, text: "a" }],
+      requestAnimationFrameFn: vi.fn(() => 0),
+      cancelAnimationFrameFn: vi.fn(),
+    });
+
+    runtime.start();
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 100,
+        capturedAtMs: 100,
+      },
+      transition: "no_change",
+    });
+
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 500,
+        capturedAtMs: 200,
+      },
+      transition: "no_change",
+    });
+
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(200);
+    expect(store.selectLiveSync().polledProgressMs).toBe(500);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(-300);
+    expect(store.selectLiveSync().correctionState).toBe("estimated");
+
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 500,
+        capturedAtMs: 300,
+      },
+      transition: "no_change",
+    });
+
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(300);
+    expect(store.selectLiveSync().polledProgressMs).toBe(500);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(-200);
+    expect(store.selectLiveSync().correctionState).toBe("estimated");
+  });
+
+  it("marks large no-change drift as hard-reset diagnostics state", () => {
+    let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    const store = new LiveSyncStore();
+    const engine = createLyricSyncEngine({ nowPerfMs: () => 100 });
+
+    const runtime = createLiveSyncRuntime({
+      subscribePlayback: (listener) => {
+        playbackListener = listener;
+        return () => {
+          playbackListener = null;
+        };
+      },
+      syncEngine: engine,
+      liveSyncStore: store,
+      getTimelineForTrack: () => [{ startMs: 0, text: "a" }],
+      requestAnimationFrameFn: vi.fn(() => 0),
+      cancelAnimationFrameFn: vi.fn(),
+    });
+
+    runtime.start();
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 100,
+        capturedAtMs: 100,
+      },
+      transition: "no_change",
+    });
+
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 2_000,
+        capturedAtMs: 200,
+      },
+      transition: "no_change",
+    });
+
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(2_000);
+    expect(store.selectLiveSync().polledProgressMs).toBe(2_000);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("hard-reset");
+  });
+
+  it("cancels pending requestAnimationFrame when playback pauses", () => {
+    let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    let nextFrameId = 1;
+    const pendingFrames = new Map<number, FrameRequestCallback>();
+    const store = new LiveSyncStore();
+    const engine = createLyricSyncEngine({ nowPerfMs: () => 1_000 });
+    const requestAnimationFrameFn = vi.fn((callback: FrameRequestCallback) => {
+      const frameId = nextFrameId;
+      nextFrameId += 1;
+      pendingFrames.set(frameId, callback);
+      return frameId;
+    });
+    const cancelAnimationFrameFn = vi.fn((frameId: number) => {
+      pendingFrames.delete(frameId);
+    });
+
+    const runtime = createLiveSyncRuntime({
+      subscribePlayback: (listener) => {
+        playbackListener = listener;
+        return () => {
+          playbackListener = null;
+        };
+      },
+      syncEngine: engine,
+      liveSyncStore: store,
+      getTimelineForTrack: () => [{ startMs: 0, text: "a" }],
+      requestAnimationFrameFn,
+      cancelAnimationFrameFn,
+    });
+
+    runtime.start();
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 100,
+        capturedAtMs: 100,
+      },
+      transition: "no_change",
+    });
+
+    expect(requestAnimationFrameFn).toHaveBeenCalledTimes(1);
 
     playbackListener?.({
       snapshot: {
@@ -54,11 +234,87 @@ describe("createLiveSyncRuntime", () => {
       transition: "paused",
     });
 
+    expect(cancelAnimationFrameFn).toHaveBeenCalledWith(1);
+    pendingFrames.get(1)?.(0);
     expect(store.selectPlaybackState()).toBe("paused");
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(500);
+    expect(store.selectLiveSync().polledProgressMs).toBe(500);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("synced");
+    expect(requestAnimationFrameFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels pending requestAnimationFrame for idle snapshots and runtime stop", () => {
+    let playbackListener: ((event: PlaybackRuntimeEvent) => void) | null = null;
+    let nextFrameId = 1;
+    const pendingFrames = new Map<number, FrameRequestCallback>();
+    let nowPerfMs = 1_000;
+    const store = new LiveSyncStore();
+    const engine = createLyricSyncEngine({ nowPerfMs: () => nowPerfMs });
+    const requestAnimationFrameFn = vi.fn((callback: FrameRequestCallback) => {
+      const frameId = nextFrameId;
+      nextFrameId += 1;
+      pendingFrames.set(frameId, callback);
+      return frameId;
+    });
+    const cancelAnimationFrameFn = vi.fn((frameId: number) => {
+      pendingFrames.delete(frameId);
+    });
+
+    const runtime = createLiveSyncRuntime({
+      subscribePlayback: (listener) => {
+        playbackListener = listener;
+        return () => {
+          playbackListener = null;
+        };
+      },
+      syncEngine: engine,
+      liveSyncStore: store,
+      getTimelineForTrack: () => [{ startMs: 0, text: "a" }],
+      nowPerfMs: () => nowPerfMs,
+      requestAnimationFrameFn,
+      cancelAnimationFrameFn,
+    });
+
+    runtime.start();
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 400,
+        capturedAtMs: 100,
+      },
+      transition: "no_change",
+    });
+
+    expect(requestAnimationFrameFn).toHaveBeenCalledTimes(1);
 
     playbackListener?.({ snapshot: null, transition: "no_change" });
+    expect(cancelAnimationFrameFn).toHaveBeenCalledWith(1);
     expect(store.selectPlaybackState()).toBe("idle");
     expect(store.selectLiveSync().activeLineIndex).toBeNull();
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
+    expect(store.selectLiveSync().polledProgressMs).toBe(0);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("static");
+
+    playbackListener?.({
+      snapshot: {
+        trackId: "track-1",
+        deviceId: "device-a",
+        isPlaying: true,
+        progressMs: 450,
+        capturedAtMs: 200,
+      },
+      transition: "no_change",
+    });
+
+    expect(requestAnimationFrameFn).toHaveBeenCalledTimes(2);
+    runtime.stop();
+    expect(cancelAnimationFrameFn).toHaveBeenCalledWith(2);
+    pendingFrames.get(2)?.(0);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(450);
   });
 
   it("marks unsupported tracks unavailable and keeps latest snapshot state", () => {
@@ -76,8 +332,8 @@ describe("createLiveSyncRuntime", () => {
       syncEngine: engine,
       liveSyncStore: store,
       getTimelineForTrack: (trackId) => (trackId === "known" ? [{ startMs: 0, text: "line" }] : null),
-      setIntervalFn: vi.fn(() => 0 as unknown as ReturnType<typeof setInterval>),
-      clearIntervalFn: vi.fn(),
+      requestAnimationFrameFn: vi.fn(() => 0),
+      cancelAnimationFrameFn: vi.fn(),
     });
 
     runtime.start();
@@ -119,8 +375,8 @@ describe("createLiveSyncRuntime", () => {
           { startMs: null, text: "plain b", renderMode: "plain-static", isTimestamped: false },
         ],
       }),
-      setIntervalFn: vi.fn(() => 0 as unknown as ReturnType<typeof setInterval>),
-      clearIntervalFn: vi.fn(),
+      requestAnimationFrameFn: vi.fn(() => 0),
+      cancelAnimationFrameFn: vi.fn(),
     });
 
     runtime.start();

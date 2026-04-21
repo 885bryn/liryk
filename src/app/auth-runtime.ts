@@ -1,6 +1,6 @@
 import { bootstrapAuth, type BootstrapAuthDependencies } from "./bootstrap-auth";
 import { SpotifyAuthService } from "../core/auth/spotify-auth-service";
-import type { SpotifyCallbackInput, SpotifyTokenExchangeResult } from "../core/auth/types";
+import type { PendingAuthorization, SpotifyCallbackInput, SpotifyTokenExchangeResult } from "../core/auth/types";
 import { createTokenStore, type PersistedTokens, type TokenStore } from "../infra/auth/token-store";
 import {
   getRuntimeSpotifyClient,
@@ -11,7 +11,7 @@ import { AuthStore, type AccountDisplay, type UiAuthState } from "../state/auth/
 
 export type RuntimeSession = {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   accessTokenExpiresAtMs: number;
   grantedScopes: string[];
 };
@@ -31,7 +31,61 @@ export type AuthRuntimeDependencies = {
   now?: () => number;
   hasPlayback?: () => boolean;
   getAccountDisplay?: () => AccountDisplay | undefined;
+  pendingAuthStore?: PendingAuthStore;
 };
+
+type PendingAuthStore = {
+  load(): PendingAuthorization | null;
+  save(pending: PendingAuthorization): void;
+  clear(): void;
+};
+
+const PENDING_AUTH_STORAGE_KEY = "liryk-pending-auth";
+
+function createPendingAuthStore(): PendingAuthStore {
+  const storage = (() => {
+    try {
+      return (globalThis as typeof globalThis & { sessionStorage?: Storage }).sessionStorage ?? null;
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!storage) {
+    return {
+      load: () => null,
+      save: () => undefined,
+      clear: () => undefined,
+    };
+  }
+
+  return {
+    load() {
+      const raw = storage.getItem(PENDING_AUTH_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      try {
+        const parsed = JSON.parse(raw) as PendingAuthorization;
+        if (!parsed?.state || !parsed?.codeVerifier || !parsed?.requestId || !parsed?.authorizeUrl) {
+          storage.removeItem(PENDING_AUTH_STORAGE_KEY);
+          return null;
+        }
+        return parsed;
+      } catch {
+        storage.removeItem(PENDING_AUTH_STORAGE_KEY);
+        return null;
+      }
+    },
+    save(pending) {
+      storage.setItem(PENDING_AUTH_STORAGE_KEY, JSON.stringify(pending));
+    },
+    clear() {
+      storage.removeItem(PENDING_AUTH_STORAGE_KEY);
+    },
+  };
+}
 
 function scopesFromSpaceSeparated(input: string): string[] {
   return input
@@ -47,6 +101,7 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
   const spotifyClient = dependencies.spotifyClient ?? getRuntimeSpotifyClient();
   const hasPlayback = dependencies.hasPlayback ?? (() => false);
   const getAccountDisplay = dependencies.getAccountDisplay ?? (() => undefined);
+  const pendingAuthStore = dependencies.pendingAuthStore ?? createPendingAuthStore();
   const env = getAuthEnv();
 
   let currentSession: RuntimeSession | null = null;
@@ -80,15 +135,23 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
 
     const previous = await tokenStore.loadTokens();
     const refreshToken = lastExchange.refreshToken ?? previous?.refreshToken;
+    const accessTokenExpiresAtMs = now() + lastExchange.expiresInSeconds * 1000;
+    const grantedScopes = scopesFromSpaceSeparated(lastExchange.scope);
+
     if (!refreshToken) {
+      currentSession = {
+        accessToken: lastExchange.accessToken,
+        accessTokenExpiresAtMs,
+        grantedScopes,
+      };
       return;
     }
 
     const persisted: PersistedTokens = {
       accessToken: lastExchange.accessToken,
       refreshToken,
-      accessTokenExpiresAtMs: now() + lastExchange.expiresInSeconds * 1000,
-      grantedScopes: scopesFromSpaceSeparated(lastExchange.scope),
+      accessTokenExpiresAtMs,
+      grantedScopes,
       savedAtMs: now(),
     };
 
@@ -98,7 +161,15 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
 
   return {
     async connectSpotify() {
-      const lifecycle = authService.startAuthorization();
+      const lifecycle = await authService.startAuthorization();
+      if (lifecycle.status !== "authorizing") {
+        throw new Error("Spotify authorization could not be started.");
+      }
+
+      const pending = authService.snapshotPendingAuthorization();
+      if (pending) {
+        pendingAuthStore.save(pending);
+      }
       authStore.syncFromLifecycle({
         lifecycle,
         hasPlayback: hasPlayback(),
@@ -112,9 +183,18 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
     },
 
     async completeSpotifyCallback(input: SpotifyCallbackInput) {
+      if (!authService.snapshotPendingAuthorization()) {
+        authService.restorePendingAuthorization(pendingAuthStore.load());
+      }
+
       const lifecycle = await authService.completeAuthorization(input);
       if (lifecycle.status === "connected") {
         await persistSessionAfterCallback();
+        pendingAuthStore.clear();
+      }
+
+      if (lifecycle.status === "recoverable_error") {
+        pendingAuthStore.clear();
       }
 
       return authStore.syncFromLifecycle({
@@ -141,7 +221,11 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
         now,
       };
 
-      return bootstrapAuth(bootstrapDependencies);
+      const result = await bootstrapAuth(bootstrapDependencies);
+      if (result.status === "connected") {
+        pendingAuthStore.clear();
+      }
+      return result;
     },
 
     getUiState() {

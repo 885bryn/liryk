@@ -6,6 +6,20 @@ export type PlaybackSnapshot = {
   capturedAtMs: number;
 };
 
+export type PlaybackClockSample = {
+  snapshot: PlaybackSnapshot;
+  capturedAtPerfMs: number;
+};
+
+export type PlaybackClockAnchor = {
+  trackId: string;
+  deviceId: string;
+  isPlaying: boolean;
+  progressMs: number;
+  sourceCapturedAtMs: number;
+  capturedAtPerfMs: number;
+};
+
 export type PlaybackTransitionKind =
   | "no_change"
   | "paused"

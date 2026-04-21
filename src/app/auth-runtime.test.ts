@@ -39,7 +39,7 @@ describe("createAuthRuntime", () => {
 
   function createSpotifyClientMock() {
     return {
-      beginAuthorization: vi.fn(() => ({
+      beginAuthorization: vi.fn(async () => ({
         authorizeUrl: "https://accounts.spotify.com/authorize?state=test-state",
         state: "test-state",
         codeVerifier: "test-verifier",
@@ -155,5 +155,111 @@ describe("createAuthRuntime", () => {
     expect(result).toEqual({ status: "reconnect_required", source: "none" });
     expect((tokenStore.clearTokens as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
     expect(authStore.selectUiState().status).toBe("disconnected");
+  });
+
+  it("restores pending authorization across redirect before completing callback", async () => {
+    const pendingStore = {
+      value: null as unknown,
+      load: vi.fn(() => pendingStore.value as {
+        requestId: string;
+        state: string;
+        codeVerifier: string;
+        startedAtMs: number;
+        authorizeUrl: string;
+      } | null),
+      save: vi.fn((value: unknown) => {
+        pendingStore.value = value;
+      }),
+      clear: vi.fn(() => {
+        pendingStore.value = null;
+      }),
+    };
+
+    const spotifyClient = createSpotifyClientMock();
+    const first = createAuthRuntime({
+      authStore: new AuthStore(),
+      spotifyClient,
+      tokenStore: createTokenStore(null),
+      pendingAuthStore: pendingStore,
+      now: () => 1000,
+      hasPlayback: () => false,
+      getAccountDisplay: () => ({ displayName: "Avery" }),
+    });
+
+    await first.connectSpotify();
+    expect(pendingStore.save).toHaveBeenCalledTimes(1);
+
+    const second = createAuthRuntime({
+      authStore: new AuthStore(),
+      spotifyClient,
+      tokenStore: createTokenStore(null),
+      pendingAuthStore: pendingStore,
+      now: () => 1000,
+      hasPlayback: () => false,
+      getAccountDisplay: () => ({ displayName: "Avery" }),
+    });
+
+    const state = await second.completeSpotifyCallback({ code: "spotify-code", state: "test-state" });
+    expect(state.status).toBe("connected_waiting_playback");
+    expect(spotifyClient.exchangeAuthorizationCode).toHaveBeenCalledTimes(1);
+    expect(pendingStore.clear).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps an in-memory access token when callback returns no refresh token", async () => {
+    const pendingStore = {
+      value: null as unknown,
+      load: vi.fn(() => pendingStore.value as {
+        requestId: string;
+        state: string;
+        codeVerifier: string;
+        startedAtMs: number;
+        authorizeUrl: string;
+      } | null),
+      save: vi.fn((value: unknown) => {
+        pendingStore.value = value;
+      }),
+      clear: vi.fn(() => {
+        pendingStore.value = null;
+      }),
+    };
+
+    const tokenStore = createTokenStore(null);
+    const spotifyClient = createSpotifyClientMock();
+    spotifyClient.exchangeAuthorizationCode.mockResolvedValueOnce({
+      accessToken: "ephemeral-token",
+      refreshToken: "",
+      scope: "user-read-currently-playing user-read-playback-state",
+      expiresInSeconds: 3600,
+    });
+
+    const first = createAuthRuntime({
+      authStore: new AuthStore(),
+      spotifyClient,
+      tokenStore,
+      pendingAuthStore: pendingStore,
+      now: () => 1000,
+      hasPlayback: () => false,
+      getAccountDisplay: () => ({ displayName: "Avery" }),
+    });
+    await first.connectSpotify();
+
+    const second = createAuthRuntime({
+      authStore: new AuthStore(),
+      spotifyClient,
+      tokenStore,
+      pendingAuthStore: pendingStore,
+      now: () => 1000,
+      hasPlayback: () => false,
+      getAccountDisplay: () => ({ displayName: "Avery" }),
+    });
+
+    const state = await second.completeSpotifyCallback({ code: "spotify-code", state: "test-state" });
+
+    expect(state.status).toBe("connected_waiting_playback");
+    expect(second.getSession()).toMatchObject({
+      accessToken: "ephemeral-token",
+      grantedScopes: ["user-read-currently-playing", "user-read-playback-state"],
+    });
+    expect(tokenStore.saveTokens).not.toHaveBeenCalled();
   });
 });

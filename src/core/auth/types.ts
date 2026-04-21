@@ -53,7 +53,7 @@ export type SpotifyCallbackInput = {
 };
 
 export interface SpotifyAuthClient {
-  beginAuthorization(request: SpotifyAuthorizationRequest): SpotifyAuthorizationStart;
+  beginAuthorization(request: SpotifyAuthorizationRequest): Promise<SpotifyAuthorizationStart>;
   exchangeAuthorizationCode(input: {
     code: string;
     codeVerifier: string;

@@ -64,8 +64,27 @@ function resolveDefaultSecureStore(): SecureSecretStore {
     };
   }
 
+  try {
+    const storage = (globalThis as typeof globalThis & { localStorage?: Storage }).localStorage;
+    if (storage) {
+      return {
+        async getSecret(key: string): Promise<string | null> {
+          return storage.getItem(key);
+        },
+        async setSecret(key: string, value: string): Promise<void> {
+          storage.setItem(key, value);
+        },
+        async deleteSecret(key: string): Promise<void> {
+          storage.removeItem(key);
+        },
+      };
+    }
+  } catch {
+    // Fall through to explicit configuration error.
+  }
+
   throw new Error(
-    "Secure token store is unavailable. Configure globalThis.__LIRYK_SECURE_STORE__ in the desktop shell.",
+    "Secure token store is unavailable. Configure globalThis.__LIRYK_SECURE_STORE__ or run in a browser with localStorage.",
   );
 }
 

@@ -14,6 +14,37 @@ const REQUIRED_KEYS = [
   "SPOTIFY_AUTH_SCOPES",
 ] as const;
 
+function resolveDefaultEnvSource(): EnvSource {
+  const source: EnvSource = {};
+
+  const processEnv =
+    typeof process !== "undefined" && process.env
+      ? (process.env as Record<string, string | undefined>)
+      : undefined;
+  if (processEnv) {
+    Object.assign(source, processEnv);
+  }
+
+  const importMetaEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env;
+  if (importMetaEnv) {
+    Object.assign(source, importMetaEnv);
+  }
+
+  return source;
+}
+
+function withViteAliases(source: EnvSource): EnvSource {
+  const normalized: EnvSource = { ...source };
+
+  for (const key of REQUIRED_KEYS) {
+    if (!normalized[key]) {
+      normalized[key] = source[`VITE_${key}`];
+    }
+  }
+
+  return normalized;
+}
+
 function readRequired(source: EnvSource, key: (typeof REQUIRED_KEYS)[number]): string {
   const value = source[key]?.trim();
 
@@ -53,14 +84,15 @@ function parseScopes(rawScopes: string): string[] {
   return scopes;
 }
 
-export function loadAuthEnv(source: EnvSource = process.env): AuthEnv {
+export function loadAuthEnv(source: EnvSource = resolveDefaultEnvSource()): AuthEnv {
+  const resolvedSource = withViteAliases(source);
   const errors: string[] = [];
 
   const values = {} as Record<(typeof REQUIRED_KEYS)[number], string>;
 
   for (const key of REQUIRED_KEYS) {
     try {
-      values[key] = readRequired(source, key);
+      values[key] = readRequired(resolvedSource, key);
     } catch (error) {
       errors.push((error as Error).message);
     }
@@ -109,7 +141,7 @@ export function loadAuthEnv(source: EnvSource = process.env): AuthEnv {
 
 let cachedAuthEnv: AuthEnv | null = null;
 
-export function getAuthEnv(source: EnvSource = process.env): AuthEnv {
+export function getAuthEnv(source: EnvSource = resolveDefaultEnvSource()): AuthEnv {
   if (cachedAuthEnv) {
     return cachedAuthEnv;
   }

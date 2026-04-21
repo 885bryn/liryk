@@ -7,6 +7,27 @@ describe("LiveSyncStore", () => {
     const store = new LiveSyncStore();
     expect(store.selectPlaybackState()).toBe("idle");
     expect(store.selectLiveSync().statusLine).toContain("Play a track");
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
+    expect(store.selectLiveSync().polledProgressMs).toBe(0);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("static");
+  });
+
+  it("updates estimated progress from runtime timing samples", () => {
+    const store = new LiveSyncStore();
+    store.setEstimatedProgressMs(1_450);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(1_450);
+  });
+
+  it("updates diagnostics values from runtime samples", () => {
+    const store = new LiveSyncStore();
+    store.setPolledProgressMs(1_400);
+    store.setDriftDeltaMs(50);
+    store.setCorrectionState("estimated");
+
+    expect(store.selectLiveSync().polledProgressMs).toBe(1_400);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(50);
+    expect(store.selectLiveSync().correctionState).toBe("estimated");
   });
 
   it("updates active line, next line, confidence, and playback state", () => {
@@ -43,6 +64,10 @@ describe("LiveSyncStore", () => {
 
   it("resets resolved lyric state on track change", () => {
     const store = new LiveSyncStore();
+    store.setEstimatedProgressMs(900);
+    store.setPolledProgressMs(880);
+    store.setDriftDeltaMs(20);
+    store.setCorrectionState("estimated");
     store.setResolvedLyrics({
       sourceState: "synced",
       renderMode: "synced",
@@ -59,6 +84,24 @@ describe("LiveSyncStore", () => {
     expect(store.selectLiveSync().retryAvailable).toBe(false);
     expect(store.selectLiveSync().retryInFlight).toBe(false);
     expect(store.selectLiveSync().lyricsWarning).toBeNull();
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
+    expect(store.selectLiveSync().polledProgressMs).toBe(0);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("static");
+  });
+
+  it("resets estimated progress when track is cleared", () => {
+    const store = new LiveSyncStore();
+    store.setTrack("track-1");
+    store.setEstimatedProgressMs(2_000);
+    store.setPolledProgressMs(1_900);
+    store.setDriftDeltaMs(100);
+    store.setCorrectionState("synced");
+    store.setTrack(null);
+    expect(store.selectLiveSync().estimatedProgressMs).toBe(0);
+    expect(store.selectLiveSync().polledProgressMs).toBe(0);
+    expect(store.selectLiveSync().driftDeltaMs).toBe(0);
+    expect(store.selectLiveSync().correctionState).toBe("static");
   });
 
   it("allows retry-in-flight status updates without mutating playback state", () => {

@@ -30,7 +30,7 @@ export function scoreCandidate(
   const metadataDuration = metadata.durationMs ?? 0;
   const candidateDuration = candidate.durationMs ?? metadataDuration;
   const durationDeltaMs = Math.abs(candidateDuration - metadataDuration);
-  if (metadata.durationMs && durationDeltaMs > 45_000) {
+  if (metadata.durationMs && durationDeltaMs > 15_000) {
     return {
       candidate,
       score: 0,

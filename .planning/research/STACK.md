@@ -1,104 +1,145 @@
 # Stack Research
 
-**Domain:** Desktop Spotify live-lyrics app (Milestone 1: sync reliability)
-**Researched:** 2026-03-19
+**Domain:** Toggleable developer activity panel overlay — browser-based Spotify lyrics app (v1.6)
+**Researched:** 2026-04-17
 **Confidence:** HIGH
+
+## Context
+
+This is an additive milestone on an existing React 18 + TypeScript + Vite + Tailwind CSS stack. The project already uses:
+
+- `react@^18.3.1`, `react-dom@^18.3.1`
+- `@base-ui/react@^1.3.0` (headless components — Dialog, Popover)
+- `tailwindcss@^3.4.17` + `tailwind-merge@^3.1.x`, `clsx@^2.1.1`
+- `lucide-react@^0.577.0` (icons)
+- `vitest@^2.1.9` (test runner)
+
+The codebase already has a module-level pub/sub pattern in `shared-playback-runtime.ts` (a hand-rolled `Map<subscriberId, { listener }>` dispatch). The goal is to decide: extend that pattern, add `mitt`, or build something purpose-fit for the dev panel.
+
+---
 
 ## Recommended Stack
 
-### Core Technologies
+### Core Technologies (no new installs required)
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Electron | 41.0.3 | Desktop shell (Windows/macOS/Linux), secure IPC boundary | Most common production desktop JS stack; mature Spotify OAuth desktop patterns; official security guidance is clear and current (context isolation + sandbox defaults). **Confidence: HIGH** |
-| React | 19.2.4 | UI rendering for lyrics timeline and controls | Stable modern React baseline (React 19 line), best ecosystem fit with existing shadcn/ui setup. **Confidence: HIGH** |
-| Vite | 8.0.1 | Fast renderer build/dev server | Current standard frontend bundler; fast iteration loop is ideal for sync tuning work. **Confidence: HIGH** |
-| TypeScript | 5.9.3 | Type-safe domain logic (playback state, lyric timing, cache schemas) | Reduces timing/state bugs in sync engine and API integration paths. **Confidence: HIGH** |
-| Node.js | 24.x LTS | Runtime/tooling baseline | Active LTS line; aligns with modern Vite requirements and current ecosystem support. **Confidence: HIGH** |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| React `useState` + `useReducer` | 18.3.x (existing) | Dev panel open/close state + bounded event log buffer | No new deps; suits a bounded circular log with a reducer action |
+| Tailwind CSS | 3.4.x (existing) | Panel overlay styling | Matches existing visual system; `fixed inset-0 pointer-events-none` + child `pointer-events-auto` pattern is idiomatic |
+| `@base-ui/react` Dialog or Popover | 1.3.x+ (existing) | Optional: accessible toggle container with focus management | Already installed; Dialog handles Escape-key dismiss and focus trap; use only if a11y trap is needed |
+| lucide-react | 0.577.x (existing) | Toggle button icon (e.g., `Activity`, `Terminal`) | Already installed |
+| `clsx` + `tailwind-merge` | existing | Conditional class composition for panel visible/hidden states | Already installed |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| @spotify/web-api-ts-sdk | 1.2.0 | Spotify Web API client with PKCE user auth helpers + token refresh | Use for `user-read-currently-playing` polling and OAuth PKCE flow in desktop auth callback flow. **Confidence: HIGH** |
-| @tanstack/react-query | 5.91.2 | Polling, stale/cache handling, retry/backoff for playback + lyrics fetch | Use for 1s playback polling and lyric-source fallback orchestration. **Confidence: HIGH** |
-| zod | 4.3.6 | Runtime validation of Spotify/lyrics payloads | Use at all network boundaries; fail fast and surface "Lyrics not found" cleanly. **Confidence: HIGH** |
-| better-sqlite3 | 12.8.0 | Local lyrics cache keyed by Spotify track ID | Use for deterministic local cache and offline-friendly reads; run in Electron main process only. **Confidence: MEDIUM** |
-| drizzle-orm | 0.45.1 | Typed SQLite schema/access layer | Use if you want migration-safe cache schema evolution beyond a single JSON blob table. **Confidence: MEDIUM** |
-| lrc-kit | 1.2.1 | LRC parsing utility | Use only if it passes multilingual edge-case tests; otherwise keep a small in-house parser for full control. **Confidence: LOW** |
+| `mitt` | 3.0.1 | Typed global event bus for emitting dev-log events from any module (outside React tree) | Use if events originate in non-React modules (e.g., `shared-playback-runtime`, `lyrics-resolver`). Zero deps, 200 bytes gzipped, ships its own TypeScript types |
 
-### Development Tools
+### Development Tools (no changes)
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| Electron Forge | 7.11.1 | App scaffolding/build workflow for Electron | Use Forge defaults; add hardening from Electron security checklist early. |
-| @electron/rebuild | 4.0.3 | Rebuild native modules for Electron ABI | Required when using `better-sqlite3` in Electron. |
-| Vitest | 4.1.0 | Unit tests for lyric timing parser/sync engine | Focus tests on timeline interpolation and fallback timing heuristics. |
-| Playwright | 1.58.2 | End-to-end smoke tests for auth/playback/auto-scroll | Use for deterministic sync regression checks on key lyric fixtures. |
+| Vitest | Unit tests for event bus and panel state reducer | Existing; no new test infra needed |
+
+---
 
 ## Installation
 
 ```bash
-# Core
-npm install react@19.2.4 react-dom@19.2.4 @spotify/web-api-ts-sdk@1.2.0 @tanstack/react-query@5.91.2 zod@4.3.6 better-sqlite3@12.8.0 drizzle-orm@0.45.1 lrc-kit@1.2.1
-
-# Supporting (keep existing shadcn/ui + radix stack; no alternate UI libs)
-npm install lucide-react@0.577.0 @radix-ui/react-scroll-area@1.2.10
-
-# Dev dependencies
-npm install -D electron@41.0.3 @electron-forge/cli@7.11.1 @electron/rebuild@4.0.3 vite@8.0.1 typescript@5.9.3 vitest@4.1.0 @playwright/test@1.58.2 tailwindcss@4.2.2 @tailwindcss/vite@4.2.2
+# Only needed if using mitt:
+npm install mitt
 ```
+
+No other new dependencies are needed for this milestone.
+
+---
+
+## Architecture Recommendation: Zero-Dep vs mitt
+
+**Decision: Add `mitt` as the event bus.**
+
+Rationale:
+
+The existing hand-rolled pub/sub in `shared-playback-runtime.ts` is subscriber-ID keyed and designed for playback consumers. Reusing it for the dev panel would couple unrelated concerns. `mitt` provides:
+
+- A typed `Emitter<Events>` singleton that any module can import and `.emit()` on
+- A `"*"` wildcard listener so the panel can capture all events in one subscription
+- 200 bytes added to the bundle — effectively free
+
+The alternative (hand-roll a second pub/sub) produces the same surface with more code and no tests. `mitt` is the clear choice.
+
+**React state for the log buffer:**
+
+Use `useReducer` in the panel component with an action `{ type: "append", entry: DevLogEntry }` that keeps the last N entries (e.g., 200). This is a circular buffer approximation — slice the newest tail on append. No external state library needed.
+
+**Panel overlay:**
+
+Use a `fixed` + `pointer-events-none` wrapper at the root level of `fullscreen-lyrics-page.tsx`. The panel itself gets `pointer-events-auto`. This avoids interference with lyric touch/scroll events when the panel is closed.
+
+Do NOT use `@base-ui/react` Dialog for this panel. Dialog adds a focus trap and backdrop — inappropriate for a non-modal debug overlay that should coexist with the lyrics page. A plain `div` with `aria-hidden` (when closed) is correct.
+
+---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Electron + React + Vite | Tauri v2 | Use Tauri only if binary size is a hard KPI this milestone and team is already comfortable with Rust/IPC/security policy model. |
-| better-sqlite3 (+ optional Drizzle) | JSON file cache (`electron-store`) | Use JSON only for throwaway prototypes; SQLite is better for dedupe, indexing, and future cache metadata. |
-| @spotify/web-api-ts-sdk | Raw `fetch` + hand-rolled OAuth/token refresh | Use raw fetch only if you need full custom auth plumbing and want to avoid SDK abstraction. |
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| `mitt` singleton | Hand-rolled module-level pub/sub | Same result, more code, not battle-tested |
+| `mitt` singleton | `EventTarget` / `CustomEvent` | Works but no TypeScript generics for event payload types; harder to test |
+| `useReducer` circular buffer | External state (Zustand, Jotai) | Massive overkill; panel log is local UI state only |
+| Plain `div` overlay | `@base-ui/react` Dialog | Dialog is modal with focus trap — wrong semantics for a non-blocking debug panel |
+| Plain `div` overlay | Radix UI / react-aria | Not in the project; no reason to add |
 
-## What NOT to Use
+---
+
+## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Spotify Web Playback SDK | Requires Spotify Premium for streaming scope; milestone requires detection without Premium. | Spotify Web API (`/me/player/currently-playing`) with PKCE scopes. |
-| Spotify Implicit Grant flow | Explicitly deprecated by Spotify docs; weaker modern OAuth posture. | Authorization Code with PKCE. |
-| `spotify-web-api-node` in renderer | Designed around client-secret/server use; violates desktop secret handling constraints if misused. | `@spotify/web-api-ts-sdk` PKCE client flow. |
-| Replacing shadcn/ui with another component library | Violates project constraint and burns milestone time on UI migration. | Keep existing shadcn/ui + Tailwind stack. |
+| `redux` / Zustand / Jotai | Panel state is strictly local; global state management is not needed | `useReducer` inside panel component |
+| `react-window` / virtualization | Log list stays bounded at 200 items — no virtualization needed at this scale | Bounded `Array.slice(-200)` in reducer |
+| `loglevel` / `debug` npm packages | They route to `console.*`, not to an in-app UI component | `mitt` + custom `DevLogEntry` type |
+| `@base-ui/react` Dialog | Modal semantics (focus trap, backdrop) are wrong for non-blocking overlay | Plain `div` with conditional rendering |
+| Heavy animation library (Framer Motion, GSAP) | Panel open/close is a simple opacity/transform toggle | Tailwind `transition-opacity` + `transition-transform` CSS utilities |
 
-## Stack Patterns by Variant
+---
 
-**If timestamped lyrics are found (preferred path):**
-- Use exact LRC timestamps + interpolation against Spotify `progress_ms`.
-- Because Milestone 1 success metric is line-level sync reliability, not broad feature surface.
+## Stack Patterns
 
-**If only plain lyrics are found (fallback path):**
-- Use deterministic estimated timings (duration-weighted line distribution), visibly mark as "estimated sync".
-- Because graceful degradation is required, but users should not confuse heuristic timing with true sync.
+**If events originate inside React components (e.g., hook callbacks):**
+- Call `emitter.emit(...)` directly inside effect or event handler
+- Because React component lifecycle is synchronous at call sites
+
+**If events originate outside the React tree (e.g., `shared-playback-runtime.ts`, `lyrics-resolver.ts`):**
+- Import the `mitt` emitter singleton and call `.emit()` from the module function
+- Because `mitt` is framework-agnostic and safe to import in plain TS modules
+
+**If the panel grows beyond ~300 lines or needs cross-page visibility:**
+- Extract to a dedicated `DevPanel` component in `src/ui/dev/`
+- Move emitter singleton to `src/lib/dev-emitter.ts`
+- Because the emitter must be importable by both core modules and UI components without circular deps
+
+---
 
 ## Version Compatibility
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| electron@41.0.3 | @electron/rebuild@4.0.3 | Needed for native addons like `better-sqlite3`. |
-| vite@8.0.1 | node >=20.19 or >=22.12 | Vite docs specify modern Node requirement; Node 24 LTS satisfies it. |
-| react@19.2.4 | shadcn/ui (existing) + Tailwind 4.x | Keep current shadcn stack; do not swap UI framework during Milestone 1. |
-| @spotify/web-api-ts-sdk@1.2.0 | Node >=18 / modern browser | SDK docs explicitly state these runtime requirements. |
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| `mitt@3.0.1` | React 18, TypeScript 5.x, Vite 5.x | Zero runtime deps; ships CJS + ESM; tree-shakes cleanly in Vite |
+| `@base-ui/react@1.4.0` | React 18 | Current published version is 1.4.0; project uses ^1.3.0 which resolves there |
+
+---
 
 ## Sources
 
-- Spotify Web API PKCE tutorial — https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow (official, HIGH)
-- Spotify "Get Currently Playing Track" reference — https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track (official, HIGH)
-- Spotify scopes reference — https://developer.spotify.com/documentation/web-api/concepts/scopes (official, HIGH)
-- Spotify Web Playback SDK overview (Premium requirement) — https://developer.spotify.com/documentation/web-playback-sdk (official, HIGH)
-- Spotify TypeScript SDK README — https://raw.githubusercontent.com/spotify/spotify-web-api-ts-sdk/main/README.md (official repo, HIGH)
-- Electron docs + security checklist — https://www.electronjs.org/docs/latest/ and https://www.electronjs.org/docs/latest/tutorial/security (official, HIGH)
-- Vite guide (v8 + Node requirements) — https://vite.dev/guide/ (official, HIGH)
-- Node release/LTS status — https://nodejs.org/en/about/previous-releases (official, HIGH)
-- Tailwind + Vite install docs (v4) — https://tailwindcss.com/docs/installation/using-vite (official, HIGH)
-- LRCLIB project README (service context, API ecosystem signal) — https://raw.githubusercontent.com/tranxuanthang/lrclib/main/README.md (official repo, MEDIUM)
-- npm registry version checks (2026-03-19): electron, react, vite, typescript, @spotify/web-api-ts-sdk, @tanstack/react-query, zod, better-sqlite3, drizzle-orm, Electron Forge, Vitest, Playwright (registry metadata, HIGH)
+- [mitt GitHub — developit/mitt](https://github.com/developit/mitt) — version 3.0.1 confirmed, 200b gzipped, full TypeScript generics (HIGH confidence)
+- `npm show mitt version` — confirmed 3.0.1 (HIGH confidence)
+- `npm show @base-ui/react version` — confirmed 1.4.0 published (HIGH confidence)
+- [Base UI Dialog docs](https://base-ui.com/react/components/dialog) — portal, focus management, Escape dismiss confirmed (HIGH confidence)
+- [Tailwind CSS z-index docs](https://tailwindcss.com/docs/z-index) — `fixed`, `z-50`, `pointer-events-none` patterns (HIGH confidence)
+- Project `package.json` — existing dependency versions verified directly (HIGH confidence)
 
 ---
-*Stack research for: Desktop Spotify live-lyrics app*
-*Researched: 2026-03-19*
+*Stack research for: toggleable dev-panel overlay — liryk v1.6*
+*Researched: 2026-04-17*

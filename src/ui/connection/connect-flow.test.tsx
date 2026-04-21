@@ -97,7 +97,7 @@ describe("connection flow UI models", () => {
     const runtime = createAuthRuntime({
       authStore,
       spotifyClient: {
-        beginAuthorization: vi.fn(() => ({
+        beginAuthorization: vi.fn(async () => ({
           authorizeUrl: "https://accounts.spotify.com/authorize?state=state-abc",
           state: "state-abc",
           codeVerifier: "verifier-abc",

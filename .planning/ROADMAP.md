@@ -1,95 +1,69 @@
-# Roadmap: Spotify Live Lyrics Desktop App
+# Roadmap: Spotify Live Lyrics Web App
 
-## Overview
+## Milestones
 
-This roadmap delivers the core milestone outcome in dependency order: secure Spotify connection and playback state, trustworthy real-time lyric sync behavior, correct lyric retrieval and multilingual rendering, then cache lifecycle performance. Each phase completes a user-verifiable capability and maps all v1 requirements exactly once.
+- ✅ **v1.0 MVP** — Phases 1-4 (shipped 2026-03-??)
+- ✅ **v1.1 Web Auth** — Phases 5-8 + 7.1 (shipped 2026-03-??)
+- ✅ **v1.2 Fullscreen** — Phases 9-11 (shipped 2026-03-??)
+- ✅ **v1.3 Timing** — Phases 12-14 (shipped 2026-04-??)
+- ✅ **v1.4 Motion Model** — Phases 15-17 (shipped 2026-04-09)
+- ✅ **v1.5 Viewport Lock** — Phases 18-20 (shipped 2026-04-??, with deferred Phase 20-06 drift blocker)
+- ✅ **v1.6 Developer Panel** — Phases 21-22 (shipped 2026-04-19)
+- 📋 **v1.7 TBD** — (planning)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+<details>
+<summary>✅ v1.6 Developer Activity Panel (Phases 21–22) — SHIPPED 2026-04-19</summary>
 
-Decimal phases appear between their surrounding integers in numeric order.
+- [x] Phase 21: Panel Container, Toggle, and UX Shell (2/2 plans) — completed 2026-04-18
+- [x] Phase 22: Event Emission Wiring (1/1 plan) — completed 2026-04-19
 
-- [x] **Phase 1: Spotify Connection Foundation** - Users securely connect Spotify and maintain a working authenticated session.
-- [x] **Phase 2: Live Playback Sync Engine** - Users get reliable, real-time lyric line progression tied to playback behavior. (completed 2026-03-20)
-- [x] **Phase 3: Lyrics Resolution and Rendered Experience** - Users receive the best available lyrics with clear fallback states and multilingual rendering. (completed 2026-03-20)
-- [ ] **Phase 4: Cache Freshness and Repeat-Load Performance** - Users get fast repeat loads without stale or invalid lyric results.
+Archive: `milestones/v1.6-ROADMAP.md`
 
-## Phase Details
+</details>
 
-### Phase 1: Spotify Connection Foundation
-**Goal**: Users can securely connect Spotify and stay authenticated across restarts so playback data is available.
-**Depends on**: Nothing (first phase)
-**Requirements**: AUTH-01, AUTH-02, SECU-01
-**Success Criteria** (what must be TRUE):
-  1. User can connect their Spotify account via OAuth PKCE without entering Spotify credentials into the app UI.
-  2. User remains connected after restarting the desktop app and can continue without reauthorizing each launch.
-  3. User secrets and auth configuration are loaded from `.env`, with no hardcoded credentials in shipped behavior.
-**Plans**: 4 plans
+<details>
+<summary>✅ v1.5 Viewport-Locked Live Lyrics (Phases 18–20) — shipped with Phase 20-06 deferred</summary>
 
-Plans:
-- [x] 01-01-PLAN.md - Secure env validation and Spotify PKCE auth service foundation
-- [x] 01-02-PLAN.md - Connection UX states, trust messaging, and retry/troubleshooting flow
-- [x] 01-03-PLAN.md - Session persistence, startup rehydrate, and disconnect/account switch controls
-- [x] 01-04-PLAN.md - Spotify runtime wiring for connect callback and startup bootstrap gap closure
+- [x] Phase 18: Viewport anchor ownership unification
+- [x] Phase 19: Song-boundary visibility and Back to Live recovery
+- [x] Phase 20: Viewport regression and timing safety closure
 
-### Phase 2: Live Playback Sync Engine
-**Goal**: Users see lyric progression stay aligned with current Spotify playback timing and controls.
-**Depends on**: Phase 1
-**Requirements**: PLAY-01, PLAY-02, PLAY-03, SYNC-01, SYNC-02
-**Success Criteria** (what must be TRUE):
-  1. User sees lyric sync tied to the currently playing Spotify track on desktop without requiring Spotify Premium.
-  2. User sees the active lyric line update continuously from playback position while audio is playing.
-  3. User sees sync behavior respond correctly when pausing, resuming, skipping tracks, or seeking within a track.
-  4. User sees the lyrics viewport automatically keep the active line in view as playback advances.
-**Plans**: 3 plans
+Archive: *(not archived — v1.5 was not formally closed)*
 
-Plans:
-- [x] 02-01-PLAN.md - Playback snapshot runtime and transition classification foundation
-- [x] 02-02-PLAN.md - Timestamp-anchored sync engine and live sync state runtime wiring
-- [x] 02-03-PLAN.md - Live lyrics viewport auto-scroll, dual emphasis, and playback-state UI behavior
+</details>
 
-### Phase 3: Lyrics Resolution and Rendered Experience
-**Goal**: Users receive correct, readable lyrics for the active track with explicit fallback outcomes.
-**Depends on**: Phase 2
-**Requirements**: LYR-01, LYR-02, LYR-03, LYR-04, I18N-01, UI-01
-**Success Criteria** (what must be TRUE):
-  1. User gets lyrics fetched for the active Spotify track and receives the best-matching version for that track metadata.
-  2. User receives timestamped lyrics when available and still gets usable plain-lyrics display when timestamps are missing.
-  3. User sees "Lyrics not found" when no usable lyrics source succeeds for the current track.
-  4. User can read rendered lyrics in supported UTF-8 scripts, including CJK, Arabic, and Korean text.
-  5. User sees the milestone UI built using the project's existing shadcn/ui component system.
-**Plans**: 4 plans
+<details>
+<summary>✅ v1.0–v1.4 Foundation (Phases 1–17) — SHIPPED</summary>
 
-Plans:
-- [x] 03-01-PLAN.md - Core lyric contracts, Unicode-safe normalization, and synced/plain line preparation
-- [x] 03-02-PLAN.md - LRCLIB provider adapter and deterministic lyric candidate resolution
-- [x] 03-03-PLAN.md - Runtime/store wiring for track-session lyric resolution, retry, and not-found states
-- [x] 03-04-PLAN.md - Presenter, panel, and viewport updates for fallback UX and multilingual rendering
+- Phases 1-4: Spotify auth, live sync, lyrics resolution, cache (v1.0)
+- Phases 5-8 + 7.1: Web runtime, auth hardening, lyrics parity (v1.1)
+- Phases 9-11: Immersive fullscreen mode (v1.2)
+- Phases 12-14: Playback clock, drift reconciliation, early cueing (v1.3)
+- Phases 15-17: Hold-transition-settle motion model (v1.4)
 
-### Phase 4: Cache Freshness and Repeat-Load Performance
-**Goal**: Users get faster repeated lyric loads while still receiving updated results when cached data is stale.
-**Depends on**: Phase 3
-**Requirements**: CACH-01, CACH-02
-**Success Criteria** (what must be TRUE):
-  1. User gets noticeably faster lyric retrieval on repeat plays of previously resolved tracks via local cache keyed by Spotify track ID.
-  2. User gets refreshed lyric data when cached entries are stale or invalid rather than repeatedly seeing outdated results.
-**Plans**: 2 plans
+Archive: `milestones/v1.4-ROADMAP.md`, `milestones/v1.4-REQUIREMENTS.md`
 
-Plans:
-- [ ] 04-01-PLAN.md - Cache policy, versioned entry contract, and local file-backed lyrics cache foundation
-- [ ] 04-02-PLAN.md - Cache-aware lyrics resolution runtime with stale refresh and retry-forced invalidation
+</details>
+
+### 📋 v1.7 (Planning)
+
+*Next milestone to be defined. Key candidates:*
+- Resolve Phase 20-06 sustained viewport drift blocker (v1.5 deferred work)
+- Motion polish (VIS-05, 16-03 quality gate, SAFE-01 timing proof)
+- Private Karaoke Mode
+- Fix pre-existing lrc-parser and plain-lyrics-timing test failures
 
 ## Progress
 
-**Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Spotify Connection Foundation | 4/4 | Complete | 2026-03-20 |
-| 2. Live Playback Sync Engine | 3/3 | Complete | 2026-03-20 |
-| 3. Lyrics Resolution and Rendered Experience | 4/4 | Complete   | 2026-03-20 |
-| 4. Cache Freshness and Repeat-Load Performance | 0/2 | Planned | - |
+| Phase | Milestone | Plans | Status   | Completed  |
+|-------|-----------|-------|----------|------------|
+| 1-4   | v1.0      | —     | Complete | 2026-03    |
+| 5-8+7.1 | v1.1    | —     | Complete | 2026-03    |
+| 9-11  | v1.2      | —     | Complete | 2026-03    |
+| 12-14 | v1.3      | —     | Complete | 2026-04    |
+| 15-17 | v1.4      | —     | Complete | 2026-04-09 |
+| 18-20 | v1.5      | —     | Complete | 2026-04    |
+| 21    | v1.6      | 2/2   | Complete | 2026-04-18 |
+| 22    | v1.6      | 1/1   | Complete | 2026-04-19 |

@@ -4,6 +4,7 @@ import type { UiAuthState } from "../../state/auth/auth-store";
 export type AccountMenuModel = {
   accountLabel: string;
   secondaryLabel?: string;
+  themeToggleLabel?: string;
   disconnectLabel: string;
   onDisconnect: () => Promise<void>;
 };
@@ -35,6 +36,7 @@ export function buildAccountMenu(
   return {
     accountLabel: state.accountDisplay.displayName,
     secondaryLabel: state.accountDisplay.spotifyUserId,
+    themeToggleLabel: "Theme",
     disconnectLabel: "Disconnect Spotify",
     onDisconnect,
   };

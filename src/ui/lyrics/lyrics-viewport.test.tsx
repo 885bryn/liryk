@@ -76,4 +76,16 @@ describe("buildLyricsViewport", () => {
     expect(view.visibleLines[1]?.dir).toBe("ltr");
     expect(view.visibleLines[2]?.displayText).toBe("\u7231\u4f60");
   });
+
+  it("keeps upstream-provided simplified displayText stable", () => {
+    const view = buildLyricsViewport({
+      lines: [{ text: "\u6b61\u8fce\u5149\u81e8 ABC 2026", displayText: "\u6b22\u8fce\u5149\u4e34 ABC 2026" }],
+      activeLineIndex: null,
+      nextLineIndex: null,
+      renderMode: "plain-static",
+      nowMs: 100,
+    });
+
+    expect(view.visibleLines[0]?.displayText).toBe("\u6b22\u8fce\u5149\u4e34 ABC 2026");
+  });
 });

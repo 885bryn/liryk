@@ -5,7 +5,6 @@ import type {
   SpotifyTokenExchangeResult,
 } from "../../core/auth/types";
 import { getAuthEnv } from "../config/env";
-import { createHash, randomBytes } from "node:crypto";
 
 export type SpotifyRefreshResult = {
   accessToken: string;
@@ -24,22 +23,34 @@ export type SpotifyRuntimeAuthClient = SpotifyAuthClient & {
 const AUTHORIZE_URL = "https://accounts.spotify.com/authorize";
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-function base64UrlEncode(input: ArrayBuffer | Uint8Array): string {
-  return Buffer.from(input)
-    .toString("base64")
+function base64UrlEncode(input: Uint8Array): string {
+  const binary = Array.from(input, (value) => String.fromCharCode(value)).join("");
+  const base64 =
+    typeof btoa === "function"
+      ? btoa(binary)
+      : (globalThis as { Buffer?: { from(value: Uint8Array): { toString(encoding: string): string } } }).Buffer?.from(
+          input,
+        ).toString("base64");
+
+  if (!base64) {
+    throw new Error("No base64 encoder available for PKCE generation.");
+  }
+
+  return base64
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/g, "");
 }
 
 function createPkceVerifier(): string {
-  const bytes = randomBytes(64);
+  const bytes = new Uint8Array(64);
+  globalThis.crypto.getRandomValues(bytes);
   return base64UrlEncode(bytes);
 }
 
-function createPkceChallenge(codeVerifier: string): string {
-  const digest = createHash("sha256").update(codeVerifier).digest();
-  return base64UrlEncode(digest);
+async function createPkceChallenge(codeVerifier: string): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(codeVerifier));
+  return base64UrlEncode(new Uint8Array(digest));
 }
 
 function parseTokenPayload(payload: unknown): SpotifyTokenExchangeResult {
@@ -92,10 +103,10 @@ async function postTokenRequest(params: URLSearchParams): Promise<SpotifyTokenEx
 
 export function createSpotifyAuthClient(): SpotifyRuntimeAuthClient {
   return {
-    beginAuthorization(request: SpotifyAuthorizationRequest): SpotifyAuthorizationStart {
+    async beginAuthorization(request: SpotifyAuthorizationRequest): Promise<SpotifyAuthorizationStart> {
       const state = crypto.randomUUID();
       const codeVerifier = createPkceVerifier();
-      const challenge = createPkceChallenge(codeVerifier);
+      const challenge = await createPkceChallenge(codeVerifier);
 
       const authorizeUrl = new URL(AUTHORIZE_URL);
       authorizeUrl.searchParams.set("response_type", "code");

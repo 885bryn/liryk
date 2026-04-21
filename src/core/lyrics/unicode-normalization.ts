@@ -1,17 +1,15 @@
+import * as OpenCC from "opencc-js";
+
 const WHITESPACE = /\s+/g;
 const MINOR_SUFFIX = new RegExp(
-  String.raw`(?:\s*(?:-|\()\s*(?:live|remaster(?:ed)?(?:\s*\d{2,4})?|clean|explicit)[^)\]]*\)?\s*)$`,
+  String.raw`(?:\s*(?:-|\()\s*(?:live|(?:\d{2,4}\s*)?remaster(?:ed)?(?:\s*\d{2,4})?|clean|explicit)[^)\]]*\)?\s*)$`,
   "i",
 );
 const RTL_SCRIPT = /[\u0590-\u08FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
 const STRONG_LTR_SCRIPT = /[A-Za-z\u0400-\u04FF\u0370-\u03FF\u3040-\u30FF\u3400-\u9FFF\uAC00-\uD7A3]/;
 const LIKELY_MOJIBAKE = /(Ã.|Â.|â[\u0080-\u00BF]|Ð.|Ñ.)/;
 
-const TRADITIONAL_TO_SIMPLIFIED: Record<string, string> = {
-  愛: "爱",
-  還: "还",
-  說: "说",
-};
+const traditionalToSimplified = OpenCC.Converter({ from: "t", to: "cn" });
 
 function stripMinorSuffix(text: string): string {
   let value = text;
@@ -61,6 +59,5 @@ export function getLineDirection(input: string): "rtl" | "ltr" | "auto" {
 }
 
 export function normalizeChineseForDisplay(input: string): string {
-  const text = input.normalize("NFC");
-  return [...text].map((char) => TRADITIONAL_TO_SIMPLIFIED[char] ?? char).join("");
+  return traditionalToSimplified(input.normalize("NFC"));
 }

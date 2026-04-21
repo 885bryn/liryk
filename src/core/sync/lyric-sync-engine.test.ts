@@ -68,6 +68,93 @@ describe("lyric sync engine", () => {
     expect(engine.estimateFrame().confidence).toBe("estimated");
   });
 
+  it("hard-resets to observed progress when drift exceeds threshold", () => {
+    let now = 1_000;
+    const engine = createLyricSyncEngine({ nowPerfMs: () => now });
+    engine.setTimeline([{ startMs: 0, text: "a" }]);
+
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_000, capturedAtMs: 1_000 }), transition: "no_change" });
+
+    now = 1_400;
+    engine.reanchor({ snapshot: snapshot({ progressMs: 3_000, capturedAtMs: 1_100 }), transition: "no_change" });
+
+    expect(engine.estimateFrame()).toMatchObject({
+      progressMs: 3_000,
+      confidence: "synced",
+    });
+  });
+
+  it("applies bounded soft correction for positive and negative drift", () => {
+    let now = 1_000;
+    const engine = createLyricSyncEngine({ nowPerfMs: () => now });
+    engine.setTimeline([{ startMs: 0, text: "a" }]);
+
+    engine.reanchor({ snapshot: snapshot({ progressMs: 2_000, capturedAtMs: 1_000 }), transition: "no_change" });
+
+    now = 1_400;
+    engine.reanchor({ snapshot: snapshot({ progressMs: 2_900, capturedAtMs: 1_100 }), transition: "no_change" });
+    expect(engine.estimateFrame()).toMatchObject({
+      progressMs: 2_500,
+      confidence: "estimated",
+    });
+
+    now = 1_600;
+    engine.reanchor({ snapshot: snapshot({ progressMs: 2_200, capturedAtMs: 1_200 }), transition: "no_change" });
+    expect(engine.estimateFrame()).toMatchObject({
+      progressMs: 2_600,
+      confidence: "estimated",
+    });
+  });
+
+  it("bypasses soft correction for transition-triggered resync events", () => {
+    const transitions = ["seeked", "track_changed", "paused", "resumed"] as const;
+
+    for (const transition of transitions) {
+      let now = 1_000;
+      const engine = createLyricSyncEngine({ nowPerfMs: () => now });
+      engine.setTimeline([{ startMs: 0, text: "a" }]);
+      engine.reanchor({ snapshot: snapshot({ progressMs: 1_000, capturedAtMs: 1_000 }), transition: "no_change" });
+
+      now = 1_600;
+      const observed = 1_450;
+      engine.reanchor({ snapshot: snapshot({ progressMs: observed, capturedAtMs: 1_100 }), transition });
+
+      expect(engine.estimateFrame()).toMatchObject({
+        progressMs: observed,
+        confidence: "synced",
+      });
+    }
+  });
+
+  it("propagates resolver indices for pre-first progress and dense boundaries", () => {
+    let now = 1_000;
+    const engine = createLyricSyncEngine({ nowPerfMs: () => now });
+    engine.setTimeline([
+      { startMs: 1_000, text: "intro" },
+      { startMs: 1_250, text: "pickup" },
+      { startMs: 1_500, text: "line" },
+    ]);
+
+    engine.reanchor({ snapshot: snapshot({ progressMs: 900 }), transition: "no_change" });
+    expect(engine.estimateFrame()).toMatchObject({
+      activeLineIndex: null,
+      nextLineIndex: 0,
+    });
+
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_250, capturedAtMs: 1_100 }), transition: "seeked" });
+    expect(engine.estimateFrame()).toMatchObject({
+      activeLineIndex: 1,
+      nextLineIndex: 2,
+    });
+
+    now = 1_300;
+    engine.reanchor({ snapshot: snapshot({ progressMs: 1_500, capturedAtMs: 1_200 }), transition: "seeked" });
+    expect(engine.estimateFrame()).toMatchObject({
+      activeLineIndex: 2,
+      nextLineIndex: null,
+    });
+  });
+
   it("ignores stale snapshots during rapid races", () => {
     const engine = createLyricSyncEngine({ nowPerfMs: () => 1_000 });
     engine.setTimeline([

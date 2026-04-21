@@ -81,14 +81,25 @@ export function createLrclibClient(input: CreateLrclibClientInput) {
 
   async function getByMetadata(metadata: LyricTrackMetadata): Promise<ProviderLyricCandidate[]> {
     const query = buildQuery(metadata);
-    const payload = await getJson(input.fetchFn, `${baseUrl}/api/get?${query.toString()}`);
-    const candidate = payload ? normalizePayload(asRecord(payload)) : null;
+    const [payload, searchCandidates] = await Promise.all([
+      getJson(input.fetchFn, `${baseUrl}/api/get?${query.toString()}`),
+      searchByMetadata(metadata),
+    ]);
+    const getCandidate = payload ? normalizePayload(asRecord(payload)) : null;
 
-    if (candidate && candidate.isUsable) {
-      return [candidate];
+    const seen = new Set<string>();
+    const merged: ProviderLyricCandidate[] = [];
+    for (const candidate of [getCandidate, ...searchCandidates]) {
+      if (!candidate || !candidate.isUsable) {
+        continue;
+      }
+      const key = candidate.providerLyricId || `${candidate.title}|${candidate.artist}|${candidate.durationMs}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(candidate);
+      }
     }
-
-    return searchByMetadata(metadata);
+    return merged;
   }
 
   return {

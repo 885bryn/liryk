@@ -1,250 +1,260 @@
 # Architecture Research
 
-**Domain:** Desktop live-synced lyrics app (Spotify playback + web lyrics sources)
-**Researched:** 2026-03-19
-**Confidence:** MEDIUM
+**Domain:** In-fullscreen developer activity panel integration
+**Researched:** 2026-04-17
+**Confidence:** HIGH (based on direct source inspection of all affected files)
 
-## Standard Architecture
+## System Overview
 
-### System Overview
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        FullscreenLyricsPage                          │
+│                                                                      │
+│  useWebAuthRuntime ──► useSharedPlayback ──► shared-playback-runtime │
+│  useKaraokeMode                                                      │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  Existing fixed overlays (z-20)                              │    │
+│  │  ├── "Exit Fullscreen Lyrics" (top-left)                     │    │
+│  │  ├── "Show Diagnostics" toggle + diagnostics panel           │    │
+│  │  ├── "Back to Live" button (conditional)                     │    │
+│  │  └── Karaoke controls (top-right)                            │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  NEW: Dev Activity Panel toggle + panel (z-20)               │    │
+│  │  └── DevActivityPanel component                              │    │
+│  │      └── useDevActivityLog hook (event log state)            │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+│  main: lyrics viewport + track + rows                                │
+└─────────────────────────────────────────────────────────────────────┘
 
-```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│                           Presentation Layer                             │
-├──────────────────────────────────────────────────────────────────────────┤
-│  ┌──────────────────────┐   ┌──────────────────────┐                    │
-│  │ Lyrics View (React)  │   │ Playback HUD (React) │                    │
-│  └──────────┬───────────┘   └──────────┬───────────┘                    │
-│             │                           │                                │
-│             └──────────────┬────────────┘                                │
-├────────────────────────────┴─────────────────────────────────────────────┤
-│                          Application Layer                                │
-├──────────────────────────────────────────────────────────────────────────┤
-│  ┌────────────────────────────────────────────────────────────────────┐   │
-│  │ Orchestrator: track lifecycle + retry policy + state transitions  │   │
-│  └───────┬──────────────────┬──────────────────┬─────────────────────┘   │
-│          │                  │                  │                         │
-│  ┌───────▼───────┐  ┌───────▼───────┐  ┌───────▼────────┐               │
-│  │ Playback      │  │ Lyrics        │  │ Sync Engine     │               │
-│  │ Poller        │  │ Resolver      │  │ (time mapping)  │               │
-│  └───────┬───────┘  └───────┬───────┘  └───────┬────────┘               │
-├──────────┴───────────────────┴──────────────────┴────────────────────────┤
-│                            Data Layer                                     │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
-│  │ Token Store      │  │ Lyrics Cache     │  │ Telemetry/Drift Store  │  │
-│  │ (secure local)   │  │ (by track ID)    │  │ (optional local logs)  │  │
-│  └──────────────────┘  └──────────────────┘  └────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────┘
-            │                           │
-            ▼                           ▼
-    Spotify Web API               Lyrics Providers (LRCLIB first)
+Event Sources (captured at natural callsites, no new bus):
+  ├── lyrics fetch resolved/failed  →  useEffect in FullscreenLyricsPage
+  ├── playbackSnapshot changes       →  useEffect (playbackSnapshot dep)
+  ├── track changes (trackId)        →  useEffect (activeTrack.trackId dep)
+  ├── live-lock changes              →  setIsLiveLocked callsites
+  └── poller diagnostics             →  logDiagnostic() in shared-playback-runtime
 ```
 
-### Component Responsibilities
+## Component Responsibilities
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| Playback Poller | Poll `/me/player/currently-playing`, normalize `item.id`, `progress_ms`, `timestamp`, `is_playing`, and emit playback snapshots | Timer-driven service with adaptive cadence (fast when playing, slow when paused) + 429 backoff (`Retry-After`) |
-| Lyrics Resolver | Resolve best lyric candidate for current track, prioritize timestamped lyrics, parse/normalize LRC, and attach metadata quality score | Provider pipeline (`primary -> fallback`) with deterministic matching on title/artist/duration and cache-first lookup |
-| Sync Engine | Convert playback snapshots into stable lyric cursor position and smooth UI progression between polls | Monotonic clock model (`anchorProgressMs + elapsedMonotonicMs`) + periodic re-anchor and seek detection |
-| State Store | Hold canonical app state (`idle/loading/ready/not-found/error`) and expose derived selectors for UI | Single client store with immutable state transitions |
-| Lyrics Renderer | Render multilingual lines, active-line highlight, and auto-scroll centered on current line | Virtualized list (if needed), `dir` per line/container, font fallback stack for CJK/Arabic/Korean |
-| Cache Layer | Persist lyrics by Spotify track ID and resolution fingerprint to avoid repeated web lookups | SQLite or local JSON/IndexedDB with TTL + schema versioning |
+| Component | Responsibility | Status |
+|-----------|----------------|--------|
+| `FullscreenLyricsPage` | Orchestrates all fullscreen state and renders the page | Exists — minor modification |
+| `DevActivityPanel` | Renders the scrolling event log overlay, accepts log entries as prop | New |
+| `useDevActivityLog` | Accumulates log entries via an `append(entry)` function, returns entries | New |
+| `shared-playback-runtime` | Polls Spotify, owns `logDiagnostic` calls | Exists — no modification needed |
 
 ## Recommended Project Structure
 
-```text
+```
 src/
-├── app/                     # App shell, providers, route/window composition
-│   ├── boot/                # startup wiring (env, auth bootstrap, store init)
-│   └── App.tsx              # top-level layout using shadcn/ui
-├── core/                    # Domain logic, framework-agnostic
-│   ├── playback/            # Spotify polling, snapshot normalization
-│   ├── lyrics/              # Provider clients, matching, parsing, scoring
-│   ├── sync/                # Timeline model, drift correction, cursoring
-│   └── orchestrator/        # Track lifecycle coordinator
-├── state/                   # Global state store, actions, selectors
-│   ├── slices/              # playback, lyrics, sync, ui slices
-│   └── selectors/           # memoized derivations for UI
-├── ui/                      # Presentational components
-│   ├── lyrics/              # lyric list, line item, auto-scroll viewport
-│   └── playback/            # song meta, playback status, fallback states
-├── infra/                   # IO boundaries
-│   ├── spotify/             # OAuth PKCE + Spotify API client
-│   ├── providers/           # LRCLIB and optional provider adapters
-│   ├── cache/               # local persistence adapter
-│   └── telemetry/           # metrics/logging sink
-└── shared/                  # types, errors, utilities, constants
+├── web/
+│   ├── dev/
+│   │   ├── dev-activity-panel.tsx     # Panel UI — receives entries[], isOpen
+│   │   └── use-dev-activity-log.ts    # Hook — accumulates log entries, returns append + entries
+│   ├── fullscreen-lyrics-page.tsx     # Modified: wires useDevActivityLog, appends events, renders DevActivityPanel
+│   └── playback/
+│       └── shared-playback-runtime.ts # Unchanged — logDiagnostic already exists
 ```
 
 ### Structure Rationale
 
-- **`core/`:** keeps timing and matching logic testable without UI or platform coupling.
-- **`infra/`:** isolates external API contracts so provider/API changes do not leak across the app.
-- **`state/`:** enforces single source of truth for playback/lyrics/sync transitions.
-- **`ui/`:** keeps rendering concerns (auto-scroll, RTL, typography) separate from orchestration.
+- **web/dev/:** Isolates all dev tooling behind a folder boundary. Nothing in this folder is imported by production paths that don't already have the panel toggle. Tree-shakers can drop it entirely in a future prod build if desired.
+- **use-dev-activity-log.ts:** Keeping the log accumulation in a hook rather than module-level state means it resets on component unmount (no stale log across navigations) and is unit-testable in isolation.
+- **dev-activity-panel.tsx:** A pure display component. Receives `entries` and `isOpen` as props. Zero coupling to runtime internals — safe to move or remove.
 
 ## Architectural Patterns
 
-### Pattern 1: Snapshot + Prediction Sync
+### Pattern 1: Capture Events at Existing useEffect Callsites
 
-**What:** treat Spotify poll responses as anchor snapshots, then predict current playback between polls using a monotonic clock.
-**When to use:** always, because polling interval is slower than visual update interval.
-**Trade-offs:** smooth and low API load; requires careful re-anchor logic to avoid drift accumulation.
+**What:** In `FullscreenLyricsPage`, each significant state transition already lives in a `useEffect`. Append a log entry inside those effects using the `append` function returned by `useDevActivityLog`.
+
+**When to use:** This is the right approach for all events that are already computed in the page component: lyrics resolution, track changes, live-lock toggles, playback snapshot changes.
+
+**Trade-offs:** Events are tied to React's render cycle, so they reflect state after React commits. This is accurate for developer observation — it matches what the user sees. The downside is that the effect dependency list must not be modified purely to trigger new log entries (that would break existing timing invariants).
 
 **Example:**
 ```typescript
-type PlaybackAnchor = {
-  spotifyTimestampMs: number;
-  progressMs: number;
-  capturedAtPerfMs: number;
-  isPlaying: boolean;
+// Inside FullscreenLyricsPage:
+const { entries, append } = useDevActivityLog({ maxEntries: 200 });
+
+// Existing effect — just add append() before existing work:
+useEffect(() => {
+  if (!webAuth.sessionAccessToken || !activeTrack?.trackId) {
+    setResolvedLyrics(null);
+    return;
+  }
+  append({ type: "lyrics:fetch-start", trackId: activeTrack.trackId });
+  // ... existing resolve logic
+  // inside resolve():
+  //   append({ type: "lyrics:resolved", renderMode: resolved.renderMode })
+  //   OR append({ type: "lyrics:not-found" })
+}, [activeTrack?.artist, activeTrack?.title, activeTrack?.trackId, webAuth.sessionAccessToken]);
+```
+
+### Pattern 2: useDevActivityLog as a Bounded Ring Buffer
+
+**What:** The hook keeps a fixed-size array (e.g. 200 entries). Each entry has `{ id, timestamp, type, payload? }`. `append()` adds to the head and drops the tail beyond the cap.
+
+**When to use:** Always — unbounded accumulation of log entries would grow without limit for long sessions.
+
+**Trade-offs:** Simple and predictable. A `useReducer` with an `ADD_ENTRY` action is cleaner than `useState` for this because the cap logic lives in the reducer.
+
+**Example:**
+```typescript
+type LogEntry = {
+  id: string;
+  timestampMs: number;
+  label: string;
 };
 
-function estimateProgressMs(anchor: PlaybackAnchor, nowPerfMs: number): number {
-  if (!anchor.isPlaying) return anchor.progressMs;
-  return anchor.progressMs + Math.max(0, nowPerfMs - anchor.capturedAtPerfMs);
+function logReducer(state: LogEntry[], action: { type: "add"; entry: LogEntry }): LogEntry[] {
+  return [action.entry, ...state].slice(0, MAX_ENTRIES);
+}
+
+export function useDevActivityLog({ maxEntries = 200 } = {}) {
+  const [entries, dispatch] = useReducer(logReducer, []);
+  const append = useCallback((label: string, extra?: object) => {
+    dispatch({
+      type: "add",
+      entry: { id: crypto.randomUUID(), timestampMs: Date.now(), label, ...extra },
+    });
+  }, []);
+  return { entries, append };
 }
 ```
 
-### Pattern 2: Provider Chain with Quality Scoring
+### Pattern 3: DevActivityPanel as a Pure Overlay (no runtime coupling)
 
-**What:** resolve lyrics via ordered providers and choose candidate by confidence score (track ID match > ISRC/duration proximity > fuzzy title/artist).
-**When to use:** when source quality varies and timestamped lyrics are not guaranteed.
-**Trade-offs:** higher hit rate and deterministic behavior; more up-front implementation complexity.
+**What:** `DevActivityPanel` is a `fixed` positioned overlay that renders `entries[]` in a scrollable list. It knows nothing about playback, lyrics, or auth. It accepts only display props.
 
-**Example:**
-```typescript
-type Candidate = { synced: boolean; durationDeltaMs: number; source: string };
+**When to use:** Always — separating display from data keeps the panel testable and ensures dev tooling never introduces side effects in the main render path.
 
-function score(c: Candidate): number {
-  return (c.synced ? 100 : 40) - Math.min(30, Math.floor(c.durationDeltaMs / 1000));
-}
-```
-
-### Pattern 3: Event-Driven Track Session Orchestrator
-
-**What:** create a per-track session that owns fetch, parse, cache, and sync state; reset atomically on track change/seek.
-**When to use:** when multiple async tasks can overlap and stale results must be ignored.
-**Trade-offs:** prevents race conditions; requires explicit cancellation and session IDs.
+**Trade-offs:** The parent (`FullscreenLyricsPage`) is responsible for passing entries down. This is correct because `FullscreenLyricsPage` already owns the toggle state (`showDiagnostics` pattern already exists as precedent).
 
 ## Data Flow
 
-### Request Flow
+### Event Log Data Flow
 
-```text
-[Playback Poll Tick]
-    ↓
-[Playback Poller] → [Spotify Client] → [/me/player/currently-playing]
-    ↓
-[Normalized Snapshot] → [Orchestrator]
-    ↓
-[Track Changed?] ── yes ──> [Lyrics Resolver] → [Cache] → [Provider API]
-    │                                   ↓
-    no                                  [Parsed Timeline]
-    │                                   ↓
-    └──────────────→ [Sync Engine Re-anchor] → [State Store] → [UI Render]
+```
+useDevActivityLog (hook in FullscreenLyricsPage)
+    │
+    ├─ append("lyrics:fetch-start", ...) ◄── lyrics useEffect (on trackId change)
+    ├─ append("lyrics:resolved", ...)    ◄── lyrics useEffect (after await)
+    ├─ append("track:changed", ...)      ◄── activeTrack trackId useEffect
+    ├─ append("playback:snapshot", ...)  ◄── playbackSnapshot useEffect
+    └─ append("live-lock:changed", ...)  ◄── setIsLiveLocked callsites
+         │
+         ▼
+    entries[]  (reverse-chronological, capped at maxEntries)
+         │
+         ▼
+    DevActivityPanel (receives entries + isOpen as props)
+         │
+         ▼
+    Scrollable fixed overlay (z-20, dark themed)
 ```
 
-### State Management
+### Toggle State Flow
 
-```text
-[State Store]
-    ↓ subscribe
-[Lyrics UI + Playback UI]
-    ↑                     ↓
-[UI actions]     [Domain actions from orchestrator]
-    └────────────→ [Reducers/Mutations] → [State Store]
 ```
-
-### Key Data Flows
-
-1. **Playback polling flow:** Poll Spotify every ~1s while playing and slower while paused; on 429, pause polling until `Retry-After` then resume.
-2. **Lyrics retrieval flow:** On new track ID, check cache; if miss, resolve via primary provider (timestamped first) then fallback; cache normalized result by track ID.
-3. **Sync engine flow:** On each animation frame, estimate progress from latest anchor, map to active lyric line, emit line index only when changed.
-4. **UI update flow:** Render active line + smooth auto-scroll; avoid full list re-render by selecting derived state (`activeLineId`, `viewportTarget`).
-
-## Suggested Build Order (Milestone: end-to-end sync reliability)
-
-1. **Playback foundation first:** Implement OAuth PKCE, token refresh, and normalized playback poller with logging.
-2. **Deterministic sync core second:** Implement anchor/prediction sync engine with seek/skip detection before any complex UI.
-3. **Single-provider lyrics path third:** Integrate one timestamped provider (LRCLIB) + parser + "Lyrics not found" fallback.
-4. **Track session orchestration fourth:** Add cancellation/session IDs to prevent stale lyrics after rapid track switches.
-5. **Cache + multilingual UI fifth:** Add cache-by-track-ID and robust rendering (`dir`, Unicode-safe line handling, font fallback).
-6. **Polish and resilience last:** Add adaptive polling, 429 backoff behavior, and drift instrumentation.
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k users | Pure desktop-local architecture; direct Spotify + provider APIs; local cache only |
-| 1k-100k users | Optional lightweight relay/proxy for provider aggregation, response normalization, and centralized rate-limit shielding |
-| 100k+ users | Dedicated backend for provider federation, aggressive caching, and observability pipelines; keep desktop client thin |
-
-### Scaling Priorities
-
-1. **First bottleneck:** external API rate limits and provider variance; fix with adaptive polling + cache + retry discipline.
-2. **Second bottleneck:** lyric quality inconsistency; fix with provider scoring, normalization, and manual override/debug tooling.
-
-## Anti-Patterns
-
-### Anti-Pattern 1: "UI time = Spotify progress_ms"
-
-**What people do:** directly bind highlighted line to last polled `progress_ms`.
-**Why it's wrong:** creates visible stutter and lag between polls.
-**Do this instead:** use snapshot + prediction with periodic re-anchor.
-
-### Anti-Pattern 2: Fire-and-forget lyrics fetches per poll
-
-**What people do:** trigger lyrics resolution on every poll tick.
-**Why it's wrong:** redundant network calls, race conditions, and stale UI updates.
-**Do this instead:** fetch only on track/session change with cancellation token/session ID.
+showDevPanel: boolean  (useState in FullscreenLyricsPage)
+    │
+    ├─ toggle button (fixed overlay, same pattern as showDiagnostics)
+    └─ DevActivityPanel isOpen={showDevPanel}
+```
 
 ## Integration Points
 
-### External Services
+### Files to Modify
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Spotify Web API | OAuth PKCE + periodic polling of `GET /me/player/currently-playing` | Handle 401/refresh and 429 `Retry-After`; fields `timestamp` + `progress_ms` are sync anchors |
-| LRCLIB (or equivalent) | Query by metadata, prefer `syncedLyrics` over plain lyrics | API returns both `plainLyrics` and `syncedLyrics`; parse `[mm:ss.xx]` lines into timeline |
+| File | Change | Risk |
+|------|--------|------|
+| `src/web/fullscreen-lyrics-page.tsx` | Add `useDevActivityLog`, wire `append()` into 4-5 existing useEffects, add toggle button and `<DevActivityPanel>` render | Low — additive only, no existing logic changes |
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/web/dev/use-dev-activity-log.ts` | Hook — `useReducer`-based ring buffer, returns `{ entries, append }` |
+| `src/web/dev/dev-activity-panel.tsx` | Pure display component — fixed overlay, scrollable log entries |
+
+### Files Left Unchanged
+
+| File | Why Untouched |
+|------|---------------|
+| `shared-playback-runtime.ts` | Already logs via `logDiagnostic` to console. The dev panel reads state it already receives through `useSharedPlayback`. No need to tap into the poller directly. |
+| `use-shared-playback.ts` | No changes needed — `FullscreenLyricsPage` already receives `playbackSnapshot` from this hook. |
+| All core/infra domain modules | Dev panel is a UI-only concern |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| `core/playback` <-> `core/sync` | Typed snapshot events | Keep clock math in sync module only |
-| `core/lyrics` <-> `infra/providers` | Interface-based adapter | Enables swapping providers without domain rewrite |
-| `core/orchestrator` <-> `state` | Domain actions | Prevent UI components from coordinating async workflows directly |
+| `useDevActivityLog` ↔ `FullscreenLyricsPage` | `append()` callback called from existing useEffects | One-way, additive |
+| `FullscreenLyricsPage` ↔ `DevActivityPanel` | Props: `isOpen: boolean`, `entries: LogEntry[]` | Pure data down, no callbacks up |
+| Dev panel ↔ production lyric display | None — panel is a sibling fixed overlay, not inside the lyrics viewport tree | Critical: must not be inside `viewportSurfaceRef` subtree or it will receive scroll/wheel events |
 
-## Risks and Mitigation
+## Build Order
 
-### Timing Drift
+The recommended build order respects existing dependencies and keeps each step independently testable:
 
-- **Risk:** drift accumulates when poll jitter or clock differences cause estimated progress to diverge from actual playback.
-- **Mitigation:** re-anchor on every poll using Spotify `timestamp`/`progress_ms`; detect seek if delta exceeds threshold (for example >1200ms) and hard-jump cursor.
-- **Mitigation:** use monotonic timing (`performance.now`) for interpolation, not wall-clock time.
-- **Mitigation:** track drift metric (`estimatedMs - snapshotProgressMs`) and alert in dev overlay when sustained drift exceeds budget.
+1. **Create `use-dev-activity-log.ts`** — standalone hook with no imports from the rest of the app. Unit-testable in isolation. No visual changes.
 
-### Multilingual Rendering
+2. **Create `dev-activity-panel.tsx`** — pure display component. Accepts mock entries for Storybook/manual testing. No runtime coupling.
 
-- **Risk:** broken segmentation/wrapping for scripts without spaces (CJK/Thai) and bidirectional issues for Arabic/Hebrew mixed text.
-- **Mitigation:** rely on Unicode-safe strings, use `Intl.Segmenter` for locale-aware segmentation where word-level operations are needed.
-- **Mitigation:** set HTML `dir` attribute per line/container instead of forcing CSS `direction`; keep mixed-script punctuation visually correct.
-- **Mitigation:** define font fallback chain with broad glyph coverage and test with CJK, Arabic, and Korean fixtures.
+3. **Wire into `FullscreenLyricsPage`** — call `useDevActivityLog`, add toggle button (following `showDiagnostics` precedent), render `<DevActivityPanel>`, add `append()` calls inside existing useEffects.
+
+4. **Validate event coverage** — manually verify that the panel shows entries for: lyrics fetch start, lyrics resolved/not-found, track change, playback snapshot arrival, live-lock toggle.
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Module-Level Event Bus
+
+**What people do:** Create a global singleton `EventEmitter` or `Subject` that any module can import and push events to, then subscribe from the panel.
+
+**Why it's wrong:** The existing architecture has no event bus. Introducing one adds a new coupling surface across the entire codebase. The runtime modules (lyrics resolver, playback poller) would gain a dependency on a UI-layer concern. It also bypasses React's render cycle, making the panel state diverge from what React has committed to the DOM.
+
+**Do this instead:** Capture events at existing `useEffect` callsites in `FullscreenLyricsPage`. These effects already fire at the right moments. The page component is the correct integration point because it is already the owner of all relevant state.
+
+### Anti-Pattern 2: Importing `append` Directly into Runtime Modules
+
+**What people do:** Pass `append` into `resolveLyricsForTrack`, `fetchWebNowPlaying`, or `subscribeSharedPlayback` as a callback parameter to get finer-grained event capture.
+
+**Why it's wrong:** This couples domain-layer and infrastructure modules to a UI concern. It breaks the existing clean separation and makes those modules harder to test. The granularity gained is not worth the coupling cost for a developer activity panel.
+
+**Do this instead:** Capture at the `useEffect` level in `FullscreenLyricsPage`. The page component is already the boundary where domain output becomes UI state. Events captured there are sufficient for the panel's purpose.
+
+### Anti-Pattern 3: Placing DevActivityPanel Inside the Lyrics Viewport Subtree
+
+**What people do:** Render the panel as a child of `viewportSurfaceRef`'s div to keep it visually grouped with the lyrics.
+
+**Why it's wrong:** `viewportSurfaceRef` has wheel and touch event listeners with `preventDefault`. Any element inside it will have its own scroll interaction intercepted. The panel needs to be a `fixed` sibling of the viewport, not a child.
+
+**Do this instead:** Render `<DevActivityPanel>` as a sibling of `<main>` at the top level of the `FullscreenLyricsPage` return tree, identical to how `showDiagnostics` panel is already placed.
+
+### Anti-Pattern 4: Re-rendering Panel on Every Animation Frame
+
+**What people do:** Subscribe the panel to the `estimatedProgressMs` state or pass it into the panel as a live-updating prop.
+
+**Why it's wrong:** `estimatedProgressMs` updates on every `requestAnimationFrame` tick. Passing it into the dev panel would cause the panel (and its entry list) to re-render at 60fps, regardless of whether any new events occurred.
+
+**Do this instead:** The panel only re-renders when `entries` changes, which happens only when `append()` is called. Keep `estimatedProgressMs` and other animation-frame state out of the panel's props.
+
+## Scaling Considerations
+
+This is a single-user developer tool with a bounded entry list. Scaling is not a concern. The only performance concern is render frequency, which is addressed by the anti-patterns above.
 
 ## Sources
 
-- Spotify Web API: Get Currently Playing Track (response fields, scopes, 429 behavior): https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track
-- Spotify Web API: Rate limits and `Retry-After`: https://developer.spotify.com/documentation/web-api/concepts/rate-limits
-- Spotify OAuth PKCE flow: https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
-- LRCLIB API behavior examples (`plainLyrics`, `syncedLyrics`): https://lrclib.net/api/get?track_name=Bohemian%20Rhapsody&artist_name=Queen
-- LRCLIB project overview: https://raw.githubusercontent.com/tranxuanthang/lrclib/master/README.md
-- MDN `requestAnimationFrame` timing guidance: https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame
-- MDN `performance.now` monotonic clock guidance: https://developer.mozilla.org/en-US/docs/Web/API/Performance/now
-- MDN `Intl.Segmenter` locale-sensitive segmentation: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter
-- MDN `dir` vs CSS `direction` guidance: https://developer.mozilla.org/en-US/docs/Web/CSS/direction
+- Direct inspection of `src/web/fullscreen-lyrics-page.tsx` (source of truth for overlay pattern, toggle state, viewport structure)
+- Direct inspection of `src/web/playback/shared-playback-runtime.ts` (confirms `logDiagnostic` already exists, no new bus needed)
+- Direct inspection of `src/web/use-shared-playback.ts` (confirms subscription model)
+- `.planning/PROJECT.md` (milestone requirements for v1.6 developer activity panel)
 
 ---
-*Architecture research for: Spotify live synchronized lyrics desktop app*
-*Researched: 2026-03-19*
+*Architecture research for: v1.6 developer activity panel integration*
+*Researched: 2026-04-17*

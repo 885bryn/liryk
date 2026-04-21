@@ -71,6 +71,22 @@ describe("buildLiveLyricsViewModel", () => {
     expect(model.primaryActionLabel).toBe("Retry");
   });
 
+  it("hides not-found retry action while retry is in flight", () => {
+    const model = buildLiveLyricsViewModel({
+      syncState: state({
+        lyricsSourceState: "not-found",
+        retryAvailable: true,
+        retryInFlight: true,
+        statusLine: "Retrying lyrics lookup...",
+      }),
+      lines: [],
+      showReturnToLive: false,
+    });
+
+    expect(model.showPrimaryAction).toBe(false);
+    expect(model.primaryActionLabel).toBeUndefined();
+  });
+
   it("keeps low-confidence and plain fallback lyrics visible without synced badge", () => {
     const lowConfidence = buildLiveLyricsViewModel({
       syncState: state({

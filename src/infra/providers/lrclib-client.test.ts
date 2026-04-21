@@ -19,7 +19,8 @@ describe("createLrclibClient", () => {
           }),
           { status: 200 },
         ),
-      );
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }));
 
     const client = createLrclibClient({ fetchFn, baseUrl: "https://lrclib.net" });
     const result = await client.getByMetadata({
@@ -30,7 +31,7 @@ describe("createLrclibClient", () => {
       durationMs: 202_400,
     });
 
-    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(result).toEqual([
       {
         provider: "lrclib",

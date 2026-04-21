@@ -1,152 +1,202 @@
 # Feature Research
 
-**Domain:** Desktop companion app for Spotify-synced live lyrics
-**Researched:** 2026-03-19
-**Confidence:** MEDIUM-HIGH
+**Domain:** In-fullscreen developer activity panel overlay for a real-time lyrics sync app
+**Researched:** 2026-04-17
+**Confidence:** HIGH (based on direct codebase inspection plus established dev overlay patterns)
+
+---
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete.
+These are the features the developer (sole user of this panel) will assume exist. Missing any of these makes the panel useless for its stated purpose: observing app behavior without leaving fullscreen.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Spotify sign-in with minimal permissions | Users expect desktop companion apps to connect quickly and safely | MEDIUM | Use OAuth PKCE with `user-read-currently-playing`/`user-read-playback-state`; token refresh is mandatory for session continuity |
-| Reliable now-playing + progress detection | Core promise is "show current lyric at current moment" | MEDIUM | Must handle `200/204/401/429`, active device changes, and no-playback state without UI jitter |
-| Version-aware lyric matching (track, artist, album, duration) | Users notice immediately when lyrics are from the wrong version/remix/live cut | HIGH | Match by metadata and cache by Spotify track ID; keep fallback path when strict match fails |
-| Real-time line highlight + auto-scroll | This is the defining Spotify-style behavior on desktop | HIGH | Parse `syncedLyrics` timestamps (LRC-style), center active line, smooth scroll, and keep drift correction loop |
-| State-aware sync (pause, seek, skip, resume) | Users expect highlight to freeze/resume instantly with playback controls | HIGH | On seek/skip, recompute active line from `progress_ms`; do not animate through old lines |
-| Graceful fallback for missing or unsynced lyrics | Lyrics are not available for all tracks/devices/markets | MEDIUM | Show explicit "Lyrics not found" state; if only plain lyrics exist, show static/estimated mode with clear labeling |
-| Multilingual lyric rendering (UTF-8 + RTL-safe) | Global catalogs include CJK, Arabic, Korean, mixed punctuation | MEDIUM | Font fallback, line wrapping, and RTL text direction testing are required in v1 |
+| Toggle button in fullscreen | Panel must be accessible without leaving fullscreen mode | LOW | A toggle already exists for timing diagnostics (`fullscreen-diagnostics-toggle`). The new panel toggle follows the same fixed-position pattern. Button goes left side, below the existing diagnostics toggle. |
+| Real-time scrolling event log | The whole point — see what happened and when | MEDIUM | A scrolling `<ul>` or `<div>` with auto-scroll-to-bottom behavior. Needs bounded max entries (ring buffer, ~200 entries) to avoid memory growth over long sessions. |
+| Timestamps on each entry | Without timestamps, ordering and latency are unreadable | LOW | Relative timestamps (`+0.3s`, `+1.2s` from panel open) or wall-clock `HH:MM:SS.mmm`. Relative-from-session-start is most useful for diffing poll intervals. |
+| Event category labels | Log will contain mixed event types; scanning is impossible without them | LOW | Category prefix on each entry: `[POLL]`, `[LYRICS]`, `[AUTH]`, `[SYNC]`, `[NAV]`, `[ERROR]`. Color-code by category in the overlay. |
+| Non-disruptive styling | Panel must not obscure lyrics content, must feel like a dark-theme terminal | LOW | Semi-transparent dark panel, same `bg-black/60 backdrop-blur-sm` language already used by the existing diagnostics section. Max width ~300-360px, anchored to left edge, below the diagnostics toggle. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set the product apart. Not required, but valuable.
+Features that make this panel genuinely useful as a debugging instrument beyond a simple log dump.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Sync quality badge (`Synced`, `Estimated`, `Static`) | Sets correct user expectations and reduces "app is broken" reports | LOW | Driven directly by lyric source payload (`syncedLyrics` vs `plainLyrics`) |
-| Per-song timing offset correction | Fixes small drift on imperfect community timestamps and long sessions | MEDIUM | Store local offset by Spotify track ID; apply before active-line resolution |
-| Multi-source lyrics resolver with confidence score | Improves coverage while preserving accuracy-first behavior | HIGH | Query primary source first, then fallback source chain; attach provenance and confidence for debugging |
-| Desktop-focused controls (keyboard jump to current line, always-on-top mini mode) | Makes the app feel purpose-built for desktop instead of a web port | MEDIUM | Ship after core reliability is stable; avoid adding playback control scope in v1 |
+| Category filter toggles | Playback polling is noisy (fires every 4s); filtering to `[LYRICS]` or `[AUTH]` isolates what matters without clearing the log | MEDIUM | A small row of toggle-able pill buttons per category. State lives in component, not persisted. Hiding a category suppresses display, not capture — entries are still buffered. |
+| Drift delta inline on poll entries | The existing polled/estimated/drift values from `LiveSyncUiState` are already computed; surfacing drift inline on each `[POLL]` entry adds immediate visibility to timing health | LOW | Pull `driftDeltaMs` and `correctionState` from existing state. Format as `drift: +12ms (synced)`. No new computation needed. |
+| Track change events highlighted | Track changes are the most important moments in lyrics sync — when they happen is critical to validate | LOW | `[SYNC] track-changed: <trackId>` shown in a distinct color (e.g. `text-yellow-400/80`). Already classifiable from `PlaybackTransitionKind` emitted by `playback-runtime.ts`. |
+| Log clear button | Long sessions accumulate hundreds of entries; a single-click clear without closing the panel | LOW | A small `Clear` link in the panel header. Sets the buffer back to empty. |
+| Copy-to-clipboard button | Developer wants to paste a log snippet for a bug report without leaving fullscreen | LOW | `navigator.clipboard.writeText(entries.map(format).join('\n'))`. Adds a `Copy` button to the panel header. Show brief "Copied!" feedback. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems.
-
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Word-by-word karaoke highlighting in v1 | Looks flashy and "more premium" | Requires word-level timing data not consistently available; large complexity spike for marginal MVP learning | Stick to line-level sync with excellent timing stability |
-| Built-in lyric editor/crowdsourcing at launch | Users want to fix bad lyrics directly | Moderation, abuse, legal, and data quality workflows will dominate roadmap | Add lightweight "Report bad sync/lyrics" signal only |
-| Playback-control heavy scope (play/pause/seek from app) | Feels like a full player replacement | Adds extra permissions and UX edge cases while not improving core lyric validation | Keep app read-only for playback state in v1 |
-| Cross-service support (Apple Music, YouTube Music, local files) in MVP | Broader audience appeal | Multiplies auth/device/metadata edge cases before Spotify flow is stable | Nail Spotify path first, then add provider abstraction in v2 |
+| Persistent log across page reloads | "I want to see what happened before the reload" | Requires `localStorage` writes on every event; auth tokens and track IDs land in storage unexpectedly; adds complexity with no payoff since reload clears all runtime state anyway | Use Copy-to-clipboard before reloading |
+| Network request inspector / HAR recording | Full visibility into Spotify API calls | Would require intercepting `fetch`, adding proxy wrapper around the lrclib client and Spotify client — intrusive and fragile; Spotify 429s are already surfaced through `logDiagnostic` in `shared-playback-runtime.ts` | Surface the specific `rate_limited` and `transient_error` events that already exist |
+| Editable/injectable log entries | "Let me annotate what I was doing at a point in time" | Adds UI complexity and interaction surface that conflicts with the read-only immersive context | Add a one-sentence note via browser console if needed; not worth panel complexity |
+| Resizable/draggable panel | "Let me move it out of the way" | Drag interactions conflict directly with the scroll-to-browse lyrics gesture; the whole fullscreen surface is a scroll target | Fixed position with semi-transparency is sufficient; panel is narrow enough to avoid lyrics in the center column |
+| Real-time chart / graph of drift over time | Visual trend of drift values | Complex to implement; the existing timing diagnostics section already shows current values; history can be inferred from log entries | Include drift value inline in each `[POLL]` log entry; developer can spot-check trend |
+| Per-line lyric sync validation overlay | Show whether each line fired at the right ms | Requires instrumentation at the sync engine frame level; very noisy (fires on every animation frame) and would drown out meaningful events | A single `[SYNC] active-line: 12 @ 45320ms` on line change events is sufficient |
+
+---
 
 ## Feature Dependencies
 
 ```
-[Spotify OAuth PKCE]
-    └──requires──> [Now-playing + progress polling]
-                        └──requires──> [State-aware sync engine (pause/seek/skip)]
-                                             └──requires──> [Line highlight + auto-scroll]
+Toggle button (open/close panel)
+    └──renders──> Panel container
+                     └──requires──> Event bus / log buffer
+                                        └──depends on──> Runtime event sources (see below)
 
-[Metadata normalization + version match]
-    └──requires──> [Lyrics fetch pipeline]
-                        └──requires──> [Cache by Spotify track ID]
+Category filter toggles
+    └──filters──> Log buffer display (does NOT affect capture)
 
-[Lyrics source result type]
-    └──drives──> [Sync quality badge]
+Copy-to-clipboard
+    └──reads──> Log buffer (formatted, full unfiltered buffer)
 
-[Multilingual rendering]
-    └──enhances──> [Line highlight + auto-scroll]
+Drift delta inline display
+    └──reads──> LiveSyncUiState.driftDeltaMs + correctionState (already computed in FullscreenLyricsPage)
 
-[Playback-control heavy scope] ──conflicts──> [Read-only MVP focus]
-[Word-level karaoke in v1] ──conflicts──> [Fast reliability-first delivery]
+Track change highlight
+    └──reads──> PlaybackTransitionKind from playback-runtime.ts (already emitted per poll)
 ```
+
+### Runtime Event Sources (existing, no new computation needed for MVP)
+
+The following event sources already exist in the codebase and can be tapped with zero new runtime computation:
+
+- `shared-playback-runtime.ts` — `logDiagnostic("request"|"stop"|"start"|"rate_limited"|"transient_error", ...)` is already called at every poll lifecycle moment. Replace `console.info` with a bus emit here to get `[POLL]` and `[ERROR]` categories.
+- `playback-runtime.ts` — `emit({ snapshot, transition })` fires on every poll result. Subscribe to this for `[POLL]` result entries and `[SYNC] track-changed` events.
+- `lyrics-resolution-runtime.ts` — `liveSyncStore.setStatusLine(...)` transitions (`"Resolving lyrics..."`, `"Lyrics ready"`, `"Lyrics not found"`, `"Refreshing cached lyrics..."`) map directly to `[LYRICS]` log events.
+- `live-sync-runtime.ts` — `correctionState: "hard-reset"` assignment is the most critical sync health event. Surface as `[SYNC] hard-reset`.
+- `use-web-auth-runtime.ts` / `auth-runtime.ts` — Token refresh and session state changes are `[AUTH]` events.
+- `FullscreenLyricsPage` — `isLiveLocked` transitions (user scrolled away, Back to Live pressed) are `[NAV]` events.
 
 ### Dependency Notes
 
-- **Spotify OAuth PKCE requires now-playing polling:** no authorized playback state means no sync baseline.
-- **State-aware sync requires now-playing progress:** pause/seek/skip handling depends on accurate `progress_ms` and playback timestamp.
-- **Line highlight requires sync engine first:** rendering is easy; correctness under track changes is the hard dependency.
-- **Version match requires metadata normalization:** without normalized title/artist/album/duration, wrong lyric version selection is common.
-- **Sync quality badge depends on source result type:** badge logic is deterministic only when source payload distinguishes synced/plain lyrics.
-- **Playback control scope conflicts with read-only MVP:** it adds API and UX complexity without validating the core lyric value proposition.
+- **Log buffer requires event bus**: The panel component cannot directly subscribe to module-level singletons without coupling. A lightweight module-level event emitter (`DevActivityBus`, a plain `Set<listener>` with an `emit(entry)` function) is the correct approach. Runtime modules call `devActivityBus.emit(...)` at their existing instrumentation points. The panel subscribes in `useEffect`. Zero framework dependency.
+- **Filter toggles depend on category labels**: Categories must be assigned at capture time, not display time.
+- **Copy-to-clipboard exports full buffer**: Copy exports all buffered entries, not the filtered view. This is intentional — you want everything when filing a bug.
+
+---
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1 — this milestone)
 
-Minimum viable product - what's needed to validate the concept.
-
-- [ ] Spotify OAuth PKCE + reconnect flow - mandatory to access current playback state reliably.
-- [ ] Reliable now-playing detection and playback progress tracking - foundation for all lyric sync behavior.
-- [ ] Version-aware lyric fetch with timestamp-first strategy - prevents visibly wrong lyric matches.
-- [ ] Real-time line highlight and smooth auto-scroll - core user-perceived value.
-- [ ] Pause/seek/skip resilient sync behavior - required for "feels native" Spotify-style UX.
-- [ ] Missing-lyrics fallback (`Lyrics not found`) + plain-lyrics fallback mode - avoids dead-end UX.
-- [ ] Local cache keyed by Spotify track ID - improves responsiveness and reduces repeated lookups.
-- [ ] Multilingual rendering baseline (UTF-8 and RTL-safe layout) - prevents major global usability failures.
+- [ ] Toggle button, fixed-position in fullscreen, matches existing ghost-button style — entry point to the panel
+- [ ] Panel container with semi-transparent dark styling, bounded height with internal scroll, does not overlap lyrics center column
+- [ ] Real-time event log with wall-clock timestamps and category prefixes
+- [ ] Six event categories surfaced: `[POLL]` (Spotify playback polls), `[LYRICS]` (resolution lifecycle), `[AUTH]` (token/session changes), `[SYNC]` (track changes, hard-reset corrections), `[NAV]` (live-lock toggle, Back to Live), `[ERROR]` (rate limits, transient errors)
+- [ ] Bounded ring buffer (200 entries max) with auto-scroll to bottom
+- [ ] Log clear button
 
 ### Add After Validation (v1.x)
 
-Features to add once core is working.
-
-- [ ] Sync quality badge + source attribution - add when support tickets show ambiguity about lyric quality.
-- [ ] Per-song timing offset adjustment - add when mismatch complaints cluster on specific tracks.
-- [ ] Keyboard shortcuts and mini always-on-top mode - add when desktop power-user usage is confirmed.
+- [ ] Category filter toggles — add when the log proves noisy in practice; `[POLL]` fires every 4 seconds so it dominates quickly
+- [ ] Copy-to-clipboard — add when copy-paste of log evidence is needed for bug reports
+- [ ] Drift delta inline on `[POLL]` entries — add when timing regression investigations begin; depends on how valuable the existing diagnostics section proves to be
 
 ### Future Consideration (v2+)
 
-Features to defer until product-market fit is established.
+- [ ] Panel width/position configurability — defer until there is a mobile use case that justifies it
+- [ ] Export log to file — defer until the developer needs to share logs formally
 
-- [ ] Multi-provider playback detection (non-Spotify) - defer until Spotify flow has strong reliability metrics.
-- [ ] Community lyric correction workflows - defer until moderation/legal approach is explicitly funded.
-- [ ] Word-level karaoke highlighting - defer until dependable word-timed datasets are available at scale.
+---
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Spotify OAuth PKCE + token lifecycle | HIGH | MEDIUM | P1 |
-| Now-playing + progress detection | HIGH | MEDIUM | P1 |
-| Version-aware lyric matching | HIGH | HIGH | P1 |
-| Real-time highlight + auto-scroll | HIGH | HIGH | P1 |
-| Pause/seek/skip state handling | HIGH | HIGH | P1 |
-| Missing lyrics + plain fallback mode | HIGH | MEDIUM | P1 |
-| Local cache by track ID | MEDIUM | LOW | P1 |
-| Multilingual rendering baseline | HIGH | MEDIUM | P1 |
-| Sync quality badge | MEDIUM | LOW | P2 |
-| Per-song timing offset correction | MEDIUM | MEDIUM | P2 |
-| Always-on-top mini mode | MEDIUM | MEDIUM | P2 |
-| Word-level karaoke highlighting | LOW | HIGH | P3 |
+| Toggle button | HIGH | LOW | P1 |
+| Panel container + styling | HIGH | LOW | P1 |
+| Real-time log with timestamps + categories | HIGH | MEDIUM | P1 |
+| Ring buffer + auto-scroll | HIGH | LOW | P1 |
+| Log clear button | HIGH | LOW | P1 |
+| `[POLL]` events (Spotify poll lifecycle) | HIGH | LOW | P1 |
+| `[LYRICS]` events (resolution lifecycle) | HIGH | LOW | P1 |
+| `[SYNC]` track-change + hard-reset events | HIGH | LOW | P1 |
+| `[AUTH]` session events | MEDIUM | LOW | P1 |
+| `[NAV]` live-lock toggle events | MEDIUM | LOW | P1 |
+| `[ERROR]` rate-limit / transient error events | HIGH | LOW | P1 |
+| Category filter toggles | HIGH | MEDIUM | P2 |
+| Drift delta inline on poll entries | MEDIUM | LOW | P2 |
+| Copy-to-clipboard | MEDIUM | LOW | P2 |
+| Track change highlight color | LOW | LOW | P2 |
 
 **Priority key:**
 - P1: Must have for launch
 - P2: Should have, add when possible
 - P3: Nice to have, future consideration
 
-## Competitor Feature Analysis
+---
 
-| Feature | Competitor A | Competitor B | Our Approach |
-|---------|--------------|--------------|--------------|
-| Real-time scrolling lyrics | Spotify desktop shows lyrics scrolling in real time during playback | Musixmatch positions synchronized lyrics as a core offering for partners | Match Spotify-style line sync/scroll behavior first; optimize smoothness and correctness over visual effects |
-| Availability messaging | Spotify explicitly notes lyrics may not exist for all songs/devices/markets | Musixmatch partnership model implies catalog/licensing coverage varies by integration | Show explicit fallback states (`Lyrics not found`, `Static lyrics`) instead of blank/ambiguous UI |
-| Free-tier access expectation | Spotify states lyrics are available to Free and Premium users | Musixmatch serves both direct and partner experiences with varying feature surfaces | Do not require Premium; keep feature available wherever playback state can be read |
-| Share/extra social features | Spotify includes lyric sharing, but core value is still live reading | Musixmatch also leans on social/community ecosystem | Defer sharing; prioritize sync reliability and desktop usability in v1 |
+## Implementation Notes (Dependencies on Existing Architecture)
+
+### DevActivityBus: Recommended Approach
+
+A module-level singleton at `src/infra/dev/activity-bus.ts`:
+
+```ts
+// A plain pub/sub ring buffer. Zero external dependencies.
+type DevEntry = { ts: number; category: string; message: string };
+type Listener = (entry: DevEntry) => void;
+```
+
+Runtime modules call `devBus.emit(...)` at their existing instrumentation points. The panel component subscribes in `useEffect` and appends to a local state array (capped at 200). This keeps runtime modules decoupled from the panel's React lifecycle.
+
+The `logDiagnostic` function in `shared-playback-runtime.ts` is already the single instrumentation point for poll lifecycle — routing it through the bus is a one-line change and handles `[POLL]` and `[ERROR]` with no structural change to polling logic.
+
+### Panel Position Constraint
+
+The existing fullscreen layout occupies these zones:
+- Top-left: "Exit Fullscreen Lyrics" (`top-3 left-4`)
+- Below that: "Show Diagnostics" toggle (`top-10 left-4`)
+- Below that: Diagnostics panel when open (`top-16 left-4`, fixed `min-w-[220px]`)
+- Bottom-right: "Back to Live" button
+- Top-right: Track metadata + karaoke controls
+
+The dev panel toggle should sit below the diagnostics toggle (approximately `top-[4.5rem] left-4`) and the panel opens further below it. A `max-w-[300px]` or `max-w-[320px]` panel anchored left does not overlap the center lyrics column (`max-w-3xl` centered) on any viewport with normal side margins. On narrow mobile, the panel and lyrics column will share horizontal space — cap panel height and ensure it uses `pointer-events-none` when closed so it cannot intercept scroll gestures.
+
+### Log Entry Format
+
+```
+[HH:MM:SS.mmm] [CATEGORY] message text
+```
+
+Example entries:
+```
+[00:01:23.045] [POLL]   request pollerId=playback-poller-1 subscribers=1
+[00:01:23.201] [POLL]   result isPlaying=true trackId=abc123 progressMs=45320 nextIn=4000ms
+[00:01:23.205] [LYRICS] resolved trackId=abc123 source=lrclib renderMode=synced lines=42
+[00:01:35.000] [SYNC]   track-changed trackId=xyz789 transition=track_change
+[00:01:35.002] [LYRICS] resolving trackId=xyz789
+[00:01:40.201] [ERROR]  rate_limited retryAfterMs=30000
+[00:02:11.000] [NAV]    live-lock-lost (user scrolled)
+[00:02:14.500] [NAV]    live-lock-restored (Back to Live)
+[00:02:14.500] [AUTH]   token-refreshed expiresIn=3600s
+[00:02:30.000] [SYNC]   hard-reset drift=+2400ms
+```
+
+---
 
 ## Sources
 
-- Spotify Support: "View lyrics" (availability caveats; Free + Premium mention) - https://support.spotify.com/us/article/lyrics/ (HIGH)
-- Spotify Newsroom: 2021 lyrics launch (desktop real-time scrolling behavior; user expectation baseline) - https://newsroom.spotify.com/2021-11-18/you-can-now-find-the-lyrics-to-your-favorite-songs-in-spotify-heres-how/ (MEDIUM)
-- Spotify Web API: `Get Currently Playing Track` (playback progress + status fields, response semantics) - https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track (HIGH)
-- Spotify Web API: `Get Playback State` (204/429 behavior and playback metadata) - https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback (HIGH)
-- Spotify Web API: PKCE tutorial (desktop-safe auth pattern) - https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow (HIGH)
-- Spotify Web API: Scopes (minimum required permissions) - https://developer.spotify.com/documentation/web-api/concepts/scopes (HIGH)
-- Spotify Web API: Rate limits (`429`, `Retry-After`, rolling window model) - https://developer.spotify.com/documentation/web-api/concepts/rate-limits (HIGH)
-- LRCLIB public API example response (`plainLyrics`, `syncedLyrics`, `instrumental` fields) - https://lrclib.net/api/get?track_name=Yellow&artist_name=Coldplay (MEDIUM)
-- Musixmatch customer story (Spotify uses synchronized lyrics) - https://about.musixmatch.com/business/customer-stories/spotify (MEDIUM)
+- Codebase: `src/web/fullscreen-lyrics-page.tsx` — existing diagnostics panel, toggle button placement, styling conventions, `showDiagnostics` state pattern
+- Codebase: `src/web/playback/shared-playback-runtime.ts` — `logDiagnostic` call sites, poll lifecycle events, rate-limit and transient-error paths
+- Codebase: `src/app/playback-runtime.ts` — `PlaybackTransitionKind`, emit pattern, per-poll event structure
+- Codebase: `src/app/lyrics-resolution-runtime.ts` — resolution lifecycle status messages, cache hit/miss/stale paths
+- Codebase: `src/app/live-sync-runtime.ts` — `hard-reset` correction state, ticker lifecycle
+- Codebase: `src/state/playback/live-sync-store.ts` — `LiveSyncUiState` shape, all diagnostic fields
+- Codebase: `src/app/auth-runtime.ts` — session lifecycle events
+- Reference patterns: Chrome DevTools overlay, Eruda mobile console, React Query Devtools, Vite HMR overlay (panel-on-dark-background, toggle button, ring buffer, category filter)
 
 ---
-*Feature research for: Spotify-synced desktop live lyrics app*
-*Researched: 2026-03-19*
+
+*Feature research for: In-fullscreen developer activity panel (Liryk v1.6)*
+*Researched: 2026-04-17*

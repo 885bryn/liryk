@@ -57,27 +57,17 @@ export function getLineIndicesAt(
       break;
     }
 
-    if (value < line.startMs) {
-      high = mid - 1;
-      continue;
-    }
-
-    if (value >= line.endMs) {
+    if (line.startMs <= value) {
+      active = mid;
       low = mid + 1;
       continue;
     }
 
-    active = mid;
-    break;
+    high = mid - 1;
   }
 
   if (active === -1) {
-    if (value < timeline.lines[0]!.startMs) {
-      return { activeIndex: 0, nextIndex: timeline.lines.length > 1 ? 1 : null };
-    }
-
-    const last = timeline.lines.length - 1;
-    return { activeIndex: last, nextIndex: null };
+    return { activeIndex: null, nextIndex: 0 };
   }
 
   const next = active + 1 < timeline.lines.length ? active + 1 : null;

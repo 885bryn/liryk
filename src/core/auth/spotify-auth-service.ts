@@ -29,12 +29,24 @@ export class SpotifyAuthService {
     return this.state;
   }
 
-  startAuthorization(): AuthLifecycleState {
+  snapshotPendingAuthorization(): PendingAuthorization | null {
+    if (!this.pendingAuthorization) {
+      return null;
+    }
+
+    return { ...this.pendingAuthorization };
+  }
+
+  restorePendingAuthorization(pending: PendingAuthorization | null): void {
+    this.pendingAuthorization = pending ? { ...pending } : null;
+  }
+
+  async startAuthorization(): Promise<AuthLifecycleState> {
     const env = getAuthEnv();
     const requestId = crypto.randomUUID();
     const startedAtMs = this.now();
 
-    const started = this.authClient.beginAuthorization({
+    const started = await this.authClient.beginAuthorization({
       clientId: env.spotifyClientId,
       redirectUri: env.spotifyRedirectUri,
       scopes: env.spotifyAuthScopes,
