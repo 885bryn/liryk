@@ -147,4 +147,19 @@ describe("lyrics matcher", () => {
     expect(scored.lowConfidence).toBe(false);
     expect(best?.candidate.providerLyricId).toBe("synced-short");
   });
+
+  it("penalizes synced timelines that extend well past the track duration", () => {
+    const plain = candidate({ providerLyricId: "plain-overlong" });
+    const overlongSynced = candidate({
+      providerLyricId: "overlong-synced",
+      syncedLyrics: "[00:25.00]line 1\n[01:15.00]line 2\n[02:10.00]line 3\n[03:24.00]line 4",
+    });
+
+    const scored = scoreCandidate(metadata, overlongSynced);
+    const best = selectBestCandidate(metadata, [plain, overlongSynced]);
+
+    expect(scored.riskFlags).toContain("synced-long-span");
+    expect(scored.riskPenalty).toBeGreaterThan(0);
+    expect(best?.candidate.providerLyricId).toBe("plain-overlong");
+  });
 });

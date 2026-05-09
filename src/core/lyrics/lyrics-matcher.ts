@@ -137,12 +137,12 @@ function collectSyncedRisk(
     const startTimes = parsed.map((line) => line.startMs ?? 0);
     const averageGap = averageGapMs(startTimes);
     const fallbackTailMs = metadataDurationMs <= SHORT_TRACK_MS ? 10_000 : 15_000;
-    const estimatedEndMs = Math.min(
-      metadataDurationMs,
-      lastStartMs + (averageGap ?? Math.min(fallbackTailMs, Math.max(5_000, metadataDurationMs * 0.25))),
-    );
-    const coverageMs = Math.max(0, estimatedEndMs - firstStartMs);
+    const estimatedTailMs = averageGap ?? Math.min(fallbackTailMs, Math.max(5_000, metadataDurationMs * 0.25));
+    const rawEstimatedEndMs = lastStartMs + estimatedTailMs;
+    const clampedEstimatedEndMs = Math.min(metadataDurationMs, rawEstimatedEndMs);
+    const coverageMs = Math.max(0, clampedEstimatedEndMs - firstStartMs);
     syncedCoverageRatio = coverageMs / metadataDurationMs;
+    const rawExtentRatio = Math.max(0, rawEstimatedEndMs - firstStartMs) / metadataDurationMs;
 
     const shortSpanFloor = metadataDurationMs <= SHORT_TRACK_MS ? 0.35 : metadataDurationMs <= MEDIUM_TRACK_MS ? 0.25 : 0.2;
     const longSpanCeiling = metadataDurationMs <= SHORT_TRACK_MS ? 1.05 : 1.15;
@@ -150,7 +150,7 @@ function collectSyncedRisk(
     if (syncedCoverageRatio < shortSpanFloor) {
       riskPenalty += 16;
       riskFlags.push("synced-short-span");
-    } else if (syncedCoverageRatio > longSpanCeiling) {
+    } else if (rawExtentRatio > longSpanCeiling) {
       riskPenalty += 12;
       riskFlags.push("synced-long-span");
     }
