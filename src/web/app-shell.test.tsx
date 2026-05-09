@@ -249,23 +249,47 @@ describe("AppShell", () => {
     expect(within(nowPlaying).getByText("Artist Z")).toBeTruthy();
   });
 
-  it("renders a subtle low-confidence indicator without displacing lyrics", () => {
-    render(
-      <AppShell
-        lyricsPanelOverride={panelOverride({
-          warningBadge: "Low confidence lyrics",
-          confidenceBadge: "Best guess",
-          activeLineText: "line a",
-          nextLineText: "line b",
-        })}
-      />,
-    );
+  it("renders a subtle low-confidence indicator from the presenter state without displacing lyrics", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-low-confidence-shell",
+      title: "Low Confidence Track",
+      artist: "Cautious Artist",
+      progressMs: 1_500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "low-confidence",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "line a", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "line b", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<AppShell />);
+
+    await waitFor(() => {
+      const indicator = screen.getByLabelText("Low confidence lyrics");
+      expect(indicator.textContent).toContain("Low confidence lyrics");
+      expect(indicator.textContent).toContain("Best guess");
+    });
 
     const shell = screen.getAllByTestId("shell-layout").at(-1);
     expect(shell).toBeTruthy();
-    const indicator = within(shell as HTMLElement).getByLabelText("Low confidence lyrics");
-    expect(indicator.textContent).toContain("Low confidence lyrics");
-    expect(indicator.textContent).toContain("Best guess");
     expect(within(shell as HTMLElement).getByText("line a")).toBeTruthy();
     expect(within(shell as HTMLElement).getByText("line b")).toBeTruthy();
   });

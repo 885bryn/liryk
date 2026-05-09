@@ -351,7 +351,7 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.queryByTestId("shell-layout")).toBeNull();
   });
 
-  it("renders a subtle low-confidence indicator in fullscreen without hiding lyrics", async () => {
+  it("renders a subtle low-confidence indicator in fullscreen from the presenter state without hiding lyrics", async () => {
     hookModel = {
       phase: "ready",
       statusCopy: "Connected - waiting for playback",

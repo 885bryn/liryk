@@ -142,8 +142,7 @@ export function AppShell(input?: AppShellProps) {
         ? "text-muted-foreground"
         : "text-foreground";
   const showLowConfidenceIndicator =
-    lyricsPanel.warningBadge?.toLowerCase().includes("low confidence") === true &&
-    typeof lyricsPanel.confidenceBadge === "string";
+    lyricsPanel.sourceState === "low-confidence" && typeof lyricsPanel.confidenceBadge === "string";
 
   useEffect(() => {
     if (!webAuth.sessionAccessToken || !nowPlaying?.trackId) {
