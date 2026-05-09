@@ -114,6 +114,25 @@ describe("buildLiveLyricsViewModel", () => {
     expect(lowConfidence.confidenceBadge).toBe("Best guess");
   });
 
+  it("keeps low-confidence plain fallback lyrics visible with warning and best-guess badge", () => {
+    const lowConfidencePlain = buildLiveLyricsViewModel({
+      syncState: state({
+        lyricsSourceState: "low-confidence",
+        lyricsRenderMode: "plain-static",
+        activeLineIndex: null,
+        nextLineIndex: null,
+        lyricsWarning: "Potential mismatch",
+      }),
+      lines: ["line a", "line b"],
+      showReturnToLive: false,
+    });
+
+    expect(lowConfidencePlain.renderMode).toBe("plain-static");
+    expect(lowConfidencePlain.showLyrics).toBe(true);
+    expect(lowConfidencePlain.warningBadge).toContain("Low confidence");
+    expect(lowConfidencePlain.confidenceBadge).toBe("Best guess");
+  });
+
   it("keeps plain fallback lyrics visible without synced badge", () => {
     const plain = buildLiveLyricsViewModel({
       syncState: state({

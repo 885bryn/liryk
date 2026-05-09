@@ -98,10 +98,10 @@ export function buildLiveLyricsViewModel(input: {
   const nextLineText =
     !isPlainMode && typeof state.nextLineIndex === "number" ? input.lines[state.nextLineIndex] : undefined;
   const confidenceBadge =
-    isPlainMode || sourceState === "not-found"
-      ? undefined
-      : sourceState === "low-confidence"
-        ? "Best guess"
+    sourceState === "low-confidence"
+      ? "Best guess"
+      : isPlainMode || sourceState === "not-found"
+        ? undefined
       : state.confidence === "estimated"
         ? "Estimated sync"
         : "Synced";
