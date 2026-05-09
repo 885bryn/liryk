@@ -31,7 +31,11 @@ describe("resolveLyricsForTrack", () => {
     const client = {
       getByMetadata: vi.fn().mockResolvedValue([
         candidate({ providerLyricId: "wrong", title: "Wrong Song", syncedLyrics: "[00:01.00]bad" }),
-        candidate({ providerLyricId: "best", title: "Song Name (Live)", syncedLyrics: "[00:01.00]good" }),
+        candidate({
+          providerLyricId: "best",
+          title: "Song Name (Remaster 2011)",
+          syncedLyrics: "[00:12.00]good\n[00:58.00]better\n[01:41.00]best\n[02:54.00]end",
+        }),
       ]),
       searchByMetadata: vi.fn().mockResolvedValue([]),
     };
@@ -78,6 +82,62 @@ describe("resolveLyricsForTrack", () => {
     const resolved = await resolveLyricsForTrack(metadata, client);
     expect(resolved.sourceState).toBe("low-confidence");
     expect(resolved.renderMode).toBe("plain-static");
+  });
+
+  it("prefers a safer plain candidate over a riskier synced candidate", async () => {
+    const client = {
+      getByMetadata: vi.fn().mockResolvedValue([
+        candidate({
+          providerLyricId: "risky-synced",
+          title: "Song Name - Live",
+          syncedLyrics: "[00:12.00]line 1\n[00:58.00]line 2\n[01:41.00]line 3\n[02:54.00]line 4",
+          plainLyrics: "risky plain",
+        }),
+        candidate({
+          providerLyricId: "safer-plain",
+          durationMs: 210_000,
+          plainLyrics: "safe 1\nsafe 2",
+        }),
+      ]),
+      searchByMetadata: vi.fn().mockResolvedValue([]),
+    };
+
+    const resolved = await resolveLyricsForTrack(metadata, client);
+
+    expect(resolved.sourceState).toBe("plain");
+    expect(resolved.renderMode).toBe("plain-static");
+    expect(resolved.candidateId).toBe("safer-plain");
+    expect(resolved.provider).toBe("lrclib");
+    expect(resolved.confidenceScore).toBe(90);
+    expect(resolved.lines.map((line) => line.text)).toEqual(["safe 1", "safe 2"]);
+  });
+
+  it("returns the best plausible risky candidate as low-confidence when no safer option exists", async () => {
+    const client = {
+      getByMetadata: vi.fn().mockResolvedValue([
+        candidate({
+          providerLyricId: "riskier-plain",
+          title: "Song Name - Live",
+          durationMs: 215_000,
+          plainLyrics: "riskier plain",
+        }),
+        candidate({
+          providerLyricId: "best-risky-synced",
+          durationMs: 214_000,
+          syncedLyrics: "[00:20.00]line 1\n[01:05.00]line 2\n[01:48.00]line 3",
+        }),
+      ]),
+      searchByMetadata: vi.fn().mockResolvedValue([]),
+    };
+
+    const resolved = await resolveLyricsForTrack(metadata, client);
+
+    expect(resolved.sourceState).toBe("low-confidence");
+    expect(resolved.renderMode).toBe("synced");
+    expect(resolved.candidateId).toBe("best-risky-synced");
+    expect(resolved.provider).toBe("lrclib");
+    expect(resolved.confidenceScore).toBe(82);
+    expect(resolved.lines[0]?.text).toBe("line 1");
   });
 
   it("keeps source text while providing simplified displayText for synced and plain lines", async () => {
