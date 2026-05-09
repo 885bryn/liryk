@@ -249,6 +249,27 @@ describe("AppShell", () => {
     expect(within(nowPlaying).getByText("Artist Z")).toBeTruthy();
   });
 
+  it("renders a subtle low-confidence indicator without displacing lyrics", () => {
+    render(
+      <AppShell
+        lyricsPanelOverride={panelOverride({
+          warningBadge: "Low confidence lyrics",
+          confidenceBadge: "Best guess",
+          activeLineText: "line a",
+          nextLineText: "line b",
+        })}
+      />,
+    );
+
+    const shell = screen.getAllByTestId("shell-layout").at(-1);
+    expect(shell).toBeTruthy();
+    const indicator = within(shell as HTMLElement).getByLabelText("Low confidence lyrics");
+    expect(indicator.textContent).toContain("Low confidence lyrics");
+    expect(indicator.textContent).toContain("Best guess");
+    expect(within(shell as HTMLElement).getByText("line a")).toBeTruthy();
+    expect(within(shell as HTMLElement).getByText("line b")).toBeTruthy();
+  });
+
   it("renders distinct syncing, empty, and not-found states", () => {
     const { rerender } = render(
       <AppShell

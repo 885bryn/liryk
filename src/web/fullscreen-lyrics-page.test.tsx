@@ -351,6 +351,49 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.queryByTestId("shell-layout")).toBeNull();
   });
 
+  it("renders a subtle low-confidence indicator in fullscreen without hiding lyrics", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-low-confidence",
+      title: "Low Confidence Track",
+      artist: "Cautious Artist",
+      progressMs: 1_500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "low-confidence",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "line a", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "line b", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const indicator = screen.getByLabelText("Low confidence lyrics");
+      expect(indicator.textContent).toContain("Low confidence lyrics");
+      expect(indicator.textContent).toContain("Best guess");
+    });
+
+    expect(screen.getByText("line a")).toBeTruthy();
+    expect(screen.getByText("line b")).toBeTruthy();
+  });
+
   it("keeps fullscreen wrapper and column class contracts", () => {
     render(<FullscreenLyricsPage />);
 

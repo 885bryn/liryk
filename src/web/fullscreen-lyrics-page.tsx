@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Terminal } from "lucide-react";
+import { AlertTriangle, Terminal } from "lucide-react";
 import { DevActivityPanel } from "./dev-activity-panel/dev-activity-panel";
 import { useDevActivityLog } from "./dev-activity-panel/use-dev-activity-log";
 
@@ -382,6 +382,9 @@ export function FullscreenLyricsPage() {
     trackArtist: activeTrack?.artist,
     showReturnToLive: false,
   });
+  const showLowConfidenceIndicator =
+    lyricsPanel.warningBadge?.toLowerCase().includes("low confidence") === true &&
+    typeof lyricsPanel.confidenceBadge === "string";
 
   useEffect(() => {
     if (playbackSnapshot === null) {
@@ -1088,6 +1091,16 @@ export function FullscreenLyricsPage() {
       >
         <p className="truncate">{lyricsPanel.nowPlayingTitle}</p>
         <p className="truncate">{lyricsPanel.nowPlayingArtist}</p>
+        {showLowConfidenceIndicator ? (
+          <div
+            aria-label={lyricsPanel.warningBadge}
+            className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-amber-200/10 bg-amber-200/10 px-2 py-1 text-[9px] text-amber-100/75"
+          >
+            <AlertTriangle className="size-3 shrink-0" aria-hidden="true" />
+            <span>{lyricsPanel.warningBadge}</span>
+            <span className="text-amber-100/55">{lyricsPanel.confidenceBadge}</span>
+          </div>
+        ) : null}
         <p data-testid="fullscreen-progress-overlay" className="pt-0.5 text-[9px] tracking-[0.18em] text-white/25">
           {`Elapsed ${elapsedProgressLabel}`}
         </p>

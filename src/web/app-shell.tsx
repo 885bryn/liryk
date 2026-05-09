@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,6 +141,9 @@ export function AppShell(input?: AppShellProps) {
       : lyricsPanel.stateRailVariant === "idle"
         ? "text-muted-foreground"
         : "text-foreground";
+  const showLowConfidenceIndicator =
+    lyricsPanel.warningBadge?.toLowerCase().includes("low confidence") === true &&
+    typeof lyricsPanel.confidenceBadge === "string";
 
   useEffect(() => {
     if (!webAuth.sessionAccessToken || !nowPlaying?.trackId) {
@@ -237,6 +241,17 @@ export function AppShell(input?: AppShellProps) {
             <p data-testid="lyrics-status-rail" className={`text-sm leading-relaxed ${statusRailClass}`}>
               {lyricsPanel.stateRailMessage}
             </p>
+
+            {showLowConfidenceIndicator ? (
+              <div
+                aria-label={lyricsPanel.warningBadge}
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/5 px-2.5 py-1 text-xs text-amber-700 dark:text-amber-300"
+              >
+                <AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
+                <span>{lyricsPanel.warningBadge}</span>
+                <span className="text-amber-700/70 dark:text-amber-300/70">{lyricsPanel.confidenceBadge}</span>
+              </div>
+            ) : null}
 
             {lyricsPanel.sourceState === "not-found" ? (
               <div data-testid="lyrics-not-found-state" className="space-y-3 text-sm leading-relaxed text-muted-foreground">
