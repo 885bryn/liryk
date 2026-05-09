@@ -55,6 +55,7 @@ describe("resolveLyricsForTrack", () => {
     const resolved = await resolveLyricsForTrack(metadata, client);
     expect(resolved.sourceState).toBe("plain");
     expect(resolved.renderMode).toBe("plain-static");
+    expect(resolved.warning).toBeUndefined();
     expect(resolved.lines).toHaveLength(2);
   });
 
@@ -82,6 +83,7 @@ describe("resolveLyricsForTrack", () => {
     const resolved = await resolveLyricsForTrack(metadata, client);
     expect(resolved.sourceState).toBe("low-confidence");
     expect(resolved.renderMode).toBe("plain-static");
+    expect(resolved.warning).toBe("Low confidence lyrics");
   });
 
   it("prefers a safer plain candidate over a riskier synced candidate", async () => {
@@ -104,8 +106,9 @@ describe("resolveLyricsForTrack", () => {
 
     const resolved = await resolveLyricsForTrack(metadata, client);
 
-    expect(resolved.sourceState).toBe("plain");
+    expect(resolved.sourceState).toBe("low-confidence");
     expect(resolved.renderMode).toBe("plain-static");
+    expect(resolved.warning).toBe("Low confidence lyrics");
     expect(resolved.candidateId).toBe("safer-plain");
     expect(resolved.provider).toBe("lrclib");
     expect(resolved.confidenceScore).toBe(90);
@@ -134,6 +137,7 @@ describe("resolveLyricsForTrack", () => {
 
     expect(resolved.sourceState).toBe("low-confidence");
     expect(resolved.renderMode).toBe("synced");
+    expect(resolved.warning).toBe("Low confidence lyrics");
     expect(resolved.candidateId).toBe("best-risky-synced");
     expect(resolved.provider).toBe("lrclib");
     expect(resolved.confidenceScore).toBe(82);

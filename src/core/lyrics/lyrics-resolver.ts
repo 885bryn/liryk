@@ -17,6 +17,7 @@ function notFound(): ResolvedLyrics {
 }
 
 const BENIGN_SYNCED_RISK_TOLERANCE = 2;
+const LOW_CONFIDENCE_WARNING = "Low confidence lyrics";
 
 function compareCandidates(a: CandidateScore, b: CandidateScore): number {
   if (a.score !== b.score) {
@@ -55,6 +56,7 @@ function comparePlainFallbacks(a: CandidateScore, b: CandidateScore): number {
 function resolveFromCandidate(
   candidateScore: CandidateScore,
   mode: "synced" | "plain-static",
+  forceLowConfidence = false,
 ): ResolvedLyrics | null {
   if (mode === "synced") {
     const parsedSynced = candidateScore.candidate.syncedLyrics ? parseLrc(candidateScore.candidate.syncedLyrics) : [];
@@ -62,13 +64,15 @@ function resolveFromCandidate(
       return null;
     }
 
+    const lowConfidence = forceLowConfidence || candidateScore.lowConfidence;
     return {
-      sourceState: candidateScore.lowConfidence ? "low-confidence" : "synced",
+      sourceState: lowConfidence ? "low-confidence" : "synced",
       renderMode: "synced",
       lines: parsedSynced,
       provider: candidateScore.candidate.provider,
       confidenceScore: candidateScore.score,
       candidateId: candidateScore.candidate.providerLyricId,
+      warning: lowConfidence ? LOW_CONFIDENCE_WARNING : undefined,
     };
   }
 
@@ -77,13 +81,15 @@ function resolveFromCandidate(
     return null;
   }
 
+  const lowConfidence = forceLowConfidence || candidateScore.lowConfidence;
   return {
-    sourceState: candidateScore.lowConfidence ? "low-confidence" : "plain",
+    sourceState: lowConfidence ? "low-confidence" : "plain",
     renderMode: "plain-static",
     lines: plainLines,
     provider: candidateScore.candidate.provider,
     confidenceScore: candidateScore.score,
     candidateId: candidateScore.candidate.providerLyricId,
+    warning: lowConfidence ? LOW_CONFIDENCE_WARNING : undefined,
   };
 }
 
@@ -125,7 +131,7 @@ export async function resolveLyricsForTrack(
   }
 
   if (bestPlain && !bestPlain.entry.lowConfidence) {
-    return bestPlain.resolved;
+    return bestSynced ? resolveFromCandidate(bestPlain.entry, "plain-static", true) ?? bestPlain.resolved : bestPlain.resolved;
   }
 
   const bestOverall = syncedOptions[0] ?? plainOptions[0];
