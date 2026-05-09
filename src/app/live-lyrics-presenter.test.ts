@@ -87,7 +87,7 @@ describe("buildLiveLyricsViewModel", () => {
     expect(model.primaryActionLabel).toBeUndefined();
   });
 
-  it("keeps low-confidence and plain fallback lyrics visible without synced badge", () => {
+  it("keeps low-confidence lyrics visible with warning and best-guess badge", () => {
     const lowConfidence = buildLiveLyricsViewModel({
       syncState: state({
         lyricsSourceState: "low-confidence",
@@ -111,6 +111,21 @@ describe("buildLiveLyricsViewModel", () => {
 
     expect(lowConfidence.showLyrics).toBe(true);
     expect(lowConfidence.warningBadge).toContain("Low confidence");
+    expect(lowConfidence.confidenceBadge).toBe("Best guess");
+  });
+
+  it("keeps plain fallback lyrics visible without synced badge", () => {
+    const plain = buildLiveLyricsViewModel({
+      syncState: state({
+        lyricsSourceState: "plain",
+        lyricsRenderMode: "plain-static",
+        activeLineIndex: null,
+        nextLineIndex: null,
+      }),
+      lines: ["line a", "line b"],
+      showReturnToLive: true,
+    });
+
     expect(plain.renderMode).toBe("plain-static");
     expect(plain.confidenceBadge).toBeUndefined();
     expect(plain.showLyrics).toBe(true);

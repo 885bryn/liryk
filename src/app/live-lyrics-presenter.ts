@@ -100,6 +100,8 @@ export function buildLiveLyricsViewModel(input: {
   const confidenceBadge =
     isPlainMode || sourceState === "not-found"
       ? undefined
+      : sourceState === "low-confidence"
+        ? "Best guess"
       : state.confidence === "estimated"
         ? "Estimated sync"
         : "Synced";
