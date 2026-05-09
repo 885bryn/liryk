@@ -120,8 +120,8 @@ describe("resolveLyricsForTrack", () => {
       getByMetadata: vi.fn().mockResolvedValue([
         candidate({
           providerLyricId: "riskier-plain",
-          title: "Song Name - Live",
-          durationMs: 215_000,
+          title: "Song Name (Instrumental)",
+          durationMs: 214_000,
           plainLyrics: "riskier plain",
         }),
         candidate({
@@ -142,6 +142,36 @@ describe("resolveLyricsForTrack", () => {
     expect(resolved.provider).toBe("lrclib");
     expect(resolved.confidenceScore).toBe(82);
     expect(resolved.lines[0]?.text).toBe("line 1");
+  });
+
+  it("prefers a safer low-confidence plain fallback over a riskier low-confidence synced candidate", async () => {
+    const client = {
+      getByMetadata: vi.fn().mockResolvedValue([
+        candidate({
+          providerLyricId: "riskier-low-confidence-synced",
+          title: "Song Name - Live",
+          durationMs: 214_000,
+          syncedLyrics: "[00:12.00]line 1\n[00:58.00]line 2\n[01:41.00]line 3\n[02:54.00]line 4",
+          plainLyrics: "risky synced plain",
+        }),
+        candidate({
+          providerLyricId: "safer-low-confidence-plain",
+          durationMs: 214_000,
+          plainLyrics: "safe fallback 1\nsafe fallback 2",
+        }),
+      ]),
+      searchByMetadata: vi.fn().mockResolvedValue([]),
+    };
+
+    const resolved = await resolveLyricsForTrack(metadata, client);
+
+    expect(resolved.sourceState).toBe("low-confidence");
+    expect(resolved.renderMode).toBe("plain-static");
+    expect(resolved.warning).toBe("Low confidence lyrics");
+    expect(resolved.candidateId).toBe("safer-low-confidence-plain");
+    expect(resolved.provider).toBe("lrclib");
+    expect(resolved.confidenceScore).toBe(86);
+    expect(resolved.lines.map((line) => line.text)).toEqual(["safe fallback 1", "safe fallback 2"]);
   });
 
   it("keeps source text while providing simplified displayText for synced and plain lines", async () => {

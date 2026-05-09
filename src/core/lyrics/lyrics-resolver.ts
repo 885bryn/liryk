@@ -134,9 +134,25 @@ export async function resolveLyricsForTrack(
     return bestSynced ? resolveFromCandidate(bestPlain.entry, "plain-static", true) ?? bestPlain.resolved : bestPlain.resolved;
   }
 
-  const bestOverall = syncedOptions[0] ?? plainOptions[0];
-  if (bestOverall) {
-    return bestOverall.resolved;
+  if (bestSynced && bestPlain) {
+    const sameCandidate =
+      bestSynced.entry.candidate.provider === bestPlain.entry.candidate.provider &&
+      bestSynced.entry.candidate.providerLyricId === bestPlain.entry.candidate.providerLyricId;
+    if (sameCandidate) {
+      return bestSynced.resolved;
+    }
+
+    return comparePlainFallbacks(bestPlain.entry, bestSynced.entry) <= 0
+      ? resolveFromCandidate(bestPlain.entry, "plain-static", true) ?? bestPlain.resolved
+      : bestSynced.resolved;
+  }
+
+  if (bestPlain) {
+    return resolveFromCandidate(bestPlain.entry, "plain-static", true) ?? bestPlain.resolved;
+  }
+
+  if (bestSynced) {
+    return bestSynced.resolved;
   }
 
   return notFound();
