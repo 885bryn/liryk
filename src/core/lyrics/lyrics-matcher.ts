@@ -31,6 +31,8 @@ const SOFT_VARIANT_MARKERS = [
   { pattern: /\bclean\b/i, penalty: 1, flag: "variant-clean" },
   { pattern: /\bexplicit\b/i, penalty: 1, flag: "variant-explicit" },
 ];
+const SHORT_TRACK_MS = 60_000;
+const MEDIUM_TRACK_MS = 90_000;
 
 function normalizedEqual(left: string, right: string): boolean {
   return normalizeForMatch(left) === normalizeForMatch(right);
@@ -61,20 +63,49 @@ function collectVariantPenalty(
   const riskFlags: string[] = [];
 
   for (const entry of HARD_VARIANT_MARKERS) {
-    if (entry.pattern.test(candidateValue) && !entry.pattern.test(metadataValue)) {
+    const metadataHasMarker = entry.pattern.test(metadataValue);
+    const candidateHasMarker = entry.pattern.test(candidateValue);
+
+    if (candidateHasMarker && !metadataHasMarker) {
       riskPenalty += entry.penalty;
       riskFlags.push(entry.flag);
+    }
+
+    if (metadataHasMarker && !candidateHasMarker) {
+      riskPenalty += entry.penalty + 2;
+      riskFlags.push(`${entry.flag}-missing`);
     }
   }
 
   for (const entry of SOFT_VARIANT_MARKERS) {
-    if (entry.pattern.test(candidateValue) && !entry.pattern.test(metadataValue)) {
+    const metadataHasMarker = entry.pattern.test(metadataValue);
+    const candidateHasMarker = entry.pattern.test(candidateValue);
+
+    if (candidateHasMarker && !metadataHasMarker) {
       riskPenalty += entry.penalty;
       riskFlags.push(entry.flag);
+    }
+
+    if (metadataHasMarker && !candidateHasMarker) {
+      riskPenalty += entry.penalty;
+      riskFlags.push(`${entry.flag}-missing`);
     }
   }
 
   return { riskPenalty, riskFlags };
+}
+
+function averageGapMs(startTimes: number[]): number | null {
+  if (startTimes.length < 2) {
+    return null;
+  }
+
+  const gaps = startTimes.slice(1).map((startMs, index) => startMs - startTimes[index]!).filter((gap) => gap > 0);
+  if (gaps.length === 0) {
+    return null;
+  }
+
+  return gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
 }
 
 function collectSyncedRisk(
@@ -94,7 +125,8 @@ function collectSyncedRisk(
   let riskPenalty = 0;
   let syncedCoverageRatio: number | undefined;
 
-  if (syncedTimestampCount < 4) {
+  const minimumTimestampCount = metadataDurationMs && metadataDurationMs <= SHORT_TRACK_MS ? 2 : metadataDurationMs && metadataDurationMs <= MEDIUM_TRACK_MS ? 3 : 4;
+  if (syncedTimestampCount < minimumTimestampCount) {
     riskPenalty += 8;
     riskFlags.push("synced-too-few-lines");
   }
@@ -102,13 +134,23 @@ function collectSyncedRisk(
   if (metadataDurationMs && syncedTimestampCount > 0) {
     const firstStartMs = parsed[0]?.startMs ?? 0;
     const lastStartMs = parsed[syncedTimestampCount - 1]?.startMs ?? firstStartMs;
-    const coverageMs = Math.max(0, lastStartMs - firstStartMs);
+    const startTimes = parsed.map((line) => line.startMs ?? 0);
+    const averageGap = averageGapMs(startTimes);
+    const fallbackTailMs = metadataDurationMs <= SHORT_TRACK_MS ? 10_000 : 15_000;
+    const estimatedEndMs = Math.min(
+      metadataDurationMs,
+      lastStartMs + (averageGap ?? Math.min(fallbackTailMs, Math.max(5_000, metadataDurationMs * 0.25))),
+    );
+    const coverageMs = Math.max(0, estimatedEndMs - firstStartMs);
     syncedCoverageRatio = coverageMs / metadataDurationMs;
 
-    if (syncedCoverageRatio < 0.2) {
+    const shortSpanFloor = metadataDurationMs <= SHORT_TRACK_MS ? 0.35 : metadataDurationMs <= MEDIUM_TRACK_MS ? 0.25 : 0.2;
+    const longSpanCeiling = metadataDurationMs <= SHORT_TRACK_MS ? 1.05 : 1.15;
+
+    if (syncedCoverageRatio < shortSpanFloor) {
       riskPenalty += 16;
       riskFlags.push("synced-short-span");
-    } else if (syncedCoverageRatio > 1.15) {
+    } else if (syncedCoverageRatio > longSpanCeiling) {
       riskPenalty += 12;
       riskFlags.push("synced-long-span");
     }

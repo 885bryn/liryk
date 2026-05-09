@@ -103,4 +103,48 @@ describe("lyrics matcher", () => {
     const best = selectBestCandidate(metadata, [riskySynced, plain]);
     expect(best?.candidate.providerLyricId).toBe("plain");
   });
+
+  it("prefers the matching variant over base lyrics for variant metadata", () => {
+    const liveMetadata: LyricTrackMetadata = {
+      ...metadata,
+      title: "Song Name - Live",
+    };
+    const base = candidate({ providerLyricId: "base", title: "Song Name" });
+    const live = candidate({
+      providerLyricId: "live",
+      title: "Song Name - Live",
+      syncedLyrics: "[00:14.00]line 1\n[01:09.00]line 2\n[02:05.00]line 3\n[03:02.00]line 4",
+    });
+
+    const best = selectBestCandidate(liveMetadata, [base, live]);
+    expect(best?.candidate.providerLyricId).toBe("live");
+    expect(scoreCandidate(liveMetadata, base).score).toBeLessThan(scoreCandidate(liveMetadata, live).score);
+  });
+
+  it("does not over-penalize sparse synced lyrics for short tracks", () => {
+    const shortMetadata: LyricTrackMetadata = {
+      ...metadata,
+      trackId: "track-short",
+      title: "Short Song",
+      durationMs: 45_000,
+    };
+    const plain = candidate({
+      providerLyricId: "plain-short",
+      title: "Short Song",
+      durationMs: 45_000,
+    });
+    const synced = candidate({
+      providerLyricId: "synced-short",
+      title: "Short Song",
+      durationMs: 45_000,
+      syncedLyrics: "[00:05.00]intro\n[00:18.00]hook\n[00:34.00]outro",
+    });
+
+    const scored = scoreCandidate(shortMetadata, synced);
+    const best = selectBestCandidate(shortMetadata, [plain, synced]);
+
+    expect(scored.accepted).toBe(true);
+    expect(scored.lowConfidence).toBe(false);
+    expect(best?.candidate.providerLyricId).toBe("synced-short");
+  });
 });
