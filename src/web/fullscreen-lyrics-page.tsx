@@ -706,6 +706,8 @@ export function FullscreenLyricsPage() {
             trackId: activeTrack.trackId,
             title: activeTrack.title,
             artist: activeTrack.artist,
+            album: activeTrack.album,
+            durationMs: activeTrack.durationMs,
           },
           lrclib,
         );

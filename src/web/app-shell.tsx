@@ -160,6 +160,8 @@ export function AppShell(input?: AppShellProps) {
             trackId: nowPlaying.trackId,
             title: nowPlaying.title,
             artist: nowPlaying.artist,
+            album: nowPlaying.album,
+            durationMs: nowPlaying.durationMs,
           },
           lrclib,
         );

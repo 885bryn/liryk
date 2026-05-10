@@ -139,6 +139,10 @@ export async function resolveLyricsForTrack(
       bestSynced.entry.candidate.provider === bestPlain.entry.candidate.provider &&
       bestSynced.entry.candidate.providerLyricId === bestPlain.entry.candidate.providerLyricId;
     if (sameCandidate) {
+      const hasSyncedTimingRisk = bestSynced.entry.riskFlags.some((flag) => flag.startsWith("synced-"));
+      if (hasSyncedTimingRisk) {
+        return resolveFromCandidate(bestPlain.entry, "plain-static", true) ?? bestPlain.resolved;
+      }
       return bestSynced.resolved;
     }
 

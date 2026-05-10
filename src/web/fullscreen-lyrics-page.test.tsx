@@ -35,6 +35,8 @@ let nowPlayingResponse: {
   trackId: string;
   title: string;
   artist: string;
+  album?: string;
+  durationMs?: number;
   progressMs: number;
   isPlaying: boolean;
 } | null = null;
@@ -392,6 +394,53 @@ describe("FullscreenLyricsPage", () => {
 
     expect(screen.getByText("line a")).toBeTruthy();
     expect(screen.getByText("line b")).toBeTruthy();
+  });
+
+  it("passes album and duration metadata into resolver calls", async () => {
+    const { resolveLyricsForTrack } = await import("@/core/lyrics/lyrics-resolver");
+    vi.mocked(resolveLyricsForTrack).mockClear();
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-metadata-fullscreen",
+      title: "Fullscreen Metadata Track",
+      artist: "Fullscreen Metadata Artist",
+      album: "Fullscreen Metadata Album",
+      durationMs: 219_000,
+      progressMs: 2_000,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "plain",
+      renderMode: "plain-static",
+      lines: [{ startMs: null, text: "line", renderMode: "plain-static", isTimestamped: false }],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      expect(vi.mocked(resolveLyricsForTrack)).toHaveBeenCalled();
+    });
+
+    const metadata = vi.mocked(resolveLyricsForTrack).mock.calls.at(-1)?.[0];
+    expect(metadata).toMatchObject({
+      trackId: "track-metadata-fullscreen",
+      title: "Fullscreen Metadata Track",
+      artist: "Fullscreen Metadata Artist",
+      album: "Fullscreen Metadata Album",
+      durationMs: 219_000,
+    });
   });
 
   it("keeps fullscreen wrapper and column class contracts", () => {

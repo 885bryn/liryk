@@ -115,7 +115,7 @@ describe("resolveLyricsForTrack", () => {
     expect(resolved.lines.map((line) => line.text)).toEqual(["safe 1", "safe 2"]);
   });
 
-  it("returns the best plausible risky candidate as low-confidence when no safer option exists", async () => {
+  it("returns low-confidence plain fallback when synced timing is risky and no better candidate exists", async () => {
     const client = {
       getByMetadata: vi.fn().mockResolvedValue([
         candidate({
@@ -136,12 +136,12 @@ describe("resolveLyricsForTrack", () => {
     const resolved = await resolveLyricsForTrack(metadata, client);
 
     expect(resolved.sourceState).toBe("low-confidence");
-    expect(resolved.renderMode).toBe("synced");
+    expect(resolved.renderMode).toBe("plain-static");
     expect(resolved.warning).toBe("Low confidence lyrics");
     expect(resolved.candidateId).toBe("best-risky-synced");
     expect(resolved.provider).toBe("lrclib");
     expect(resolved.confidenceScore).toBe(82);
-    expect(resolved.lines[0]?.text).toBe("line 1");
+    expect(resolved.lines[0]?.text).toBe("plain line");
   });
 
   it("prefers a safer low-confidence plain fallback over a riskier low-confidence synced candidate", async () => {
@@ -174,12 +174,36 @@ describe("resolveLyricsForTrack", () => {
     expect(resolved.lines.map((line) => line.text)).toEqual(["safe fallback 1", "safe fallback 2"]);
   });
 
+  it("falls back to plain from the same candidate when synced timing is riskier", async () => {
+    const client = {
+      getByMetadata: vi.fn().mockResolvedValue([
+        candidate({
+          providerLyricId: "mixed-single-candidate",
+          title: "Song Name",
+          durationMs: 214_000,
+          plainLyrics: "safe single candidate 1\nsafe single candidate 2",
+          syncedLyrics: "[00:25.00]line 1\n[01:15.00]line 2\n[02:10.00]line 3\n[03:24.00]line 4",
+        }),
+      ]),
+      searchByMetadata: vi.fn().mockResolvedValue([]),
+    };
+
+    const resolved = await resolveLyricsForTrack(metadata, client);
+
+    expect(resolved.sourceState).toBe("low-confidence");
+    expect(resolved.renderMode).toBe("plain-static");
+    expect(resolved.warning).toBe("Low confidence lyrics");
+    expect(resolved.candidateId).toBe("mixed-single-candidate");
+    expect(resolved.lines.map((line) => line.text)).toEqual(["safe single candidate 1", "safe single candidate 2"]);
+  });
+
   it("keeps source text while providing simplified displayText for synced and plain lines", async () => {
     const syncedClient = {
       getByMetadata: vi.fn().mockResolvedValue([
         candidate({
           providerLyricId: "synced-traditional",
-          syncedLyrics: "[00:01.00]愛在臺北\n[00:02.00]歡迎光臨 ABC 2026",
+          syncedLyrics:
+            "[00:01.00]愛在臺北\n[00:38.00]歡迎光臨 ABC 2026\n[01:22.00]愛在臺北\n[02:46.00]歡迎光臨 ABC 2026",
         }),
       ]),
       searchByMetadata: vi.fn().mockResolvedValue([]),

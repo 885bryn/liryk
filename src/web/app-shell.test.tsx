@@ -36,6 +36,7 @@ let nowPlayingResponse: {
   trackId: string;
   title: string;
   artist: string;
+  album?: string;
   progressMs: number;
   durationMs?: number;
   isPlaying: boolean;
@@ -459,5 +460,52 @@ describe("AppShell", () => {
     expect(screen.queryByText("歡迎光臨 ABC 2026!")).toBeNull();
     expect(screen.getByTestId("lyrics-now-playing")).toBeTruthy();
     expect(screen.getByTestId("lyrics-status-rail")).toBeTruthy();
+  });
+
+  it("passes album and duration metadata into resolver calls", async () => {
+    const { resolveLyricsForTrack } = await import("@/core/lyrics/lyrics-resolver");
+    vi.mocked(resolveLyricsForTrack).mockClear();
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-metadata-shell",
+      title: "Shell Metadata Track",
+      artist: "Shell Metadata Artist",
+      album: "Shell Metadata Album",
+      progressMs: 1_500,
+      durationMs: 208_000,
+      isPlaying: true,
+    };
+    resolvedLyricsResponse = {
+      sourceState: "plain",
+      renderMode: "plain-static",
+      lines: [{ startMs: null, text: "line", renderMode: "plain-static", isTimestamped: false }],
+    };
+
+    render(<AppShell />);
+
+    await waitFor(() => {
+      expect(vi.mocked(resolveLyricsForTrack)).toHaveBeenCalled();
+    });
+
+    const metadata = vi.mocked(resolveLyricsForTrack).mock.calls.at(-1)?.[0];
+    expect(metadata).toMatchObject({
+      trackId: "track-metadata-shell",
+      title: "Shell Metadata Track",
+      artist: "Shell Metadata Artist",
+      album: "Shell Metadata Album",
+      durationMs: 208_000,
+    });
   });
 });
