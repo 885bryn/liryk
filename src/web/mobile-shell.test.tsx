@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { UiAuthState } from "../state/auth/auth-store";
@@ -30,6 +30,37 @@ let hookModel: HookModel = {
 
 vi.mock("./use-web-auth-runtime", () => ({
   useWebAuthRuntime: () => hookModel,
+}));
+
+vi.mock("./use-shared-playback", () => ({
+  useSharedPlayback: () => ({
+    nowPlaying: null,
+    playbackSnapshot: null,
+    pollerId: "test-poller",
+    rateLimitedUntilMs: 0,
+    lastUpdatedAtMs: Date.now(),
+  }),
+}));
+
+vi.mock("./use-karaoke-mode", () => ({
+  useKaraokeMode: () => ({
+    mode: "inactive",
+    message: "Karaoke inactive",
+    localPlaybackMs: null,
+    referenceTrack: null,
+    candidateMappings: [],
+    currentMapping: null,
+    canResumeAutoplay: false,
+    playerHostRef: { current: null },
+    primePlaybackGesture: vi.fn(),
+    enterKaraokeMode: vi.fn(async () => undefined),
+    exitKaraokeMode: vi.fn(async () => undefined),
+    switchToCandidate: vi.fn(async () => undefined),
+    confirmCurrentMapping: vi.fn(),
+    banCurrentCandidate: vi.fn(async () => undefined),
+    clearError: vi.fn(),
+    resumeAutoplay: vi.fn(async () => undefined),
+  }),
 }));
 
 describe("MobileShell", () => {
@@ -189,5 +220,31 @@ describe("MobileShell", () => {
     expect(busyButton).toBeTruthy();
     expect(busyButton.hasAttribute("disabled")).toBe(true);
     expect(screen.queryByRole("button", { name: "Reconnect Spotify" })).toBeNull();
+  });
+
+  it("renders the fullscreen-style lyrics viewport inside the mobile shell after successful auth", async () => {
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - play a track on Spotify",
+      hasSetupError: false,
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - play a track on Spotify",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    render(<MobileShell />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("fullscreen-lyrics-layout")).toBeTruthy();
+    });
+    expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
+    expect(screen.queryByTestId("fullscreen-dev-panel-toggle")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show Diagnostics" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Enter Karaoke|Exit Karaoke/ })).toBeNull();
   });
 });

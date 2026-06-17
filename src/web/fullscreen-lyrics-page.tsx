@@ -26,7 +26,7 @@ import { createLrclibClient } from "@/infra/providers/lrclib-client";
 import type { LiveSyncUiState } from "@/state/playback/live-sync-store";
 import { createLiveLyricsPanelBuilder } from "@/ui/lyrics/live-lyrics-panel";
 
-import { useWebAuthRuntime } from "./use-web-auth-runtime";
+import { useWebAuthRuntime, type WebAuthRuntimeModel } from "./use-web-auth-runtime";
 import { useSharedPlayback } from "./use-shared-playback";
 import { useKaraokeMode } from "./use-karaoke-mode";
 
@@ -66,6 +66,16 @@ type MotionAnchor = {
   nextIndex: number | null;
   easedProgress: number;
   offsetPx: number;
+};
+
+type FullscreenLyricsPageProps = {
+  embedded?: boolean;
+  authModel?: WebAuthRuntimeModel;
+};
+
+type FullscreenLyricsPageViewProps = {
+  embedded: boolean;
+  webAuth: WebAuthRuntimeModel;
 };
 
 function formatElapsedProgress(progressMs: number): string {
@@ -124,15 +134,28 @@ export function getBoundaryLockedScrollTop(input: {
   return 0;
 }
 
-export function FullscreenLyricsPage() {
+export function FullscreenLyricsPage({ embedded = false, authModel }: FullscreenLyricsPageProps) {
+  if (authModel) {
+    return <FullscreenLyricsPageView embedded={embedded} webAuth={authModel} />;
+  }
+
+  return <FullscreenLyricsPageWithAuth embedded={embedded} />;
+}
+
+function FullscreenLyricsPageWithAuth({ embedded = false }: Pick<FullscreenLyricsPageProps, "embedded">) {
   const webAuth = useWebAuthRuntime();
+
+  return <FullscreenLyricsPageView embedded={embedded} webAuth={webAuth} />;
+}
+
+function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageViewProps) {
   const sharedPlayback = useSharedPlayback({
-    source: "FullscreenLyricsPage",
+    source: embedded ? "MobileShellLyrics" : "FullscreenLyricsPage",
     accessToken: webAuth.sessionAccessToken ?? null,
   });
   const nowPlaying = sharedPlayback.nowPlaying;
   const karaoke = useKaraokeMode({
-    accessToken: webAuth.sessionAccessToken ?? null,
+    accessToken: embedded ? null : (webAuth.sessionAccessToken ?? null),
     nowPlaying,
   });
   const activeTrack = karaoke.referenceTrack ?? nowPlaying;
@@ -899,12 +922,14 @@ export function FullscreenLyricsPage() {
       data-testid="fullscreen-lyrics-layout"
       className="h-screen w-full overflow-hidden bg-black text-white overscroll-none"
     >
-      <a
-        href="/"
-        className="fixed left-4 top-3 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/40 transition-colors duration-200 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-4"
-      >
-        Exit Fullscreen Lyrics
-      </a>
+      {!embedded ? (
+        <a
+          href="/"
+          className="fixed left-4 top-3 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/40 transition-colors duration-200 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-4"
+        >
+          Exit Fullscreen Lyrics
+        </a>
+      ) : null}
 
       {!isLiveLocked ? (
         <button
@@ -921,129 +946,137 @@ export function FullscreenLyricsPage() {
         </button>
       ) : null}
 
-      <button
-        type="button"
-        data-testid="fullscreen-diagnostics-toggle"
-        aria-expanded={showDiagnostics}
-        className="fixed left-4 top-10 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-12"
-        onClick={() => {
-          setShowDiagnostics((current) => !current);
-        }}
-      >
-        {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
-      </button>
-
-      <button
-        type="button"
-        data-testid="fullscreen-dev-panel-toggle"
-        aria-expanded={showDevPanel}
-        className="fixed left-4 top-16 z-20 bg-transparent text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-20"
-        onClick={() => setShowDevPanel((v) => !v)}
-      >
-        <Terminal className="size-3" aria-hidden="true" />
-      </button>
-
-      <div className="fixed right-4 top-16 z-20 flex max-w-[300px] flex-col items-end gap-2 text-right sm:right-6 sm:top-20">
+      {!embedded ? (
         <button
           type="button"
-          className="rounded border border-white/25 bg-black/60 px-3 py-1 text-[11px] tracking-[0.12em] text-white/85 hover:bg-black/70"
-          onMouseDown={() => {
-            karaoke.primePlaybackGesture();
-          }}
-          onTouchStart={() => {
-            karaoke.primePlaybackGesture();
-          }}
+          data-testid="fullscreen-diagnostics-toggle"
+          aria-expanded={showDiagnostics}
+          className="fixed left-4 top-10 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-12"
           onClick={() => {
-            if (karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original") {
-              void karaoke.exitKaraokeMode();
-              return;
-            }
-
-            void karaoke.enterKaraokeMode();
+            setShowDiagnostics((current) => !current);
           }}
-          disabled={karaoke.mode === "switching_to_karaoke" || karaoke.mode === "switching_to_original"}
         >
-          {karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original" ? "Exit Karaoke" : "Enter Karaoke"}
+          {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
         </button>
-        <p className="text-[10px] text-white/60">{karaoke.message}</p>
-        {karaoke.candidateMappings.length > 0 ? (
-          <div className="w-full rounded border border-white/10 bg-black/40 p-2 text-left">
-            <p className="pb-1 text-[9px] tracking-[0.12em] text-white/50">Top Backing Tracks</p>
-            {karaoke.candidateMappings.slice(0, 3).map((candidate, index) => {
-              const selected = karaoke.currentMapping?.youtubeVideoId === candidate.youtubeVideoId;
-              return (
-                <button
-                  key={`${candidate.youtubeVideoId}-${index}`}
-                  type="button"
-                  className={`mb-1 block w-full truncate text-left text-[10px] ${
-                    selected ? "text-white" : "text-white/75 hover:text-white"
-                  }`}
-                  onClick={() => {
-                    void karaoke.switchToCandidate(candidate.youtubeVideoId);
-                  }}
-                  title={candidate.youtubeTitle}
-                >
-                  {selected ? "* " : ""}
-                  {index + 1}. {candidate.youtubeTitle}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-        {karaoke.mode === "karaoke" && karaoke.currentMapping && !karaoke.currentMapping.confirmedByUser ? (
-          <button
-            type="button"
-            className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
-            onClick={() => {
-              karaoke.confirmCurrentMapping();
-            }}
-          >
-            Confirm current backing track
-          </button>
-        ) : null}
-        {karaoke.mode === "karaoke" && karaoke.currentMapping ? (
-          <button
-            type="button"
-            className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
-            onClick={() => {
-              void karaoke.banCurrentCandidate();
-            }}
-          >
-            Ban current candidate
-          </button>
-        ) : null}
-        {karaoke.mode === "error" ? (
-          <button
-            type="button"
-            className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
-            onClick={() => {
-              karaoke.clearError();
-            }}
-          >
-            Clear error
-          </button>
-        ) : null}
-        {karaoke.mode === "error" && karaoke.canResumeAutoplay ? (
-          <button
-            type="button"
-            className="text-[10px] tracking-[0.1em] text-white/80 underline underline-offset-2"
-            onClick={() => {
-              void karaoke.resumeAutoplay();
-            }}
-          >
-            Start YouTube audio
-          </button>
-        ) : null}
-      </div>
+      ) : null}
 
-      <div
-        ref={karaoke.playerHostRef}
-        data-testid="karaoke-youtube-host"
-        className="pointer-events-none fixed -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0"
-        aria-hidden="true"
-      />
+      {!embedded ? (
+        <button
+          type="button"
+          data-testid="fullscreen-dev-panel-toggle"
+          aria-expanded={showDevPanel}
+          className="fixed left-4 top-16 z-20 bg-transparent text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-20"
+          onClick={() => setShowDevPanel((v) => !v)}
+        >
+          <Terminal className="size-3" aria-hidden="true" />
+        </button>
+      ) : null}
 
-      {showDevPanel ? (
+      {!embedded ? (
+        <div className="fixed right-4 top-16 z-20 flex max-w-[300px] flex-col items-end gap-2 text-right sm:right-6 sm:top-20">
+          <button
+            type="button"
+            className="rounded border border-white/25 bg-black/60 px-3 py-1 text-[11px] tracking-[0.12em] text-white/85 hover:bg-black/70"
+            onMouseDown={() => {
+              karaoke.primePlaybackGesture();
+            }}
+            onTouchStart={() => {
+              karaoke.primePlaybackGesture();
+            }}
+            onClick={() => {
+              if (karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original") {
+                void karaoke.exitKaraokeMode();
+                return;
+              }
+
+              void karaoke.enterKaraokeMode();
+            }}
+            disabled={karaoke.mode === "switching_to_karaoke" || karaoke.mode === "switching_to_original"}
+          >
+            {karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original" ? "Exit Karaoke" : "Enter Karaoke"}
+          </button>
+          <p className="text-[10px] text-white/60">{karaoke.message}</p>
+          {karaoke.candidateMappings.length > 0 ? (
+            <div className="w-full rounded border border-white/10 bg-black/40 p-2 text-left">
+              <p className="pb-1 text-[9px] tracking-[0.12em] text-white/50">Top Backing Tracks</p>
+              {karaoke.candidateMappings.slice(0, 3).map((candidate, index) => {
+                const selected = karaoke.currentMapping?.youtubeVideoId === candidate.youtubeVideoId;
+                return (
+                  <button
+                    key={`${candidate.youtubeVideoId}-${index}`}
+                    type="button"
+                    className={`mb-1 block w-full truncate text-left text-[10px] ${
+                      selected ? "text-white" : "text-white/75 hover:text-white"
+                    }`}
+                    onClick={() => {
+                      void karaoke.switchToCandidate(candidate.youtubeVideoId);
+                    }}
+                    title={candidate.youtubeTitle}
+                  >
+                    {selected ? "* " : ""}
+                    {index + 1}. {candidate.youtubeTitle}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {karaoke.mode === "karaoke" && karaoke.currentMapping && !karaoke.currentMapping.confirmedByUser ? (
+            <button
+              type="button"
+              className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+              onClick={() => {
+                karaoke.confirmCurrentMapping();
+              }}
+            >
+              Confirm current backing track
+            </button>
+          ) : null}
+          {karaoke.mode === "karaoke" && karaoke.currentMapping ? (
+            <button
+              type="button"
+              className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+              onClick={() => {
+                void karaoke.banCurrentCandidate();
+              }}
+            >
+              Ban current candidate
+            </button>
+          ) : null}
+          {karaoke.mode === "error" ? (
+            <button
+              type="button"
+              className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+              onClick={() => {
+                karaoke.clearError();
+              }}
+            >
+              Clear error
+            </button>
+          ) : null}
+          {karaoke.mode === "error" && karaoke.canResumeAutoplay ? (
+            <button
+              type="button"
+              className="text-[10px] tracking-[0.1em] text-white/80 underline underline-offset-2"
+              onClick={() => {
+                void karaoke.resumeAutoplay();
+              }}
+            >
+              Start YouTube audio
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!embedded ? (
+        <div
+          ref={karaoke.playerHostRef}
+          data-testid="karaoke-youtube-host"
+          className="pointer-events-none fixed -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0"
+          aria-hidden="true"
+        />
+      ) : null}
+
+      {!embedded && showDevPanel ? (
         <section
           data-testid="fullscreen-dev-panel"
           className="fixed bottom-4 left-4 z-20 w-[240px] rounded-sm border border-white/15 bg-black/60 backdrop-blur-sm"
@@ -1053,7 +1086,7 @@ export function FullscreenLyricsPage() {
         </section>
       ) : null}
 
-      {showDiagnostics ? (
+      {!embedded && showDiagnostics ? (
         <section
           data-testid="fullscreen-diagnostics-overlay"
           className="fixed left-4 top-16 z-20 min-w-[220px] rounded-sm border border-white/15 bg-black/60 px-3 py-2 text-[10px] leading-tight text-white/72 backdrop-blur-sm sm:left-6 sm:top-20"

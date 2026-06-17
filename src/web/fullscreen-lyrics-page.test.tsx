@@ -353,6 +353,18 @@ describe("FullscreenLyricsPage", () => {
     expect(screen.queryByTestId("shell-layout")).toBeNull();
   });
 
+  it("supports a chrome-free embedded mode for the fullscreen lyrics experience", async () => {
+    render(<FullscreenLyricsPage embedded />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("fullscreen-lyrics-layout")).toBeTruthy();
+    });
+
+    expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
+    expect(screen.queryByTestId("fullscreen-dev-panel-toggle")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show Diagnostics" })).toBeNull();
+  });
+
   it("renders a subtle low-confidence indicator in fullscreen from the presenter state without hiding lyrics", async () => {
     hookModel = {
       phase: "ready",
