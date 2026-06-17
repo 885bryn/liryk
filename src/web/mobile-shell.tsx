@@ -24,6 +24,17 @@ export function MobileShell() {
       );
     }
 
+    if (webAuth.uiState.status === "authorizing") {
+      return (
+        <>
+          <p className="text-sm leading-relaxed text-white/70">{webAuth.statusCopy}</p>
+          <Button type="button" disabled>
+            {webAuth.statusCopy}
+          </Button>
+        </>
+      );
+    }
+
     if (webAuth.uiState.status === "disconnected") {
       return (
         <>

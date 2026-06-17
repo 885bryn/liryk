@@ -127,6 +127,25 @@ describe("MobileShell", () => {
     expect(screen.getByRole("button", { name: "Reconnect Spotify" }).hasAttribute("disabled")).toBe(true);
   });
 
+  it("shows a disabled authorization CTA for ready-phase authorizing auth state", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "ready",
+      statusCopy: "Authorizing Spotify connection...",
+      uiState: {
+        status: "authorizing",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+    };
+
+    render(<MobileShell />);
+
+    expect(screen.getByRole("button", { name: "Authorizing Spotify connection..." }).hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Connect Spotify" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reconnect Spotify" })).toBeNull();
+  });
+
   it("shows busy copy with a disabled CTA even when auth status still looks disconnected", () => {
     hookModel = {
       ...hookModel,
