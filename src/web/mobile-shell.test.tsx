@@ -70,6 +70,19 @@ describe("MobileShell", () => {
     expect(screen.getByRole("button", { name: "Connect Spotify" })).toBeTruthy();
   });
 
+  it("disables Connect Spotify for a disconnected setup error", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "ready",
+      statusCopy: "Spotify auth setup issue: Missing client id.",
+      uiState: disconnectedState,
+    };
+
+    render(<MobileShell />);
+
+    expect(screen.getByRole("button", { name: "Connect Spotify" }).hasAttribute("disabled")).toBe(true);
+  });
+
   it("shows Reconnect Spotify for a recoverable auth state", () => {
     hookModel = {
       ...hookModel,
@@ -90,6 +103,28 @@ describe("MobileShell", () => {
     render(<MobileShell />);
 
     expect(screen.getByRole("button", { name: "Reconnect Spotify" })).toBeTruthy();
+  });
+
+  it("disables Reconnect Spotify when retry is not eligible", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "ready",
+      statusCopy: "Network connection was interrupted. Check your connection and retry.",
+      uiState: {
+        status: "recoverable_error",
+        reason: "network",
+        userFacingReason: "Network connection was interrupted. Check your connection and retry.",
+        retryEligible: false,
+        troubleshootingSuggested: true,
+        attempts: 3,
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+    };
+
+    render(<MobileShell />);
+
+    expect(screen.getByRole("button", { name: "Reconnect Spotify" }).hasAttribute("disabled")).toBe(true);
   });
 
   it("shows busy copy with a disabled CTA even when auth status still looks disconnected", () => {
