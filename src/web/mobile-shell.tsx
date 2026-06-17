@@ -6,7 +6,6 @@ import { useWebAuthRuntime } from "./use-web-auth-runtime";
 
 export function MobileShell() {
   const webAuth = useWebAuthRuntime();
-  const hasSetupIssue = webAuth.statusCopy.startsWith("Spotify auth setup issue:");
 
   const connectionBody = useMemo(() => {
     if (webAuth.phase === "checking") {
@@ -39,7 +38,7 @@ export function MobileShell() {
       return (
         <>
           <p className="text-sm leading-relaxed text-white/70">{webAuth.statusCopy}</p>
-          <Button type="button" disabled={hasSetupIssue} onClick={() => void webAuth.onConnect()}>
+          <Button type="button" disabled={webAuth.hasSetupError} onClick={() => void webAuth.onConnect()}>
             Connect Spotify
           </Button>
         </>
@@ -58,7 +57,7 @@ export function MobileShell() {
     }
 
     return <p className="text-sm leading-relaxed text-white/70">{webAuth.statusCopy}</p>;
-  }, [hasSetupIssue, webAuth]);
+  }, [webAuth]);
 
   return (
     <main

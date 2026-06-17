@@ -9,6 +9,7 @@ type WebAuthPhase = "checking" | "ready" | "busy";
 export type WebAuthRuntimeModel = {
   phase: WebAuthPhase;
   statusCopy: string;
+  hasSetupError: boolean;
   uiState: UiAuthState;
   onConnect: () => Promise<void>;
   sessionAccessToken: string | null;
@@ -90,12 +91,14 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
   const [statusCopy, setStatusCopy] = useState<string>(() =>
     runtimeCreation.error ? copyFromError(runtimeCreation.error) : "Checking Spotify connection...",
   );
+  const [hasSetupError, setHasSetupError] = useState<boolean>(() => runtimeCreation.error !== null);
   const [sessionAccessToken, setSessionAccessToken] = useState<string | null>(() => runtime?.getSession()?.accessToken ?? null);
 
   useEffect(() => {
     if (!runtime) {
       setPhase("ready");
       setStatusCopy(copyFromError(runtimeCreation.error));
+      setHasSetupError(true);
       return;
     }
 
@@ -104,6 +107,9 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     const bootstrap = async () => {
       setPhase("checking");
       setStatusCopy("Checking Spotify connection...");
+      setHasSetupError(false);
+
+      let setupErrorCopy: string | null = null;
 
       try {
         await runBootstrap({
@@ -113,7 +119,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
         });
       } catch (error) {
         if (active) {
-          setStatusCopy(copyFromError(error));
+          setupErrorCopy = copyFromError(error);
         }
       } finally {
         if (!active) {
@@ -122,8 +128,14 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
 
         const nextState = runtime.getUiState();
         setUiState(nextState);
-        setStatusCopy(copyFromUiState(nextState));
         setSessionAccessToken(runtime.getSession()?.accessToken ?? null);
+        if (setupErrorCopy !== null) {
+          setStatusCopy(setupErrorCopy);
+          setHasSetupError(true);
+        } else {
+          setStatusCopy(copyFromUiState(nextState));
+          setHasSetupError(false);
+        }
         setPhase("ready");
       }
     };
@@ -139,11 +151,13 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     if (!runtime) {
       setPhase("ready");
       setStatusCopy(copyFromError(runtimeCreation.error));
+      setHasSetupError(true);
       return;
     }
 
     setPhase("busy");
     setStatusCopy("Authorizing Spotify connection...");
+    setHasSetupError(false);
 
     const started = await runtime.connectSpotify();
     setUiState(runtime.getUiState());
@@ -154,6 +168,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
   return {
     phase,
     statusCopy,
+    hasSetupError,
     uiState,
     onConnect,
     sessionAccessToken,

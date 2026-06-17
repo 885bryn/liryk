@@ -7,6 +7,7 @@ import { MobileShell } from "./mobile-shell";
 type HookModel = {
   phase: "checking" | "ready" | "busy";
   statusCopy: string;
+  hasSetupError: boolean;
   uiState: UiAuthState;
   onConnect: () => Promise<void>;
   sessionAccessToken?: string | null;
@@ -21,6 +22,7 @@ const disconnectedState: UiAuthState = {
 let hookModel: HookModel = {
   phase: "checking",
   statusCopy: "Checking Spotify connection...",
+  hasSetupError: false,
   uiState: disconnectedState,
   onConnect: async () => undefined,
   sessionAccessToken: null,
@@ -39,6 +41,7 @@ describe("MobileShell", () => {
     hookModel = {
       phase: "checking",
       statusCopy: "Checking Spotify connection...",
+      hasSetupError: false,
       uiState: disconnectedState,
       onConnect: async () => undefined,
       sessionAccessToken: null,
@@ -74,7 +77,8 @@ describe("MobileShell", () => {
     hookModel = {
       ...hookModel,
       phase: "ready",
-      statusCopy: "Spotify auth setup issue: Missing client id.",
+      statusCopy: "Auth configuration is unavailable.",
+      hasSetupError: true,
       uiState: disconnectedState,
     };
 

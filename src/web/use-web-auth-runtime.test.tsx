@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import * as authRuntimeModule from "../app/auth-runtime";
 import { AuthStore } from "../state/auth/auth-store";
 import type { UiAuthState } from "../state/auth/auth-store";
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
@@ -18,7 +19,7 @@ const probeReadLocation = () => new URL("http://localhost:3000/?code=abc&state=x
 const probeReplaceHistoryUrl = () => undefined;
 
 function HookProbe(input: {
-  runtime: RuntimeStub;
+  runtime?: RuntimeStub;
   runBootstrap: (deps: {
     runtime: RuntimeStub;
     readLocation: () => URL;
@@ -39,6 +40,7 @@ function HookProbe(input: {
       <p data-testid="phase">{model.phase}</p>
       <p data-testid="copy">{model.statusCopy}</p>
       <p data-testid="ui-status">{model.uiState.status}</p>
+      <p data-testid="has-setup-error">{String(model.hasSetupError)}</p>
       <button type="button" onClick={() => void model.onConnect()}>
         Connect
       </button>
@@ -49,6 +51,7 @@ function HookProbe(input: {
 describe("useWebAuthRuntime", () => {
   afterEach(() => {
     cleanup();
+    vi.restoreAllMocks();
   });
 
   it("emits checking state during bootstrap before yielding runtime UI state", async () => {
@@ -144,5 +147,48 @@ describe("useWebAuthRuntime", () => {
     });
     expect(screen.getByTestId("ui-status").textContent).toBe("connected_waiting_playback");
     expect(screen.getByTestId("copy").textContent).toBe("Connected - play a track on Spotify");
+  });
+
+  it("sets hasSetupError when auth runtime creation fails", async () => {
+    vi.spyOn(authRuntimeModule, "createAuthRuntime").mockImplementation(() => {
+      throw new Error("Missing client id.");
+    });
+
+    render(<HookProbe runBootstrap={vi.fn(async () => undefined)} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("phase").textContent).toBe("ready");
+    });
+
+    expect(screen.getByTestId("has-setup-error").textContent).toBe("true");
+    expect(screen.getByTestId("copy").textContent).toBe("Spotify auth setup issue: Missing client id.");
+  });
+
+  it("sets hasSetupError when bootstrap fails with a setup error", async () => {
+    const authStore = new AuthStore();
+
+    const runtime: RuntimeStub = {
+      initialize: vi.fn(async () => ({ status: "connected", source: "none" })),
+      completeSpotifyCallback: vi.fn(async () => authStore.selectUiState()),
+      connectSpotify: vi.fn(async () => ({ authorizeUrl: "https://accounts.spotify.com/authorize", requestId: "req-4" })),
+      getUiState: () => authStore.selectUiState(),
+      getSession: () => null,
+    };
+
+    render(
+      <HookProbe
+        runtime={runtime}
+        runBootstrap={vi.fn(async () => {
+          throw new Error("Redirect URI mismatch.");
+        })}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("phase").textContent).toBe("ready");
+    });
+
+    expect(screen.getByTestId("has-setup-error").textContent).toBe("true");
+    expect(screen.getByTestId("copy").textContent).toBe("Spotify auth setup issue: Redirect URI mismatch.");
   });
 });
