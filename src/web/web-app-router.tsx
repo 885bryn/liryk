@@ -1,10 +1,5 @@
-import { AppShell } from "./app-shell";
-import { FullscreenLyricsPage } from "./fullscreen-lyrics-page";
+import { MobileShell } from "./mobile-shell";
 
 export function WebAppRouter() {
-  if (window.location.pathname === "/fullscreen") {
-    return <FullscreenLyricsPage />;
-  }
-
-  return <AppShell />;
+  return <MobileShell />;
 }
