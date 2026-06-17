@@ -18,4 +18,14 @@ describe("WebAppRouter", () => {
     expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
   });
+
+  it("renders the mobile shell at the fullscreen path with no fullscreen escape hatch", () => {
+    window.history.replaceState(null, "", "/fullscreen");
+
+    render(<WebAppRouter />);
+
+    expect(screen.getByTestId("mobile-shell-layout")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
+  });
 });

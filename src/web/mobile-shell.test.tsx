@@ -56,4 +56,80 @@ describe("MobileShell", () => {
     expect(screen.getByTestId("mobile-shell-now-playing")).toBeTruthy();
     expect(screen.getByTestId("mobile-shell-lyrics-stage")).toBeTruthy();
   });
+
+  it("shows Connect Spotify for a disconnected auth state", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "ready",
+      statusCopy: disconnectedState.onboardingExplainer,
+      uiState: disconnectedState,
+    };
+
+    render(<MobileShell />);
+
+    expect(screen.getByRole("button", { name: "Connect Spotify" })).toBeTruthy();
+  });
+
+  it("shows Reconnect Spotify for a recoverable auth state", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "ready",
+      statusCopy: "Network connection was interrupted. Check your connection and retry.",
+      uiState: {
+        status: "recoverable_error",
+        reason: "network",
+        userFacingReason: "Network connection was interrupted. Check your connection and retry.",
+        retryEligible: true,
+        troubleshootingSuggested: false,
+        attempts: 1,
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+    };
+
+    render(<MobileShell />);
+
+    expect(screen.getByRole("button", { name: "Reconnect Spotify" })).toBeTruthy();
+  });
+
+  it("shows busy copy with a disabled CTA even when auth status still looks disconnected", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "busy",
+      statusCopy: "Authorizing Spotify connection...",
+      uiState: disconnectedState,
+    };
+
+    render(<MobileShell />);
+
+    const busyButton = screen.getByRole("button", { name: "Authorizing Spotify connection..." });
+    expect(busyButton).toBeTruthy();
+    expect(busyButton.hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Connect Spotify" })).toBeNull();
+  });
+
+  it("shows busy copy with a disabled CTA even when auth status still looks recoverable", () => {
+    hookModel = {
+      ...hookModel,
+      phase: "busy",
+      statusCopy: "Authorizing Spotify connection...",
+      uiState: {
+        status: "recoverable_error",
+        reason: "network",
+        userFacingReason: "Network connection was interrupted. Check your connection and retry.",
+        retryEligible: true,
+        troubleshootingSuggested: false,
+        attempts: 1,
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+    };
+
+    render(<MobileShell />);
+
+    const busyButton = screen.getByRole("button", { name: "Authorizing Spotify connection..." });
+    expect(busyButton).toBeTruthy();
+    expect(busyButton.hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Reconnect Spotify" })).toBeNull();
+  });
 });

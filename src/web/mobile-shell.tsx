@@ -12,6 +12,17 @@ export function MobileShell() {
       return <p className="text-sm leading-relaxed text-white/70">Checking Spotify connection...</p>;
     }
 
+    if (webAuth.phase === "busy") {
+      return (
+        <>
+          <p className="text-sm leading-relaxed text-white/70">{webAuth.statusCopy}</p>
+          <Button type="button" disabled>
+            {webAuth.statusCopy}
+          </Button>
+        </>
+      );
+    }
+
     if (webAuth.uiState.status === "disconnected") {
       return (
         <>
@@ -29,17 +40,6 @@ export function MobileShell() {
           <p className="text-sm leading-relaxed text-amber-200">{webAuth.statusCopy}</p>
           <Button type="button" onClick={() => void webAuth.onConnect()}>
             Reconnect Spotify
-          </Button>
-        </>
-      );
-    }
-
-    if (webAuth.phase === "busy") {
-      return (
-        <>
-          <p className="text-sm leading-relaxed text-white/70">{webAuth.statusCopy}</p>
-          <Button type="button" disabled>
-            {webAuth.statusCopy}
           </Button>
         </>
       );
