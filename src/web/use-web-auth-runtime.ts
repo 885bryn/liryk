@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { createAuthRuntime, type AuthRuntime } from "../app/auth-runtime";
 import type { UiAuthState } from "../state/auth/auth-store";
-import { runWebAuthBootstrap } from "./auth/web-auth-controller";
+import { readPlatformAuthRedirect, type PlatformAuthRedirect } from "./auth/platform-auth-redirect";
 
 type WebAuthPhase = "checking" | "ready" | "busy";
 
@@ -22,6 +22,7 @@ type BootstrapFn = (deps: {
   };
   readLocation: () => URL;
   replaceHistoryUrl: (url: string) => void;
+  readRedirect: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
 }) => Promise<void>;
 
 export type UseWebAuthRuntimeOptions = {
@@ -30,7 +31,28 @@ export type UseWebAuthRuntimeOptions = {
   readLocation?: () => URL;
   replaceHistoryUrl?: (url: string) => void;
   navigateToAuthorization?: (url: string) => void;
+  readRedirect?: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
 };
+
+async function runPlatformAwareBootstrap(deps: {
+  runtime: {
+    initialize: AuthRuntime["initialize"];
+    completeSpotifyCallback: AuthRuntime["completeSpotifyCallback"];
+  };
+  readLocation: () => URL;
+  replaceHistoryUrl: (url: string) => void;
+  readRedirect: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
+}): Promise<void> {
+  await deps.runtime.initialize();
+
+  const redirect = deps.readRedirect(deps.readLocation());
+  if (!redirect.callback) {
+    return;
+  }
+
+  await deps.runtime.completeSpotifyCallback(redirect.callback);
+  deps.replaceHistoryUrl(redirect.cleanedUrl);
+}
 
 function defaultReadLocation(): URL {
   return new URL(window.location.href);
@@ -79,10 +101,11 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
   }, [options.runtime]);
 
   const runtime = runtimeCreation.runtime;
-  const runBootstrap = options.runBootstrap ?? runWebAuthBootstrap;
+  const runBootstrap = options.runBootstrap ?? runPlatformAwareBootstrap;
   const readLocation = options.readLocation ?? defaultReadLocation;
   const replaceHistoryUrl = options.replaceHistoryUrl ?? defaultReplaceHistoryUrl;
   const navigateToAuthorization = options.navigateToAuthorization ?? defaultNavigateToAuthorization;
+  const readRedirect = options.readRedirect ?? readPlatformAuthRedirect;
 
   const [phase, setPhase] = useState<WebAuthPhase>("checking");
   const [uiState, setUiState] = useState<UiAuthState>(
@@ -116,6 +139,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
           runtime,
           readLocation,
           replaceHistoryUrl,
+          readRedirect,
         });
       } catch (error) {
         if (active) {
@@ -145,7 +169,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     return () => {
       active = false;
     };
-  }, [readLocation, replaceHistoryUrl, runBootstrap, runtime, runtimeCreation.error]);
+  }, [readLocation, readRedirect, replaceHistoryUrl, runBootstrap, runtime, runtimeCreation.error]);
 
   const onConnect = async () => {
     if (!runtime) {

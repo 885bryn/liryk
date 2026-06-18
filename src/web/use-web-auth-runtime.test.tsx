@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as authRuntimeModule from "../app/auth-runtime";
 import { AuthStore } from "../state/auth/auth-store";
 import type { UiAuthState } from "../state/auth/auth-store";
+import type { PlatformAuthRedirect } from "./auth/platform-auth-redirect";
+import { runWebAuthBootstrap } from "./auth/web-auth-controller";
 import { useWebAuthRuntime } from "./use-web-auth-runtime";
 
 type RuntimeStub = {
@@ -20,19 +22,23 @@ const probeReplaceHistoryUrl = () => undefined;
 
 function HookProbe(input: {
   runtime?: RuntimeStub;
-  runBootstrap: (deps: {
+  runBootstrap?: (deps: {
     runtime: RuntimeStub;
     readLocation: () => URL;
     replaceHistoryUrl: (url: string) => void;
+    readRedirect: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
   }) => Promise<void>;
   navigateToAuthorization?: (url: string) => void;
+  readLocation?: () => URL;
+  readRedirect?: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
 }): ReactElement {
   const model = useWebAuthRuntime({
     runtime: input.runtime,
     runBootstrap: input.runBootstrap,
     navigateToAuthorization: input.navigateToAuthorization,
-    readLocation: probeReadLocation,
+    readLocation: input.readLocation ?? probeReadLocation,
     replaceHistoryUrl: probeReplaceHistoryUrl,
+    readRedirect: input.readRedirect,
   });
 
   return (
@@ -59,7 +65,7 @@ describe("useWebAuthRuntime", () => {
 
     let releaseBootstrap: (() => void) | null = null;
     const runBootstrap = vi.fn(
-      () =>
+      ({ readRedirect: _readRedirect }: { readRedirect: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl"> }) =>
         new Promise<void>((resolve) => {
           releaseBootstrap = resolve;
         }),
@@ -147,6 +153,77 @@ describe("useWebAuthRuntime", () => {
     });
     expect(screen.getByTestId("ui-status").textContent).toBe("connected_waiting_playback");
     expect(screen.getByTestId("copy").textContent).toBe("Connected - play a track on Spotify");
+  });
+
+  it("completes bootstrap when the callback URL comes from the Android shell path", async () => {
+    const authStore = new AuthStore();
+    authStore.setConnectedWaitingPlayback({ displayName: "Avery" });
+
+    const connectedState = authStore.selectUiState();
+    const runtime: RuntimeStub = {
+      initialize: vi.fn(async () => ({ status: "connected", source: "none" })),
+      completeSpotifyCallback: vi.fn(async () => connectedState),
+      connectSpotify: vi.fn(async () => ({
+        authorizeUrl: "https://accounts.spotify.com/authorize",
+        requestId: "req-4",
+      })),
+      getUiState: () => connectedState,
+      getSession: () => ({ accessToken: "token" }),
+    };
+
+    render(
+      <HookProbe
+        runtime={runtime}
+        runBootstrap={runWebAuthBootstrap}
+        readLocation={() => new URL("app.liryk://callback?code=spotify-code&state=spotify-state")}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("ui-status").textContent).toBe("connected_waiting_playback");
+    });
+  });
+
+  it("uses the redirect reader during default bootstrap callback completion", async () => {
+    const authStore = new AuthStore();
+    authStore.setConnectedWaitingPlayback({ displayName: "Avery" });
+
+    const connectedState = authStore.selectUiState();
+    const readRedirect = vi.fn(
+      () =>
+        ({
+          callback: { code: "spotify-code", state: "spotify-state" },
+          cleanedUrl: "app.liryk://callback",
+        }) satisfies Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">,
+    );
+
+    const runtime: RuntimeStub = {
+      initialize: vi.fn(async () => ({ status: "connected", source: "none" })),
+      completeSpotifyCallback: vi.fn(async () => connectedState),
+      connectSpotify: vi.fn(async () => ({
+        authorizeUrl: "https://accounts.spotify.com/authorize",
+        requestId: "req-5",
+      })),
+      getUiState: () => connectedState,
+      getSession: () => ({ accessToken: "token" }),
+    };
+
+    render(
+      <HookProbe
+        runtime={runtime}
+        readLocation={() => new URL("http://localhost:3000/")}
+        readRedirect={readRedirect}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("ui-status").textContent).toBe("connected_waiting_playback");
+    });
+    expect(readRedirect).toHaveBeenCalledTimes(1);
+    expect(runtime.completeSpotifyCallback).toHaveBeenCalledWith({
+      code: "spotify-code",
+      state: "spotify-state",
+    });
   });
 
   it("sets hasSetupError when auth runtime creation fails", async () => {
