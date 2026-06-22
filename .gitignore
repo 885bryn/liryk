@@ -2,3 +2,4 @@ node_modules/
 dist/
 nul
 src/_write_test.tmp
+.worktrees/
