@@ -19,6 +19,18 @@ describe("loadAuthEnv", () => {
     });
   });
 
+  it("accepts a custom app redirect URI for native auth callbacks", () => {
+    const env = loadAuthEnv({
+      SPOTIFY_CLIENT_ID: "spotify-client-id",
+      SPOTIFY_REDIRECT_URI: "app.liryk://callback",
+      APP_BASE_URL: "https://localhost",
+      SPOTIFY_AUTH_SCOPES: "user-read-playback-state",
+    });
+
+    expect(env.spotifyRedirectUri).toBe("app.liryk://callback");
+    expect(env.appBaseUrl).toBe("https://localhost");
+  });
+
   it("fails fast with readable errors when required variables are missing", () => {
     expect(() =>
       loadAuthEnv({

@@ -64,11 +64,18 @@ function assertValidUrl(name: string, value: string): string {
     throw new Error(`${name} must be a valid URL`);
   }
 
+  return value;
+}
+
+function assertValidHttpUrl(name: string, value: string): string {
+  const validUrl = assertValidUrl(name, value);
+  const parsed = new URL(validUrl);
+
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`${name} must use http or https`);
   }
 
-  return value;
+  return validUrl;
 }
 
 function parseScopes(rawScopes: string): string[] {
@@ -114,7 +121,7 @@ export function loadAuthEnv(source: EnvSource = resolveDefaultEnvSource()): Auth
   }
 
   try {
-    appBaseUrl = assertValidUrl("APP_BASE_URL", appBaseUrl);
+    appBaseUrl = assertValidHttpUrl("APP_BASE_URL", appBaseUrl);
   } catch (error) {
     urlErrors.push((error as Error).message);
   }

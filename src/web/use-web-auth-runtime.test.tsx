@@ -31,6 +31,7 @@ function HookProbe(input: {
   navigateToAuthorization?: (url: string) => void;
   readLocation?: () => URL;
   readRedirect?: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
+  subscribeToRedirects?: (onUrl: (url: string) => void) => void | (() => void) | Promise<void | (() => void)>;
 }): ReactElement {
   const model = useWebAuthRuntime({
     runtime: input.runtime,
@@ -39,6 +40,7 @@ function HookProbe(input: {
     readLocation: input.readLocation ?? probeReadLocation,
     replaceHistoryUrl: probeReplaceHistoryUrl,
     readRedirect: input.readRedirect,
+    subscribeToRedirects: input.subscribeToRedirects,
   });
 
   return (
@@ -224,6 +226,49 @@ describe("useWebAuthRuntime", () => {
       code: "spotify-code",
       state: "spotify-state",
     });
+  });
+
+  it("completes callback flow when the Android shell emits a redirect URL after returning from the browser", async () => {
+    const authStore = new AuthStore();
+    authStore.setConnectedWaitingPlayback({ displayName: "Avery" });
+
+    const connectedState = authStore.selectUiState();
+    let emitRedirect: ((url: string) => void) | null = null;
+
+    const runtime: RuntimeStub = {
+      initialize: vi.fn(async () => ({ status: "connected", source: "none" })),
+      completeSpotifyCallback: vi.fn(async () => connectedState),
+      connectSpotify: vi.fn(async () => ({
+        authorizeUrl: "https://accounts.spotify.com/authorize",
+        requestId: "req-6",
+      })),
+      getUiState: () => connectedState,
+      getSession: () => ({ accessToken: "token" }),
+    };
+
+    render(
+      <HookProbe
+        runtime={runtime}
+        readLocation={() => new URL("https://localhost/")}
+        subscribeToRedirects={(onUrl) => {
+          emitRedirect = onUrl;
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("phase").textContent).toBe("ready");
+    });
+
+    emitRedirect?.("app.liryk://callback?code=spotify-code&state=spotify-state");
+
+    await waitFor(() => {
+      expect(runtime.completeSpotifyCallback).toHaveBeenCalledWith({
+        code: "spotify-code",
+        state: "spotify-state",
+      });
+    });
+    expect(screen.getByTestId("ui-status").textContent).toBe("connected_waiting_playback");
   });
 
   it("sets hasSetupError when auth runtime creation fails", async () => {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { createAuthRuntime, type AuthRuntime } from "../app/auth-runtime";
 import type { UiAuthState } from "../state/auth/auth-store";
+import { subscribeToPlatformAuthRedirects, type SubscribeToPlatformRedirects } from "./auth/platform-auth-listener";
 import { readPlatformAuthRedirect, type PlatformAuthRedirect } from "./auth/platform-auth-redirect";
 
 type WebAuthPhase = "checking" | "ready" | "busy";
@@ -32,6 +33,7 @@ export type UseWebAuthRuntimeOptions = {
   replaceHistoryUrl?: (url: string) => void;
   navigateToAuthorization?: (url: string) => void;
   readRedirect?: (url: URL) => Pick<PlatformAuthRedirect, "callback" | "cleanedUrl">;
+  subscribeToRedirects?: SubscribeToPlatformRedirects;
 };
 
 async function runPlatformAwareBootstrap(deps: {
@@ -64,6 +66,11 @@ function defaultReplaceHistoryUrl(url: string): void {
 
 function defaultNavigateToAuthorization(url: string): void {
   window.location.assign(url);
+}
+
+function shouldReplaceHistoryUrl(url: string): boolean {
+  const protocol = new URL(url).protocol;
+  return protocol === "http:" || protocol === "https:";
 }
 
 function copyFromUiState(uiState: UiAuthState): string {
@@ -106,6 +113,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
   const replaceHistoryUrl = options.replaceHistoryUrl ?? defaultReplaceHistoryUrl;
   const navigateToAuthorization = options.navigateToAuthorization ?? defaultNavigateToAuthorization;
   const readRedirect = options.readRedirect ?? readPlatformAuthRedirect;
+  const subscribeToRedirects = options.subscribeToRedirects ?? subscribeToPlatformAuthRedirects;
 
   const [phase, setPhase] = useState<WebAuthPhase>("checking");
   const [uiState, setUiState] = useState<UiAuthState>(
@@ -116,6 +124,29 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
   );
   const [hasSetupError, setHasSetupError] = useState<boolean>(() => runtimeCreation.error !== null);
   const [sessionAccessToken, setSessionAccessToken] = useState<string | null>(() => runtime?.getSession()?.accessToken ?? null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let cleanup: void | (() => void | Promise<void>);
+
+    void Promise.resolve(
+      subscribeToRedirects((url) => {
+        if (active) {
+          setRedirectUrl(url);
+        }
+      }),
+    ).then((nextCleanup) => {
+      cleanup = nextCleanup;
+    });
+
+    return () => {
+      active = false;
+      if (cleanup) {
+        void cleanup();
+      }
+    };
+  }, [subscribeToRedirects]);
 
   useEffect(() => {
     if (!runtime) {
@@ -135,10 +166,16 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
       let setupErrorCopy: string | null = null;
 
       try {
+        const locationToRead = redirectUrl ? () => new URL(redirectUrl) : readLocation;
         await runBootstrap({
           runtime,
-          readLocation,
-          replaceHistoryUrl,
+          readLocation: locationToRead,
+          replaceHistoryUrl: (url) => {
+            if (shouldReplaceHistoryUrl(url)) {
+              replaceHistoryUrl(url);
+            }
+            setRedirectUrl(null);
+          },
           readRedirect,
         });
       } catch (error) {
@@ -169,7 +206,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     return () => {
       active = false;
     };
-  }, [readLocation, readRedirect, replaceHistoryUrl, runBootstrap, runtime, runtimeCreation.error]);
+  }, [readLocation, readRedirect, redirectUrl, replaceHistoryUrl, runBootstrap, runtime, runtimeCreation.error]);
 
   const onConnect = async () => {
     if (!runtime) {

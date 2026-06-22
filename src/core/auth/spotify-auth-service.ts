@@ -1,4 +1,5 @@
 import { getAuthEnv } from "../../infra/config/env";
+import { resolveRuntimeSpotifyRedirectUri } from "../../infra/config/runtime-spotify-redirect";
 
 import type {
   AuthLifecycleState,
@@ -43,12 +44,13 @@ export class SpotifyAuthService {
 
   async startAuthorization(): Promise<AuthLifecycleState> {
     const env = getAuthEnv();
+    const redirectUri = resolveRuntimeSpotifyRedirectUri(env.spotifyRedirectUri);
     const requestId = crypto.randomUUID();
     const startedAtMs = this.now();
 
     const started = await this.authClient.beginAuthorization({
       clientId: env.spotifyClientId,
-      redirectUri: env.spotifyRedirectUri,
+      redirectUri,
       scopes: env.spotifyAuthScopes,
     });
 
@@ -116,12 +118,13 @@ export class SpotifyAuthService {
     }
 
     const env = getAuthEnv();
+    const redirectUri = resolveRuntimeSpotifyRedirectUri(env.spotifyRedirectUri);
 
     try {
       const exchanged = await this.authClient.exchangeAuthorizationCode({
         code: input.code,
         codeVerifier: this.pendingAuthorization.codeVerifier,
-        redirectUri: env.spotifyRedirectUri,
+        redirectUri,
         clientId: env.spotifyClientId,
       });
 
