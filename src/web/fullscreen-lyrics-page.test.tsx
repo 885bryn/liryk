@@ -525,6 +525,54 @@ describe("FullscreenLyricsPage", () => {
     });
   });
 
+  it("shows a resolving status while launch-time lyrics are still loading for an already playing track", async () => {
+    const { resolveLyricsForTrack } = await import("@/core/lyrics/lyrics-resolver");
+    let releaseResolve: ((value: ResolvedLyrics) => void) | null = null;
+    vi.mocked(resolveLyricsForTrack).mockImplementationOnce(
+      () =>
+        new Promise<ResolvedLyrics>((resolve) => {
+          releaseResolve = resolve;
+        }),
+    );
+
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-launch-loading",
+      title: "Launch Loading",
+      artist: "Startup Artist",
+      progressMs: 12_000,
+      isPlaying: true,
+    };
+
+    render(<FullscreenLyricsPage embedded />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Resolving lyrics...")).toBeTruthy();
+    });
+
+    releaseResolve?.({
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [{ startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true }],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Line 1")).toBeTruthy();
+    });
+  });
+
   it("keeps the first synced lyric in viewport after track start", async () => {
     hookModel = {
       phase: "ready",

@@ -247,4 +247,37 @@ describe("MobileShell", () => {
     expect(screen.queryByRole("button", { name: "Show Diagnostics" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Enter Karaoke|Exit Karaoke/ })).toBeNull();
   });
+
+  it("does not violate hook ordering when auth state transitions from disconnected to connected", async () => {
+    hookModel = {
+      ...hookModel,
+      phase: "ready",
+      statusCopy: disconnectedState.onboardingExplainer,
+      uiState: disconnectedState,
+    };
+
+    const { rerender } = render(<MobileShell />);
+
+    expect(screen.getByRole("button", { name: "Connect Spotify" })).toBeTruthy();
+
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - play a track on Spotify",
+      hasSetupError: false,
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - play a track on Spotify",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    rerender(<MobileShell />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("fullscreen-lyrics-layout")).toBeTruthy();
+    });
+  });
 });

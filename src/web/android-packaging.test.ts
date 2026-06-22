@@ -36,6 +36,9 @@ describe("android packaging scaffold", () => {
     const source = await readRepoFile("android/app/src/main/java/app/liryk/MainActivity.java");
 
     expect(source).toContain("extends BridgeActivity");
+    expect(source).toContain('Uri.parse("https://localhost/callback")');
+    expect(source).toContain("normalizedIntent.setData");
+    expect(source).toContain("WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON");
   });
 
   it("defaults Android network security to no cleartext traffic", async () => {

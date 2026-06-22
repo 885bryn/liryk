@@ -7,14 +7,8 @@ import { useWebAuthRuntime } from "./use-web-auth-runtime";
 
 export function MobileShell() {
   const webAuth = useWebAuthRuntime();
-
-  if (webAuth.uiState.status === "connected_waiting_playback" || webAuth.uiState.status === "success") {
-    return (
-      <main data-testid="mobile-shell-layout" className="min-h-screen bg-black text-white">
-        <FullscreenLyricsPage embedded authModel={webAuth} />
-      </main>
-    );
-  }
+  const showFullscreenShell =
+    webAuth.uiState.status === "connected_waiting_playback" || webAuth.uiState.status === "success";
 
   const connectionBody = useMemo(() => {
     if (webAuth.phase === "checking") {
@@ -67,6 +61,14 @@ export function MobileShell() {
 
     return <p className="text-sm leading-relaxed text-white/70">{webAuth.statusCopy}</p>;
   }, [webAuth]);
+
+  if (showFullscreenShell) {
+    return (
+      <main data-testid="mobile-shell-layout" className="min-h-screen bg-black text-white">
+        <FullscreenLyricsPage embedded authModel={webAuth} />
+      </main>
+    );
+  }
 
   return (
     <main

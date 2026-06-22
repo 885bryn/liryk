@@ -1148,6 +1148,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           <p className="text-lg text-white/70">Lyrics not found</p>
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
           <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
+        ) : !resolvedLyrics ? (
+          <p className="text-lg text-white/70">{syncState.statusLine}</p>
         ) : (
           <div
             ref={viewportSurfaceRef}
