@@ -35,12 +35,24 @@ export function resolveFullscreenThemePreset(
   return FULLSCREEN_LYRICS_THEME_PRESETS.find((preset) => preset.id === presetId) ?? DEFAULT_PRESET;
 }
 
+function resolveStorage(input?: { storage?: Storage }): Storage | undefined {
+  if (input?.storage) {
+    return input.storage;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
 export function createFullscreenThemeStore(input?: { storage?: Storage }) {
-  const storage = input?.storage ?? window.localStorage;
+  const storage = resolveStorage(input);
   let preset = DEFAULT_PRESET;
 
   try {
-    preset = resolveFullscreenThemePreset(storage.getItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY));
+    preset = resolveFullscreenThemePreset(storage?.getItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY));
   } catch {
     preset = DEFAULT_PRESET;
   }
@@ -52,7 +64,7 @@ export function createFullscreenThemeStore(input?: { storage?: Storage }) {
     setPreset(nextPresetId: FullscreenThemePresetId): FullscreenThemePreset {
       preset = resolveFullscreenThemePreset(nextPresetId);
       try {
-        storage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, preset.id);
+        storage?.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, preset.id);
       } catch {
         // Keep in-memory state even if persistence fails.
       }

@@ -38,6 +38,27 @@ describe("fullscreen-theme-store", () => {
     expect(store.getPreset().id).toBe("midnight");
   });
 
+  it("falls back to Midnight when storage acquisition throws", () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, "localStorage");
+
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get() {
+        throw new Error("storage blocked");
+      },
+    });
+
+    try {
+      const store = createFullscreenThemeStore();
+
+      expect(store.getPreset().id).toBe("midnight");
+    } finally {
+      if (originalDescriptor) {
+        Object.defineProperty(window, "localStorage", originalDescriptor);
+      }
+    }
+  });
+
   it("uses Midnight when storage reads throw and still updates in memory", () => {
     const throwingStorage = {
       getItem() {
@@ -51,6 +72,7 @@ describe("fullscreen-theme-store", () => {
     const store = createFullscreenThemeStore({ storage: throwingStorage });
     expect(store.getPreset().id).toBe("midnight");
     expect(store.setPreset("forest-glow").id).toBe("forest-glow");
+    expect(store.getPreset().id).toBe("forest-glow");
   });
 
   it("exposes exactly the five curated presets from the spec", () => {
