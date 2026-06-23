@@ -1962,8 +1962,10 @@ describe("FullscreenLyricsPage", () => {
       expect(screen.queryAllByTestId("fullscreen-lyric-line-active").length).toBe(1);
 
       const layout = screen.getByTestId("fullscreen-lyrics-layout");
-      expect(layout.className).toContain("bg-black");
-      expect(layout.className).toContain("text-white");
+      expect(layout.className).toContain("overscroll-none");
+      expect(layout.className).not.toContain("bg-card");
+      expect(layout.className).not.toContain("ring-border");
+      expect(layout.className).not.toContain("border");
     });
   });
 
