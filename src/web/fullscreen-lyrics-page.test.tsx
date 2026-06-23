@@ -9,6 +9,7 @@ import { buildRowLayout, getFloatingRowAnchorPx } from "@/core/sync/lyric-motion
 import type { UiAuthState } from "../state/auth/auth-store";
 
 import { FullscreenLyricsPage, getBoundaryLockedScrollTop } from "./fullscreen-lyrics-page";
+import { FULLSCREEN_LYRICS_THEME_STORAGE_KEY } from "./fullscreen-theme-store";
 
 type HookModel = {
   phase: "checking" | "ready" | "busy";
@@ -157,6 +158,7 @@ describe("FullscreenLyricsPage", () => {
 
   afterEach(() => {
     cleanup();
+    window.localStorage.clear();
     console.error = originalConsoleError;
   });
 
@@ -462,8 +464,7 @@ describe("FullscreenLyricsPage", () => {
     expect(layout.className).toContain("h-screen");
     expect(layout.className).toContain("w-full");
     expect(layout.className).toContain("overflow-hidden");
-    expect(layout.className).toContain("bg-black");
-    expect(layout.className).toContain("text-white");
+    expect(layout.className).toContain("overscroll-none");
     expect(layout.className).not.toContain("bg-card");
     expect(layout.className).not.toContain("ring-border");
     expect(layout.className).not.toContain("border");
@@ -478,6 +479,58 @@ describe("FullscreenLyricsPage", () => {
     expect(column.className).not.toContain("bg-card");
     expect(column.className).not.toContain("ring-border");
     expect(column.className).not.toContain("border");
+  });
+
+  it("shows a theme picker with five preset options", async () => {
+    render(<FullscreenLyricsPage />);
+
+    const themeToggle = screen.getByRole("button", { name: "Theme" });
+    fireEvent.click(themeToggle);
+
+    expect(screen.getByRole("button", { name: "Midnight" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Paper Lantern" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Blue Hour" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Forest Glow" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Rose Lounge" })).toBeTruthy();
+  });
+
+  it("uses Midnight as the default fullscreen theme", () => {
+    render(<FullscreenLyricsPage />);
+
+    const layout = screen.getByTestId("fullscreen-lyrics-layout");
+    expect(layout.getAttribute("style") ?? "").toContain("background-color: rgb(0, 0, 0)");
+    expect(layout.getAttribute("style") ?? "").toContain("color: rgb(255, 255, 255)");
+  });
+
+  it("applies and persists a selected fullscreen preset", async () => {
+    render(<FullscreenLyricsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Theme" }));
+    fireEvent.click(screen.getByRole("button", { name: "Blue Hour" }));
+
+    const layout = screen.getByTestId("fullscreen-lyrics-layout");
+    expect(layout.getAttribute("style") ?? "").toContain("background-color: rgb(16, 36, 63)");
+    expect(localStorage.getItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY)).toBe("blue-hour");
+    expect(screen.queryByRole("button", { name: "Paper Lantern" })).toBeNull();
+  });
+
+  it("restores a saved preset in embedded fullscreen mode", async () => {
+    localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "rose-lounge");
+
+    render(<FullscreenLyricsPage embedded />);
+
+    const layout = await screen.findByTestId("fullscreen-lyrics-layout");
+    expect(layout.getAttribute("style") ?? "").toContain("background-color: rgb(46, 22, 34)");
+    expect(layout.getAttribute("style") ?? "").toContain("color: rgb(255, 232, 242)");
+  });
+
+  it("falls back to Midnight when fullscreen theme storage is invalid", () => {
+    localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "bad-value");
+
+    render(<FullscreenLyricsPage />);
+
+    const layout = screen.getByTestId("fullscreen-lyrics-layout");
+    expect(layout.getAttribute("style") ?? "").toContain("background-color: rgb(0, 0, 0)");
   });
 
   it("renders fullscreen lyrics inside a viewport-owned stage", async () => {
@@ -1851,9 +1904,9 @@ describe("FullscreenLyricsPage", () => {
       expect(metadataOverlay.className).toContain("right-4");
       expect(metadataOverlay.className).toContain("top-3");
       expect(metadataOverlay.className).toContain("text-[10px]");
-      expect(metadataOverlay.className).toContain("text-white/32");
+      expect(metadataOverlay.getAttribute("style") ?? "").toContain("--fullscreen-muted-alpha");
       expect(progressOverlay.className).toContain("text-[9px]");
-      expect(progressOverlay.className).toContain("text-white/25");
+      expect(progressOverlay.getAttribute("style") ?? "").toContain("--fullscreen-subtle-alpha");
 
       expect(metadataOverlay.className).not.toContain("text-4xl");
       expect(metadataOverlay.className).not.toContain("sm:text-5xl");
