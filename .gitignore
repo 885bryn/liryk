@@ -3,3 +3,4 @@ dist/
 nul
 src/_write_test.tmp
 .worktrees/
+.env.local

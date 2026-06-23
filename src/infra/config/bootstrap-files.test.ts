@@ -59,9 +59,10 @@ describe("bootstrap files", () => {
 
     expect(source).toContain("# Liryk");
     expect(source).toContain("Fresh Windows setup");
-    expect(source).toContain(".\\scripts\\setup-windows.ps1");
+    expect(source).toContain("powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-windows.ps1");
     expect(source).toContain("npm install");
     expect(source).toContain("npm run dev");
+    expect(source).toContain("http://127.0.0.1:5173");
   });
 
   it("pins the expected Node.js version", async () => {
@@ -80,10 +81,16 @@ describe("bootstrap files", () => {
   it("ships an env template with the required auth keys", async () => {
     const source = await readFile(".env.example", "utf8");
 
-    expect(source).toContain("SPOTIFY_CLIENT_ID=");
-    expect(source).toContain("SPOTIFY_REDIRECT_URI=http://localhost:3000/callback");
-    expect(source).toContain("APP_BASE_URL=http://localhost:3000");
-    expect(source).toContain("SPOTIFY_AUTH_SCOPES=user-read-playback-state,user-read-currently-playing");
+    expect(source).toContain("VITE_SPOTIFY_CLIENT_ID=");
+    expect(source).toContain("VITE_SPOTIFY_REDIRECT_URI=http://127.0.0.1:5173/callback");
+    expect(source).toContain("VITE_APP_BASE_URL=http://127.0.0.1:5173");
+    expect(source).toContain("VITE_SPOTIFY_AUTH_SCOPES=user-read-playback-state,user-read-currently-playing");
+  });
+
+  it("ignores the local env file", async () => {
+    const source = await readFile(".gitignore", "utf8");
+
+    expect(source).toContain(".env.local");
   });
 
   it("ships the referenced Windows bootstrap scripts", async () => {
@@ -93,7 +100,10 @@ describe("bootstrap files", () => {
 
   it("creates .env.local from the template without overwriting an existing file", async () => {
     const fixtureDir = await createTempDir("liryk-bootstrap-setup-");
-    await writeFile(join(fixtureDir, ".env.example"), "SPOTIFY_CLIENT_ID=template-client\nAPP_BASE_URL=http://localhost:3000\n");
+    await writeFile(
+      join(fixtureDir, ".env.example"),
+      "VITE_SPOTIFY_CLIENT_ID=template-client\nVITE_APP_BASE_URL=http://127.0.0.1:5173\n",
+    );
 
     const firstRun = await runCommand("powershell", [
       "-NoProfile",
@@ -104,9 +114,11 @@ describe("bootstrap files", () => {
     ], { cwd: fixtureDir });
 
     expect(firstRun.code).toBe(0);
-    await expect(readFile(join(fixtureDir, ".env.local"), "utf8")).resolves.toContain("SPOTIFY_CLIENT_ID=template-client");
+    await expect(readFile(join(fixtureDir, ".env.local"), "utf8")).resolves.toContain(
+      "VITE_SPOTIFY_CLIENT_ID=template-client",
+    );
 
-    await writeFile(join(fixtureDir, ".env.local"), "SPOTIFY_CLIENT_ID=keep-me\n");
+    await writeFile(join(fixtureDir, ".env.local"), "VITE_SPOTIFY_CLIENT_ID=keep-me\n");
     const secondRun = await runCommand("powershell", [
       "-NoProfile",
       "-ExecutionPolicy",
@@ -116,7 +128,7 @@ describe("bootstrap files", () => {
     ], { cwd: fixtureDir });
 
     expect(secondRun.code).toBe(0);
-    await expect(readFile(join(fixtureDir, ".env.local"), "utf8")).resolves.toBe("SPOTIFY_CLIENT_ID=keep-me\n");
+    await expect(readFile(join(fixtureDir, ".env.local"), "utf8")).resolves.toBe("VITE_SPOTIFY_CLIENT_ID=keep-me\n");
   });
 
   it("runs the dev preflight against .env.local before startup", async () => {
@@ -124,10 +136,10 @@ describe("bootstrap files", () => {
     await writeFile(
       join(fixtureDir, ".env.local"),
       [
-        "SPOTIFY_CLIENT_ID=spotify-client-id",
-        "SPOTIFY_REDIRECT_URI=http://localhost:3000/callback",
-        "APP_BASE_URL=http://localhost:3000",
-        "SPOTIFY_AUTH_SCOPES=user-read-playback-state,user-read-currently-playing",
+        "VITE_SPOTIFY_CLIENT_ID=spotify-client-id",
+        "VITE_SPOTIFY_REDIRECT_URI=http://127.0.0.1:5173/callback",
+        "VITE_APP_BASE_URL=http://127.0.0.1:5173",
+        "VITE_SPOTIFY_AUTH_SCOPES=user-read-playback-state,user-read-currently-playing",
         "",
       ].join("\n"),
     );
@@ -140,7 +152,7 @@ describe("bootstrap files", () => {
     expect(success.code).toBe(0);
     expect(success.stdout).toContain("Environment looks good");
 
-    await writeFile(join(fixtureDir, ".env.local"), "SPOTIFY_CLIENT_ID=\n");
+    await writeFile(join(fixtureDir, ".env.local"), "VITE_SPOTIFY_CLIENT_ID=\n");
     const failure = await runCommand("node", [join(process.cwd(), "scripts/check-dev-env.ts")], {
       cwd: fixtureDir,
       env: { ...process.env },

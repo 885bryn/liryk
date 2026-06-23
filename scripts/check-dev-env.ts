@@ -37,7 +37,9 @@ async function readEnvLocal(cwd: string): Promise<EnvSource> {
   try {
     await access(envPath, fsConstants.F_OK);
   } catch {
-    throw new Error("Missing .env.local. Run .\\scripts\\setup-windows.ps1, then fill in your Spotify values.");
+    throw new Error(
+      "Missing .env.local. Run powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-windows.ps1, then fill in your VITE_ Spotify values.",
+    );
   }
 
   return parseEnvFile(await readFile(envPath, "utf8"));
@@ -52,7 +54,7 @@ async function main(): Promise<void> {
     };
 
     loadAuthEnv(envSource);
-    console.log("Environment looks good for local dev.");
+    console.log("Environment looks good for local dev at http://127.0.0.1:5173.");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(message);
