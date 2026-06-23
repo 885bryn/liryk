@@ -19,19 +19,19 @@ export function getEnvAlignmentDiagnostics(input: {
 
   if (appBaseUrl.origin !== currentOrigin) {
     messages.push(
-      `APP_BASE_URL origin mismatch: expected ${appBaseUrl.origin}, actual ${currentOrigin}.`,
+      `VITE_APP_BASE_URL origin mismatch: expected ${appBaseUrl.origin}, actual ${currentOrigin}.`,
     );
   }
 
   if (spotifyRedirectUri.origin !== currentOrigin) {
     messages.push(
-      `SPOTIFY_REDIRECT_URI origin mismatch: expected ${spotifyRedirectUri.origin}, actual ${currentOrigin}.`,
+      `VITE_SPOTIFY_REDIRECT_URI origin mismatch: expected ${spotifyRedirectUri.origin}, actual ${currentOrigin}.`,
     );
   }
 
   if (spotifyRedirectUri.pathname !== requiredCallbackPath) {
     messages.push(
-      `SPOTIFY_REDIRECT_URI path mismatch: expected ${spotifyRedirectUri.pathname}, required ${requiredCallbackPath}.`,
+      `VITE_SPOTIFY_REDIRECT_URI path mismatch: expected ${spotifyRedirectUri.pathname}, required ${requiredCallbackPath}.`,
     );
   }
 

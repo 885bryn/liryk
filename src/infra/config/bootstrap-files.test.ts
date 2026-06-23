@@ -159,6 +159,6 @@ describe("bootstrap files", () => {
     });
 
     expect(failure.code).toBe(1);
-    expect(failure.stderr).toContain("Missing required environment variable: SPOTIFY_CLIENT_ID");
+    expect(failure.stderr).toContain("Missing required environment variable: VITE_SPOTIFY_CLIENT_ID");
   });
 });

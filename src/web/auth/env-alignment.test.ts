@@ -35,7 +35,7 @@ describe("getEnvAlignmentDiagnostics", () => {
     expect(diagnostics).toEqual({ status: "ok", messages: [] });
   });
 
-  it("warns with expected and actual origin when APP_BASE_URL origin mismatches", () => {
+  it("warns with expected and actual origin when VITE_APP_BASE_URL origin mismatches", () => {
     mockEnv = {
       appBaseUrl: "http://127.0.0.1:5173",
       spotifyRedirectUri: "http://localhost:3000/callback",
@@ -46,12 +46,12 @@ describe("getEnvAlignmentDiagnostics", () => {
     });
 
     expect(diagnostics.status).toBe("warning");
-    expect(diagnostics.messages.some((message) => message.includes("APP_BASE_URL origin mismatch"))).toBe(true);
+    expect(diagnostics.messages.some((message) => message.includes("VITE_APP_BASE_URL origin mismatch"))).toBe(true);
     expect(diagnostics.messages.some((message) => message.includes("expected http://127.0.0.1:5173"))).toBe(true);
     expect(diagnostics.messages.some((message) => message.includes("actual http://localhost:3000"))).toBe(true);
   });
 
-  it("warns when SPOTIFY_REDIRECT_URI path does not match callback route", () => {
+  it("warns when VITE_SPOTIFY_REDIRECT_URI path does not match callback route", () => {
     mockEnv = {
       appBaseUrl: "http://localhost:3000",
       spotifyRedirectUri: "http://localhost:3000/",
@@ -63,7 +63,7 @@ describe("getEnvAlignmentDiagnostics", () => {
     });
 
     expect(diagnostics.status).toBe("warning");
-    expect(diagnostics.messages.some((message) => message.includes("SPOTIFY_REDIRECT_URI path mismatch"))).toBe(true);
+    expect(diagnostics.messages.some((message) => message.includes("VITE_SPOTIFY_REDIRECT_URI path mismatch"))).toBe(true);
     expect(diagnostics.messages.some((message) => message.includes("required /callback"))).toBe(true);
   });
 });

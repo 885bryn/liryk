@@ -38,7 +38,7 @@ describe("loadAuthEnv", () => {
         APP_BASE_URL: "http://localhost:3000",
       }),
     ).toThrowError(
-      "Invalid auth environment:\n- Missing required environment variable: SPOTIFY_REDIRECT_URI\n- Missing required environment variable: SPOTIFY_AUTH_SCOPES",
+      "Invalid auth environment:\n- Missing required environment variable: VITE_SPOTIFY_REDIRECT_URI\n- Missing required environment variable: VITE_SPOTIFY_AUTH_SCOPES",
     );
   });
 });

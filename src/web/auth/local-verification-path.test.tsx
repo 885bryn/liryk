@@ -31,7 +31,7 @@ vi.mock("../use-web-auth-runtime", () => ({
 vi.mock("./env-alignment", () => ({
   getEnvAlignmentDiagnostics: vi.fn(() => ({
     status: "warning",
-    messages: ["APP_BASE_URL origin mismatch: expected http://127.0.0.1:5173, actual http://localhost:3000."],
+    messages: ["VITE_APP_BASE_URL origin mismatch: expected http://127.0.0.1:5173, actual http://localhost:3000."],
   })),
 }));
 
@@ -104,6 +104,6 @@ describe("local auth verification path", () => {
     render(<AppShell />);
 
     expect(screen.getByText("Connected - play a track on Spotify")).toBeTruthy();
-    expect(screen.getByText(/APP_BASE_URL origin mismatch/)).toBeTruthy();
+    expect(screen.getByText(/VITE_APP_BASE_URL origin mismatch/)).toBeTruthy();
   });
 });

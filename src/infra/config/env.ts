@@ -14,6 +14,10 @@ const REQUIRED_KEYS = [
   "SPOTIFY_AUTH_SCOPES",
 ] as const;
 
+function toUserFacingKey(key: (typeof REQUIRED_KEYS)[number]): `VITE_${(typeof REQUIRED_KEYS)[number]}` {
+  return `VITE_${key}`;
+}
+
 function resolveDefaultEnvSource(): EnvSource {
   const source: EnvSource = {};
 
@@ -49,7 +53,7 @@ function readRequired(source: EnvSource, key: (typeof REQUIRED_KEYS)[number]): s
   const value = source[key]?.trim();
 
   if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+    throw new Error(`Missing required environment variable: ${toUserFacingKey(key)}`);
   }
 
   return value;
@@ -85,7 +89,7 @@ function parseScopes(rawScopes: string): string[] {
     .filter(Boolean);
 
   if (scopes.length === 0) {
-    throw new Error("SPOTIFY_AUTH_SCOPES must contain at least one scope");
+    throw new Error("VITE_SPOTIFY_AUTH_SCOPES must contain at least one scope");
   }
 
   return scopes;
@@ -115,13 +119,13 @@ export function loadAuthEnv(source: EnvSource = resolveDefaultEnvSource()): Auth
   let appBaseUrl = values.APP_BASE_URL;
 
   try {
-    spotifyRedirectUri = assertValidUrl("SPOTIFY_REDIRECT_URI", spotifyRedirectUri);
+    spotifyRedirectUri = assertValidUrl("VITE_SPOTIFY_REDIRECT_URI", spotifyRedirectUri);
   } catch (error) {
     urlErrors.push((error as Error).message);
   }
 
   try {
-    appBaseUrl = assertValidHttpUrl("APP_BASE_URL", appBaseUrl);
+    appBaseUrl = assertValidHttpUrl("VITE_APP_BASE_URL", appBaseUrl);
   } catch (error) {
     urlErrors.push((error as Error).message);
   }
