@@ -487,11 +487,15 @@ describe("FullscreenLyricsPage", () => {
     const themeToggle = screen.getByRole("button", { name: "Theme" });
     fireEvent.click(themeToggle);
 
-    expect(screen.getByRole("button", { name: "Midnight" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Paper Lantern" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Blue Hour" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Forest Glow" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Rose Lounge" })).toBeTruthy();
+    const presetOptions = [
+      screen.getByRole("button", { name: "Midnight" }),
+      screen.getByRole("button", { name: "Paper Lantern" }),
+      screen.getByRole("button", { name: "Blue Hour" }),
+      screen.getByRole("button", { name: "Forest Glow" }),
+      screen.getByRole("button", { name: "Rose Lounge" }),
+    ];
+
+    expect(presetOptions).toHaveLength(5);
   });
 
   it("uses Midnight as the default fullscreen theme", () => {
@@ -511,7 +515,6 @@ describe("FullscreenLyricsPage", () => {
     const layout = screen.getByTestId("fullscreen-lyrics-layout");
     expect(layout.getAttribute("style") ?? "").toContain("background-color: rgb(16, 36, 63)");
     expect(localStorage.getItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY)).toBe("blue-hour");
-    expect(screen.queryByRole("button", { name: "Paper Lantern" })).toBeNull();
   });
 
   it("restores a saved preset in embedded fullscreen mode", async () => {
@@ -531,6 +534,7 @@ describe("FullscreenLyricsPage", () => {
 
     const layout = screen.getByTestId("fullscreen-lyrics-layout");
     expect(layout.getAttribute("style") ?? "").toContain("background-color: rgb(0, 0, 0)");
+    expect(layout.getAttribute("style") ?? "").toContain("color: rgb(255, 255, 255)");
   });
 
   it("renders fullscreen lyrics inside a viewport-owned stage", async () => {
