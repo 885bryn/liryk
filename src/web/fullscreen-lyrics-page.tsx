@@ -242,6 +242,10 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
     () => ({ color: `rgba(${presetRgb}, 0.7)` }),
     [presetRgb],
   );
+  const themeMenuOptionLabelStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.88)` }),
+    [presetRgb],
+  );
 
   const syncedLines = useMemo(
     () => (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number"),
@@ -1057,7 +1061,7 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
                     aria-label={preset.name}
                     className="mb-1 flex w-full items-center justify-between rounded px-2 py-1 text-left text-[11px]"
                     style={{
-                      color: preset.textHex,
+                      ...themeMenuOptionLabelStyle,
                       outline: selected ? `1px solid rgba(${presetRgb}, 0.35)` : "none",
                     }}
                     onClick={() => {

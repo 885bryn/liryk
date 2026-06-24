@@ -544,6 +544,58 @@ describe("FullscreenLyricsPage", () => {
     expect(idleCopy.getAttribute("style") ?? "").toContain("47, 36, 25");
   });
 
+  it("keeps theme menu option labels readable against the active menu surface", () => {
+    localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "paper-lantern");
+
+    render(<FullscreenLyricsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Theme" }));
+
+    const blueHourOption = screen.getByRole("button", { name: "Blue Hour" });
+    expect(blueHourOption.getAttribute("style") ?? "").toContain("47, 36, 25");
+    expect(blueHourOption.getAttribute("style") ?? "").not.toContain("243, 247, 255");
+  });
+
+  it("renders synced lyric colors from a non-default preset", async () => {
+    localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "blue-hour");
+    hookModel = {
+      phase: "ready",
+      statusCopy: "Connected - waiting for playback",
+      uiState: {
+        status: "connected_waiting_playback",
+        waitingMessage: "Connected - waiting for playback",
+        onboardingExplainer: disconnectedState.onboardingExplainer,
+        permissionSummary: disconnectedState.permissionSummary,
+      },
+      onConnect: async () => undefined,
+      sessionAccessToken: "session-token",
+    };
+
+    nowPlayingResponse = {
+      trackId: "track-theme-synced-colors",
+      title: "Theme Synced Track",
+      artist: "Theme Artist",
+      progressMs: 500,
+      isPlaying: true,
+    };
+
+    resolvedLyricsResponse = {
+      sourceState: "synced",
+      renderMode: "synced",
+      lines: [
+        { startMs: 0, text: "Line 1", renderMode: "synced", isTimestamped: true },
+        { startMs: 2_000, text: "Line 2", renderMode: "synced", isTimestamped: true },
+      ],
+    };
+
+    render(<FullscreenLyricsPage />);
+
+    await waitFor(() => {
+      const activeLine = screen.getByTestId("fullscreen-lyric-line-active");
+      expect(activeLine.getAttribute("style") ?? "").toContain("243, 247, 255");
+    });
+  });
+
   it("restores a saved preset in embedded fullscreen mode", async () => {
     localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "rose-lounge");
 
