@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { AlertTriangle, Terminal } from "lucide-react";
 import { DevActivityPanel } from "./dev-activity-panel/dev-activity-panel";
@@ -29,6 +29,11 @@ import { createLiveLyricsPanelBuilder } from "@/ui/lyrics/live-lyrics-panel";
 import { useWebAuthRuntime, type WebAuthRuntimeModel } from "./use-web-auth-runtime";
 import { useSharedPlayback } from "./use-shared-playback";
 import { useKaraokeMode } from "./use-karaoke-mode";
+import {
+  createFullscreenThemeStore,
+  FULLSCREEN_LYRICS_THEME_PRESETS,
+  type FullscreenThemePreset,
+} from "./fullscreen-theme-store";
 
 const baseSyncState: LiveSyncUiState = {
   playbackState: "idle",
@@ -107,6 +112,14 @@ function getUnscaledRectHeight(element: HTMLParagraphElement): number {
   return rectHeight / scale;
 }
 
+function hexToRgbChannels(hex: string): string {
+  const normalized = hex.replace("#", "");
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  return `${red}, ${green}, ${blue}`;
+}
+
 export function getBoundaryLockedScrollTop(input: {
   viewportHeight: number;
   rowLayout: RowLayout;
@@ -149,6 +162,11 @@ function FullscreenLyricsPageWithAuth({ embedded = false }: Pick<FullscreenLyric
 }
 
 function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageViewProps) {
+  const fullscreenThemeStoreRef = useRef<ReturnType<typeof createFullscreenThemeStore> | null>(null);
+  if (fullscreenThemeStoreRef.current === null) {
+    fullscreenThemeStoreRef.current = createFullscreenThemeStore();
+  }
+
   const sharedPlayback = useSharedPlayback({
     source: embedded ? "MobileShellLyrics" : "FullscreenLyricsPage",
     accessToken: webAuth.sessionAccessToken ?? null,
@@ -165,6 +183,10 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
   const [isLiveLocked, setIsLiveLocked] = useState(true);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [showDevPanel, setShowDevPanel] = useState(false);
+  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [themePreset, setThemePreset] = useState<FullscreenThemePreset>(() =>
+    fullscreenThemeStoreRef.current?.getPreset() ?? FULLSCREEN_LYRICS_THEME_PRESETS[0],
+  );
   const { entries: logEntries, append: appendLogEntry } = useDevActivityLog();
   const [manualBrowseOffsetPx, setManualBrowseOffsetPx] = useState(0);
   const programmaticScrollRef = useRef(false);
@@ -197,6 +219,17 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
     easedProgress: 0,
     offsetPx: 0,
   });
+  const presetRgb = useMemo(() => hexToRgbChannels(themePreset.textHex), [themePreset.textHex]);
+  const fullscreenThemeStyle = useMemo(() => {
+    const style: CSSProperties = {
+      backgroundColor: themePreset.backgroundHex,
+      color: themePreset.textHex,
+      ["--fullscreen-text-rgb" as string]: presetRgb,
+      ["--fullscreen-muted-alpha" as string]: "0.32",
+      ["--fullscreen-subtle-alpha" as string]: "0.25",
+    };
+    return style;
+  }, [presetRgb, themePreset.backgroundHex, themePreset.textHex]);
 
   const syncedLines = useMemo(
     () => (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number"),
@@ -920,7 +953,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
   return (
     <div
       data-testid="fullscreen-lyrics-layout"
-      className="h-screen w-full overflow-hidden bg-black text-white overscroll-none"
+      className="h-screen w-full overflow-hidden overscroll-none"
+      style={fullscreenThemeStyle}
     >
       {!embedded ? (
         <a
@@ -970,6 +1004,66 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
         >
           <Terminal className="size-3" aria-hidden="true" />
         </button>
+      ) : null}
+
+      {!embedded ? (
+        <div className="fixed left-4 top-24 z-20 sm:left-6 sm:top-28">
+          <button
+            type="button"
+            aria-expanded={themeMenuOpen}
+            aria-haspopup="true"
+            aria-label="Theme"
+            className="rounded border bg-transparent px-2 py-1 text-[10px] tracking-[0.14em] focus-visible:outline-none focus-visible:ring-2"
+            style={{
+              color: `rgba(${presetRgb}, 0.45)`,
+              borderColor: `rgba(${presetRgb}, 0.3)`,
+            }}
+            onClick={() => setThemeMenuOpen((current) => !current)}
+          >
+            Theme
+          </button>
+
+          {themeMenuOpen ? (
+            <div
+              className="mt-2 w-44 rounded-sm border p-2 backdrop-blur-sm"
+              style={{
+                backgroundColor: `rgba(${presetRgb}, 0.08)`,
+                borderColor: `rgba(${presetRgb}, 0.16)`,
+              }}
+            >
+              {FULLSCREEN_LYRICS_THEME_PRESETS.map((preset) => {
+                const selected = preset.id === themePreset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={preset.name}
+                    className="mb-1 flex w-full items-center justify-between rounded px-2 py-1 text-left text-[11px]"
+                    style={{
+                      color: preset.textHex,
+                      outline: selected ? `1px solid rgba(${presetRgb}, 0.35)` : "none",
+                    }}
+                    onClick={() => {
+                      const nextPreset = fullscreenThemeStoreRef.current?.setPreset(preset.id) ?? preset;
+                      setThemePreset(nextPreset);
+                    }}
+                  >
+                    <span>{preset.name}</span>
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-3 w-8 overflow-hidden rounded-sm border"
+                      style={{ borderColor: `rgba(${presetRgb}, 0.22)` }}
+                    >
+                      <span className="h-full w-1/2" style={{ backgroundColor: preset.backgroundHex }} />
+                      <span className="h-full w-1/2" style={{ backgroundColor: preset.textHex }} />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       {!embedded ? (
@@ -1089,9 +1183,19 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
       {!embedded && showDiagnostics ? (
         <section
           data-testid="fullscreen-diagnostics-overlay"
-          className="fixed left-4 top-16 z-20 min-w-[220px] rounded-sm border border-white/15 bg-black/60 px-3 py-2 text-[10px] leading-tight text-white/72 backdrop-blur-sm sm:left-6 sm:top-20"
+          className="fixed left-4 top-16 z-20 min-w-[220px] rounded-sm border px-3 py-2 text-[10px] leading-tight backdrop-blur-sm sm:left-6 sm:top-20"
+          style={{
+            backgroundColor: `rgba(${presetRgb}, 0.08)`,
+            borderColor: `rgba(${presetRgb}, 0.15)`,
+            color: `rgba(${presetRgb}, 0.72)`,
+          }}
         >
-          <p className="pb-1 text-[9px] tracking-[0.16em] text-white/50">Timing Diagnostics</p>
+          <p
+            className="pb-1 text-[9px] tracking-[0.16em]"
+            style={{ color: `rgba(${presetRgb}, var(--fullscreen-muted-alpha))` }}
+          >
+            Timing Diagnostics
+          </p>
           <p>
             Estimated ms: <span data-testid="diagnostics-estimated-ms">{syncState.estimatedProgressMs}</span>
           </p>
@@ -1121,7 +1225,11 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
 
       <div
         data-testid="fullscreen-meta-overlay"
-        className="pointer-events-none fixed right-4 top-3 z-10 flex max-w-[45vw] flex-col items-end gap-0.5 bg-transparent text-right text-[10px] leading-tight text-white/32 sm:right-6 sm:top-4"
+        className="pointer-events-none fixed right-4 top-3 z-10 flex max-w-[45vw] flex-col items-end gap-0.5 bg-transparent text-right text-[10px] leading-tight sm:right-6 sm:top-4"
+        style={{
+          color: `rgba(var(--fullscreen-text-rgb), var(--fullscreen-muted-alpha))`,
+          ["--fullscreen-muted-alpha" as string]: "0.32",
+        }}
       >
         <p className="truncate">{lyricsPanel.nowPlayingTitle}</p>
         <p className="truncate">{lyricsPanel.nowPlayingArtist}</p>
@@ -1135,7 +1243,14 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
             <span className="text-amber-100/55">{lyricsPanel.confidenceBadge}</span>
           </div>
         ) : null}
-        <p data-testid="fullscreen-progress-overlay" className="pt-0.5 text-[9px] tracking-[0.18em] text-white/25">
+        <p
+          data-testid="fullscreen-progress-overlay"
+          className="pt-0.5 text-[9px] tracking-[0.18em]"
+          style={{
+            color: `rgba(var(--fullscreen-text-rgb), var(--fullscreen-subtle-alpha))`,
+            ["--fullscreen-subtle-alpha" as string]: "0.25",
+          }}
+        >
           {`Elapsed ${elapsedProgressLabel}`}
         </p>
       </div>
@@ -1189,7 +1304,7 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
                       style={{
                         opacity: visualState.opacity,
                         transform: `scale(${visualState.scale})`,
-                        color: `rgba(255,255,255,${visualState.colorAlpha})`,
+                        color: `rgba(${presetRgb}, ${visualState.colorAlpha})`,
                         filter: `blur(${visualState.blurPx}px) brightness(${visualState.brightness})`,
                         fontWeight: 560,
                       }}
@@ -1200,10 +1315,20 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
                 })
                 : null}
                 {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.activeLineText ? (
-                  <p className="text-white font-semibold text-4xl sm:text-5xl">{lyricsPanel.activeLineText}</p>
+                  <p
+                    className="font-semibold text-4xl sm:text-5xl"
+                    style={{ color: `rgba(${presetRgb}, 1)` }}
+                  >
+                    {lyricsPanel.activeLineText}
+                  </p>
                 ) : null}
                 {resolvedLyrics?.renderMode !== "synced" && lyricsPanel.nextLineText ? (
-                  <p className="text-zinc-300 font-medium text-3xl sm:text-4xl">{lyricsPanel.nextLineText}</p>
+                  <p
+                    className="font-medium text-3xl sm:text-4xl"
+                    style={{ color: `rgba(${presetRgb}, var(--fullscreen-muted-alpha))` }}
+                  >
+                    {lyricsPanel.nextLineText}
+                  </p>
                 ) : null}
               </div>
             </div>
