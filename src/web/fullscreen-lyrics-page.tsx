@@ -230,6 +230,18 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
     };
     return style;
   }, [presetRgb, themePreset.backgroundHex, themePreset.textHex]);
+  const lowEmphasisControlStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.45)` }),
+    [presetRgb],
+  );
+  const subtleUtilityStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.4)` }),
+    [presetRgb],
+  );
+  const fallbackCopyStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.7)` }),
+    [presetRgb],
+  );
 
   const syncedLines = useMemo(
     () => (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number"),
@@ -959,7 +971,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
       {!embedded ? (
         <a
           href="/"
-          className="fixed left-4 top-3 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/40 transition-colors duration-200 hover:text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-4"
+          className="fixed left-4 top-3 z-20 bg-transparent text-[10px] tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-4"
+          style={subtleUtilityStyle}
         >
           Exit Fullscreen Lyrics
         </a>
@@ -969,7 +982,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
         <button
           type="button"
           data-testid="fullscreen-return-live"
-          className="fixed bottom-4 right-4 z-20 bg-transparent text-[10px] tracking-[0.16em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:bottom-6 sm:right-6"
+          className="fixed bottom-4 right-4 z-20 bg-transparent text-[10px] tracking-[0.16em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:bottom-6 sm:right-6"
+          style={lowEmphasisControlStyle}
           onClick={() => {
             userScrollIntentRef.current = false;
             setIsLiveLocked(true);
@@ -985,7 +999,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           type="button"
           data-testid="fullscreen-diagnostics-toggle"
           aria-expanded={showDiagnostics}
-          className="fixed left-4 top-10 z-20 bg-transparent text-[10px] tracking-[0.14em] text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-12"
+          className="fixed left-4 top-10 z-20 bg-transparent text-[10px] tracking-[0.14em] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-12"
+          style={lowEmphasisControlStyle}
           onClick={() => {
             setShowDiagnostics((current) => !current);
           }}
@@ -999,7 +1014,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           type="button"
           data-testid="fullscreen-dev-panel-toggle"
           aria-expanded={showDevPanel}
-          className="fixed left-4 top-16 z-20 bg-transparent text-white/45 transition-colors duration-200 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-20"
+          className="fixed left-4 top-16 z-20 bg-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 sm:left-6 sm:top-20"
+          style={lowEmphasisControlStyle}
           onClick={() => setShowDevPanel((v) => !v)}
         >
           <Terminal className="size-3" aria-hidden="true" />
@@ -1047,6 +1063,7 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
                     onClick={() => {
                       const nextPreset = fullscreenThemeStoreRef.current?.setPreset(preset.id) ?? preset;
                       setThemePreset(nextPreset);
+                      setThemeMenuOpen(false);
                     }}
                   >
                     <span>{preset.name}</span>
@@ -1260,11 +1277,11 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
         className="mx-auto flex h-screen w-full max-w-3xl flex-col justify-start overflow-hidden px-6 text-left sm:px-8"
       >
         {lyricsPanel.sourceState === "not-found" ? (
-          <p className="text-lg text-white/70">Lyrics not found</p>
+          <p className="text-lg" style={fallbackCopyStyle}>Lyrics not found</p>
         ) : lyricsPanel.status === "idle" || lyricsPanel.status === "no-track" ? (
-          <p className="text-lg text-white/70">Lyrics will appear once a track is playing.</p>
+          <p className="text-lg" style={fallbackCopyStyle}>Lyrics will appear once a track is playing.</p>
         ) : !resolvedLyrics ? (
-          <p className="text-lg text-white/70">{syncState.statusLine}</p>
+          <p className="text-lg" style={fallbackCopyStyle}>{syncState.statusLine}</p>
         ) : (
           <div
             ref={viewportSurfaceRef}

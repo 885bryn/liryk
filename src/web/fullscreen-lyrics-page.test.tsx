@@ -517,6 +517,33 @@ describe("FullscreenLyricsPage", () => {
     expect(localStorage.getItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY)).toBe("blue-hour");
   });
 
+  it("closes the theme picker after selecting a preset", () => {
+    render(<FullscreenLyricsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Theme" }));
+    expect(screen.getByRole("button", { name: "Blue Hour" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Blue Hour" }));
+
+    expect(screen.queryByRole("button", { name: "Paper Lantern" })).toBeNull();
+  });
+
+  it("derives low-emphasis utility and fallback copy from the active preset", () => {
+    localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "paper-lantern");
+
+    render(<FullscreenLyricsPage />);
+
+    const exitLink = screen.getByRole("link", { name: "Exit Fullscreen Lyrics" });
+    const diagnosticsToggle = screen.getByTestId("fullscreen-diagnostics-toggle");
+    const devPanelToggle = screen.getByTestId("fullscreen-dev-panel-toggle");
+    const idleCopy = screen.getByText("Lyrics will appear once a track is playing.");
+
+    expect(exitLink.getAttribute("style") ?? "").toContain("47, 36, 25");
+    expect(diagnosticsToggle.getAttribute("style") ?? "").toContain("47, 36, 25");
+    expect(devPanelToggle.getAttribute("style") ?? "").toContain("47, 36, 25");
+    expect(idleCopy.getAttribute("style") ?? "").toContain("47, 36, 25");
+  });
+
   it("restores a saved preset in embedded fullscreen mode", async () => {
     localStorage.setItem(FULLSCREEN_LYRICS_THEME_STORAGE_KEY, "rose-lounge");
 
