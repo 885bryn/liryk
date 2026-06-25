@@ -536,11 +536,15 @@ describe("FullscreenLyricsPage", () => {
     const exitLink = screen.getByRole("link", { name: "Exit Fullscreen Lyrics" });
     const diagnosticsToggle = screen.getByTestId("fullscreen-diagnostics-toggle");
     const devPanelToggle = screen.getByTestId("fullscreen-dev-panel-toggle");
+    const karaokeButton = screen.getByRole("button", { name: "Enter Karaoke" });
+    const karaokeMessage = screen.getByText("Karaoke inactive");
     const idleCopy = screen.getByText("Lyrics will appear once a track is playing.");
 
     expect(exitLink.getAttribute("style") ?? "").toContain("47, 36, 25");
     expect(diagnosticsToggle.getAttribute("style") ?? "").toContain("47, 36, 25");
     expect(devPanelToggle.getAttribute("style") ?? "").toContain("47, 36, 25");
+    expect(karaokeButton.getAttribute("style") ?? "").toContain("47, 36, 25");
+    expect(karaokeMessage.getAttribute("style") ?? "").toContain("47, 36, 25");
     expect(idleCopy.getAttribute("style") ?? "").toContain("47, 36, 25");
   });
 
@@ -594,6 +598,12 @@ describe("FullscreenLyricsPage", () => {
       const activeLine = screen.getByTestId("fullscreen-lyric-line-active");
       expect(activeLine.getAttribute("style") ?? "").toContain("243, 247, 255");
     });
+  });
+
+  it("shows the theme picker in embedded fullscreen mode", () => {
+    render(<FullscreenLyricsPage embedded />);
+
+    expect(screen.getByRole("button", { name: "Theme" })).toBeTruthy();
   });
 
   it("restores a saved preset in embedded fullscreen mode", async () => {

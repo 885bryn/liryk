@@ -14,7 +14,7 @@ export type FullscreenThemePreset = {
   textHex: string;
 };
 
-export const FULLSCREEN_LYRICS_THEME_PRESETS: FullscreenThemePreset[] = [
+export const FULLSCREEN_LYRICS_THEME_PRESETS: readonly FullscreenThemePreset[] = [
   { id: "midnight", name: "Midnight", backgroundHex: "#000000", textHex: "#FFFFFF" },
   {
     id: "paper-lantern",
@@ -27,7 +27,7 @@ export const FULLSCREEN_LYRICS_THEME_PRESETS: FullscreenThemePreset[] = [
   { id: "rose-lounge", name: "Rose Lounge", backgroundHex: "#2E1622", textHex: "#FFE8F2" },
 ];
 
-const DEFAULT_PRESET = FULLSCREEN_LYRICS_THEME_PRESETS[0];
+const DEFAULT_PRESET: FullscreenThemePreset = FULLSCREEN_LYRICS_THEME_PRESETS[0]!;
 
 export function resolveFullscreenThemePreset(
   presetId: string | null | undefined,

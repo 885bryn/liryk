@@ -246,6 +246,46 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
     () => ({ color: `rgba(${presetRgb}, 0.88)` }),
     [presetRgb],
   );
+  const karaokePrimaryButtonStyle = useMemo<CSSProperties>(
+    () => ({
+      borderColor: `rgba(${presetRgb}, 0.25)`,
+      backgroundColor: `rgba(${presetRgb}, 0.08)`,
+      color: `rgba(${presetRgb}, 0.85)`,
+    }),
+    [presetRgb],
+  );
+  const karaokeMessageStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.6)` }),
+    [presetRgb],
+  );
+  const karaokePanelStyle = useMemo<CSSProperties>(
+    () => ({
+      borderColor: `rgba(${presetRgb}, 0.1)`,
+      backgroundColor: `rgba(${presetRgb}, 0.06)`,
+    }),
+    [presetRgb],
+  );
+  const karaokePanelHeadingStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.5)` }),
+    [presetRgb],
+  );
+  const karaokeLinkStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.7)` }),
+    [presetRgb],
+  );
+  const karaokeStrongLinkStyle = useMemo<CSSProperties>(
+    () => ({ color: `rgba(${presetRgb}, 0.8)` }),
+    [presetRgb],
+  );
+  const devPanelSurfaceStyle = useMemo<CSSProperties>(
+    () => ({
+      height: "30vh",
+      maxHeight: "30vh",
+      borderColor: `rgba(${presetRgb}, 0.15)`,
+      backgroundColor: `rgba(${presetRgb}, 0.1)`,
+    }),
+    [presetRgb],
+  );
 
   const syncedLines = useMemo(
     () => (resolvedLyrics?.lines ?? []).filter((line) => typeof line.startMs === "number"),
@@ -1026,8 +1066,7 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
         </button>
       ) : null}
 
-      {!embedded ? (
-        <div className="fixed left-4 top-24 z-20 sm:left-6 sm:top-28">
+      <div className="fixed left-4 top-24 z-20 sm:left-6 sm:top-28">
           <button
             type="button"
             aria-expanded={themeMenuOpen}
@@ -1085,13 +1124,13 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
             </div>
           ) : null}
         </div>
-      ) : null}
 
       {!embedded ? (
         <div className="fixed right-4 top-16 z-20 flex max-w-[300px] flex-col items-end gap-2 text-right sm:right-6 sm:top-20">
           <button
             type="button"
-            className="rounded border border-white/25 bg-black/60 px-3 py-1 text-[11px] tracking-[0.12em] text-white/85 hover:bg-black/70"
+            className="rounded border px-3 py-1 text-[11px] tracking-[0.12em] transition-colors duration-200"
+            style={karaokePrimaryButtonStyle}
             onMouseDown={() => {
               karaoke.primePlaybackGesture();
             }}
@@ -1110,19 +1149,20 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           >
             {karaoke.mode === "karaoke" || karaoke.mode === "switching_to_original" ? "Exit Karaoke" : "Enter Karaoke"}
           </button>
-          <p className="text-[10px] text-white/60">{karaoke.message}</p>
+          <p className="text-[10px]" style={karaokeMessageStyle}>
+            {karaoke.message}
+          </p>
           {karaoke.candidateMappings.length > 0 ? (
-            <div className="w-full rounded border border-white/10 bg-black/40 p-2 text-left">
-              <p className="pb-1 text-[9px] tracking-[0.12em] text-white/50">Top Backing Tracks</p>
+            <div className="w-full rounded border p-2 text-left" style={karaokePanelStyle}>
+              <p className="pb-1 text-[9px] tracking-[0.12em]" style={karaokePanelHeadingStyle}>Top Backing Tracks</p>
               {karaoke.candidateMappings.slice(0, 3).map((candidate, index) => {
                 const selected = karaoke.currentMapping?.youtubeVideoId === candidate.youtubeVideoId;
                 return (
                   <button
                     key={`${candidate.youtubeVideoId}-${index}`}
                     type="button"
-                    className={`mb-1 block w-full truncate text-left text-[10px] ${
-                      selected ? "text-white" : "text-white/75 hover:text-white"
-                    }`}
+                    className="mb-1 block w-full truncate text-left text-[10px]"
+                    style={selected ? { color: `rgba(${presetRgb}, 1)` } : { color: `rgba(${presetRgb}, 0.75)` }}
                     onClick={() => {
                       void karaoke.switchToCandidate(candidate.youtubeVideoId);
                     }}
@@ -1138,7 +1178,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           {karaoke.mode === "karaoke" && karaoke.currentMapping && !karaoke.currentMapping.confirmedByUser ? (
             <button
               type="button"
-              className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+              className="text-[10px] tracking-[0.1em] underline underline-offset-2"
+              style={karaokeLinkStyle}
               onClick={() => {
                 karaoke.confirmCurrentMapping();
               }}
@@ -1149,7 +1190,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           {karaoke.mode === "karaoke" && karaoke.currentMapping ? (
             <button
               type="button"
-              className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+              className="text-[10px] tracking-[0.1em] underline underline-offset-2"
+              style={karaokeLinkStyle}
               onClick={() => {
                 void karaoke.banCurrentCandidate();
               }}
@@ -1160,7 +1202,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           {karaoke.mode === "error" ? (
             <button
               type="button"
-              className="text-[10px] tracking-[0.1em] text-white/70 underline underline-offset-2"
+              className="text-[10px] tracking-[0.1em] underline underline-offset-2"
+              style={karaokeLinkStyle}
               onClick={() => {
                 karaoke.clearError();
               }}
@@ -1171,7 +1214,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
           {karaoke.mode === "error" && karaoke.canResumeAutoplay ? (
             <button
               type="button"
-              className="text-[10px] tracking-[0.1em] text-white/80 underline underline-offset-2"
+              className="text-[10px] tracking-[0.1em] underline underline-offset-2"
+              style={karaokeStrongLinkStyle}
               onClick={() => {
                 void karaoke.resumeAutoplay();
               }}
@@ -1194,8 +1238,8 @@ function FullscreenLyricsPageView({ embedded, webAuth }: FullscreenLyricsPageVie
       {!embedded && showDevPanel ? (
         <section
           data-testid="fullscreen-dev-panel"
-          className="fixed bottom-4 left-4 z-20 w-[240px] rounded-sm border border-white/15 bg-black/60 backdrop-blur-sm"
-          style={{ height: "30vh", maxHeight: "30vh" }}
+          className="fixed bottom-4 left-4 z-20 w-[240px] rounded-sm border backdrop-blur-sm"
+          style={devPanelSurfaceStyle}
         >
           <DevActivityPanel entries={logEntries} />
         </section>
