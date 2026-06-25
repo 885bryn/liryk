@@ -14,8 +14,8 @@ describe("WebAppRouter", () => {
 
     render(<WebAppRouter />);
 
-    expect(screen.getByTestId("mobile-shell-layout")).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
+    expect(screen.getByTestId("shell-layout")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open Fullscreen Lyrics" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
   });
 
@@ -24,8 +24,8 @@ describe("WebAppRouter", () => {
 
     render(<WebAppRouter />);
 
-    expect(screen.getByTestId("mobile-shell-layout")).toBeTruthy();
+    expect(screen.getByTestId("fullscreen-lyrics-layout")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeTruthy();
   });
 });

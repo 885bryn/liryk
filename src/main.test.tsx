@@ -14,27 +14,27 @@ describe("main route entry", () => {
     window.history.pushState({}, "", "/");
   });
 
-  it("renders the mobile shell at / without fullscreen escape hatches", () => {
+  it("renders the desktop shell at / with an open-fullscreen entry point", () => {
     renderEntryAt("/");
 
-    expect(screen.getByTestId("mobile-shell-layout")).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
+    expect(screen.getByTestId("shell-layout")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open Fullscreen Lyrics" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
   });
 
-  it("renders the mobile shell at /fullscreen without fullscreen escape hatches", () => {
+  it("renders the standalone fullscreen page at /fullscreen", () => {
     renderEntryAt("/fullscreen");
 
-    expect(screen.getByTestId("mobile-shell-layout")).toBeTruthy();
+    expect(screen.getByTestId("fullscreen-lyrics-layout")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeTruthy();
   });
 
-  it("falls back to the mobile shell on unknown paths", () => {
+  it("falls back to the desktop shell on unknown paths", () => {
     renderEntryAt("/missing");
 
-    expect(screen.getByTestId("mobile-shell-layout")).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "Open Fullscreen Lyrics" })).toBeNull();
+    expect(screen.getByTestId("shell-layout")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open Fullscreen Lyrics" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Exit Fullscreen Lyrics" })).toBeNull();
   });
 });
