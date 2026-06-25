@@ -246,6 +246,18 @@ async function pollOnce(): Promise<void> {
       return;
     }
 
+    if (error instanceof SpotifyPlaybackError && (error.status === 401 || error.status === 403)) {
+      logDiagnostic("auth_error", {
+        source: "shared-playback-runtime",
+        timestamp,
+        pollerId,
+        status: error.status,
+      });
+
+      stopPolling(`spotify_auth_${error.status}`);
+      return;
+    }
+
     consecutiveTransientErrors += 1;
     const backoffMs = Math.min(
       MAX_ERROR_BACKOFF_MS,
