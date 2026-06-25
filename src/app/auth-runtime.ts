@@ -224,6 +224,8 @@ export function createAuthRuntime(dependencies: AuthRuntimeDependencies = {}): A
       const result = await bootstrapAuth(bootstrapDependencies);
       if (result.status === "connected") {
         pendingAuthStore.clear();
+      } else {
+        currentSession = null;
       }
       return result;
     },

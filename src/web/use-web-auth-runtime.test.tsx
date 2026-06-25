@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -14,7 +14,7 @@ type RuntimeStub = {
   completeSpotifyCallback: (input: { code?: string; state?: string; error?: string }) => Promise<UiAuthState>;
   connectSpotify: () => Promise<{ authorizeUrl: string; requestId: string }>;
   getUiState: () => UiAuthState;
-  getSession: () => { accessToken: string } | null;
+  getSession: () => { accessToken: string; accessTokenExpiresAtMs?: number } | null;
 };
 
 const probeReadLocation = () => new URL("http://localhost:3000/?code=abc&state=xyz");
@@ -49,6 +49,7 @@ function HookProbe(input: {
       <p data-testid="copy">{model.statusCopy}</p>
       <p data-testid="ui-status">{model.uiState.status}</p>
       <p data-testid="has-setup-error">{String(model.hasSetupError)}</p>
+      <p data-testid="session-token">{model.sessionAccessToken ?? ""}</p>
       <button type="button" onClick={() => void model.onConnect()}>
         Connect
       </button>
@@ -313,4 +314,56 @@ describe("useWebAuthRuntime", () => {
     expect(screen.getByTestId("has-setup-error").textContent).toBe("true");
     expect(screen.getByTestId("copy").textContent).toBe("Spotify auth setup issue: Redirect URI mismatch.");
   });
+  it("refreshes the web session before the access token expires", async () => {
+    vi.useFakeTimers();
+    try {
+      const authStore = new AuthStore();
+      authStore.setConnectedWaitingPlayback({ displayName: "Avery" });
+
+      let currentSession = {
+        accessToken: "token-initial",
+        accessTokenExpiresAtMs: Date.now() + 70_000,
+      };
+
+      const runtime: RuntimeStub = {
+        initialize: vi.fn(async () => {
+          if (vi.mocked(runtime.initialize).mock.calls.length > 1) {
+            currentSession = {
+              accessToken: "token-refreshed",
+              accessTokenExpiresAtMs: Date.now() + 3_600_000,
+            };
+          }
+          return { status: "connected", source: "persisted" };
+        }),
+        completeSpotifyCallback: vi.fn(async () => authStore.selectUiState()),
+        connectSpotify: vi.fn(async () => ({
+          authorizeUrl: "https://accounts.spotify.com/authorize",
+          requestId: "req-refresh",
+        })),
+        getUiState: () => authStore.selectUiState(),
+        getSession: () => currentSession,
+      };
+
+      render(<HookProbe runtime={runtime} runBootstrap={runWebAuthBootstrap} readLocation={() => new URL("http://localhost:3000/")} />);
+
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(screen.getByTestId("phase").textContent).toBe("ready");
+      expect(screen.getByTestId("session-token").textContent).toBe("token-initial");
+      expect(runtime.initialize).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+
+      expect(runtime.initialize).toHaveBeenCalledTimes(2);
+      expect(screen.getByTestId("session-token").textContent).toBe("token-refreshed");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
 });

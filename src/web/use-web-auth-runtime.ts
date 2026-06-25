@@ -7,6 +7,8 @@ import { readPlatformAuthRedirect, type PlatformAuthRedirect } from "./auth/plat
 
 type WebAuthPhase = "checking" | "ready" | "busy";
 
+const SESSION_REFRESH_SKEW_MS = 60_000;
+
 export type WebAuthRuntimeModel = {
   phase: WebAuthPhase;
   statusCopy: string;
@@ -94,6 +96,17 @@ function copyFromError(error: unknown): string {
   return `Spotify auth setup issue: ${message}`;
 }
 
+function readSession(runtime: Pick<AuthRuntime, "getSession"> | null): {
+  accessToken: string | null;
+  accessTokenExpiresAtMs: number | null;
+} {
+  const session = runtime?.getSession() ?? null;
+  return {
+    accessToken: session?.accessToken ?? null,
+    accessTokenExpiresAtMs: session?.accessTokenExpiresAtMs ?? null,
+  };
+}
+
 export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAuthRuntimeModel {
   const runtimeCreation = useMemo(() => {
     if (options.runtime) {
@@ -123,8 +136,11 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     runtimeCreation.error ? copyFromError(runtimeCreation.error) : "Checking Spotify connection...",
   );
   const [hasSetupError, setHasSetupError] = useState<boolean>(() => runtimeCreation.error !== null);
-  const [sessionAccessToken, setSessionAccessToken] = useState<string | null>(() => runtime?.getSession()?.accessToken ?? null);
+  const initialSession = readSession(runtime);
+  const [sessionAccessToken, setSessionAccessToken] = useState<string | null>(initialSession.accessToken);
+  const [sessionAccessTokenExpiresAtMs, setSessionAccessTokenExpiresAtMs] = useState<number | null>(initialSession.accessTokenExpiresAtMs);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -147,6 +163,21 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
       }
     };
   }, [subscribeToRedirects]);
+
+  useEffect(() => {
+    if (!runtime || sessionAccessTokenExpiresAtMs === null) {
+      return;
+    }
+
+    const refreshDelayMs = Math.max(0, sessionAccessTokenExpiresAtMs - Date.now() - SESSION_REFRESH_SKEW_MS);
+    const timeoutId = window.setTimeout(() => {
+      setRefreshTick((current) => current + 1);
+    }, refreshDelayMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [runtime, sessionAccessTokenExpiresAtMs]);
 
   useEffect(() => {
     if (!runtime) {
@@ -188,8 +219,10 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
         }
 
         const nextState = runtime.getUiState();
+        const nextSession = readSession(runtime);
         setUiState(nextState);
-        setSessionAccessToken(runtime.getSession()?.accessToken ?? null);
+        setSessionAccessToken(nextSession.accessToken);
+        setSessionAccessTokenExpiresAtMs(nextSession.accessTokenExpiresAtMs);
         if (setupErrorCopy !== null) {
           setStatusCopy(setupErrorCopy);
           setHasSetupError(true);
@@ -206,7 +239,7 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     return () => {
       active = false;
     };
-  }, [readLocation, readRedirect, redirectUrl, replaceHistoryUrl, runBootstrap, runtime, runtimeCreation.error]);
+  }, [readLocation, readRedirect, redirectUrl, refreshTick, replaceHistoryUrl, runBootstrap, runtime, runtimeCreation.error]);
 
   const onConnect = async () => {
     if (!runtime) {
@@ -221,8 +254,10 @@ export function useWebAuthRuntime(options: UseWebAuthRuntimeOptions = {}): WebAu
     setHasSetupError(false);
 
     const started = await runtime.connectSpotify();
+    const nextSession = readSession(runtime);
     setUiState(runtime.getUiState());
-    setSessionAccessToken(runtime.getSession()?.accessToken ?? null);
+    setSessionAccessToken(nextSession.accessToken);
+    setSessionAccessTokenExpiresAtMs(nextSession.accessTokenExpiresAtMs);
     navigateToAuthorization(started.authorizeUrl);
   };
 

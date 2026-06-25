@@ -262,4 +262,37 @@ describe("createAuthRuntime", () => {
     });
     expect(tokenStore.saveTokens).not.toHaveBeenCalled();
   });
+  it("clears the in-memory session when a later token refresh fails", async () => {
+    const authStore = new AuthStore();
+    const tokenStore = createTokenStore({
+      ...baseTokens,
+      accessTokenExpiresAtMs: 200_000,
+    });
+    const spotifyClient = createSpotifyClientMock();
+    let nowMs = 100_000;
+
+    const runtime = createAuthRuntime({
+      authStore,
+      tokenStore,
+      spotifyClient,
+      now: () => nowMs,
+      hasPlayback: () => true,
+      getAccountDisplay: () => ({ displayName: "Avery" }),
+    });
+
+    await runtime.initialize();
+    expect(runtime.getSession()).toMatchObject({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    nowMs = 220_000;
+    spotifyClient.refreshAccessToken.mockRejectedValueOnce(new Error("invalid_grant"));
+
+    const result = await runtime.initialize();
+
+    expect(result).toEqual({ status: "reconnect_required", source: "none" });
+    expect(runtime.getSession()).toBeNull();
+  });
+
 });
